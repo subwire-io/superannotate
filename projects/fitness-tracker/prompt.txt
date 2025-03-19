@@ -1,0 +1,1 @@
+Develop a React fitness tracking application that monitors workout routines, tracks  progress, and sets fitness goals. Include features for different exercise categories and  performance metrics.

@@ -1,0 +1,50 @@
+fitness-tracker/
+├── app/
+│   ├── goals/
+│   │   └── page.tsx        # Goals page route
+│   ├── profile/
+│   │   └── page.tsx        # Profile page route 
+│   ├── workouts/
+│   │   └── page.tsx        # Workouts page route
+│   ├── layout.tsx          # Root layout
+│   └── page.tsx            # Dashboard/home page route
+├── components/
+│   ├── dashboard/
+│   │   ├── activity-chart.tsx
+│   │   ├── dashboard-header.tsx
+│   │   ├── exercise-distribution.tsx
+│   │   ├── goal-progress-card.tsx
+│   │   └── workout-summary-card.tsx
+│   ├── goals/
+│   │   ├── goal-card.tsx
+│   │   └── goal-form.tsx
+│   ├── ui/
+│   │   ├── alert-dialog.tsx
+│   │   ├── badge.tsx
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── checkbox.tsx
+│   │   ├── dialog.tsx
+│   │   ├── dropdown-menu.tsx
+│   │   ├── input.tsx
+│   │   ├── label.tsx
+│   │   ├── progress-ring.tsx
+│   │   ├── select.tsx
+│   │   ├── textarea.tsx
+│   │   └── toggle.tsx
+│   ├── workouts/
+│   │   ├── workout-card.tsx
+│   │   └── workout-form.tsx
+│   └── navigation.tsx
+├── lib/
+│   ├── data.ts
+│   ├── storage.ts
+│   └── utils.ts
+├── public/
+│   └── placeholder.svg
+├── types/
+│   └── index.ts
+├── next.config.js
+├── package.json
+├── tailwind.config.js
+└── tsconfig.json
