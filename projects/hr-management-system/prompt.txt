@@ -1,0 +1,85 @@
+Input: Build a comprehensive HR management system with employee profiles, attendance tracking, performance reviews, and recruitment pipeline.
+
+Response: <Thinking>This is a complex web UI creation task that requires multiple components and interactions. I'll need to create a comprehensive HR management system with several key features:
+
+1. Employee profiles
+2. Attendance tracking
+3. Performance reviews
+4. Recruitment pipeline
+
+
+This falls into the "Complex Web UI" category (10-15 UI elements with interactions) as it will require multiple tabs, forms, tables, and interactive elements.
+
+I'll structure the application with:
+
+- A main dashboard layout with navigation
+- Separate sections for each major feature
+- Responsive design for all screen sizes
+- Interactive components for data entry and visualization
+- Mock data for demonstration purposes
+
+
+For the UI components, I'll use:
+
+- Shadcn/ui components for consistent design
+- Tailwind CSS for styling
+- Lucide React icons for visual elements
+- Next.js App Router for navigation
+
+
+I'll implement the following UI elements (10-15 elements):
+
+1. Navigation sidebar
+2. Dashboard overview cards
+3. Employee profile cards/details
+4. Attendance calendar/tracker
+5. Performance review forms
+6. Performance metrics charts
+7. Recruitment kanban board
+8. Job posting form
+9. Candidate profile cards
+10. Search and filter components
+11. Notification system
+12. Settings panel
+
+
+Let me plan the file structure:
+
+- app/
+
+- layout.tsx (main layout)
+- page.tsx (dashboard)
+- employees/
+
+- page.tsx (employee list)
+- [id]/page.tsx (employee profile)
+
+
+
+- attendance/
+
+- page.tsx (attendance tracking)
+
+
+
+- performance/
+
+- page.tsx (performance reviews)
+
+
+
+- recruitment/
+
+- page.tsx (recruitment pipeline)
+
+
+
+- components/
+
+- dashboard/
+- employees/
+- attendance/
+- performance/
+- recruitment/
+- ui/ (shared UI components)
+</Thinking>
