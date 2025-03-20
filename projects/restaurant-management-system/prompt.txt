@@ -1,0 +1,95 @@
+Input: Create a complete restaurant management system with table reservations, menu management, order taking, and kitchen display.
+
+Response: 'll create a complete restaurant management system with all the requested features.
+
+<thinking>
+For this restaurant management system, I need to create a comprehensive solution that includes:
+
+1. **Authentication System**: For staff logins with role-based access
+2. **Table Reservation System**: To manage bookings and table availability
+3. **Menu Management**: For adding, editing, and organizing menu items
+4. **Order Taking Interface**: For waitstaff to take and manage orders
+5. **Kitchen Display System**: For kitchen staff to view and manage orders
+6. **Dashboard**: For overview and analytics
+
+
+I'll structure this with:
+
+- Next.js App Router for routing
+- Shadcn/UI for components
+- Tailwind CSS for styling
+- React Server Components and Client Components where appropriate
+- TypeScript for type safety
+- Local state management with React hooks
+- Server Actions for database operations
+
+
+For database models, I'll need:
+
+- Users (staff members with roles)
+- Tables (for restaurant layout)
+- Reservations (bookings)
+- Menu Categories
+- Menu Items
+- Orders
+- Order Items
+
+
+I'll use a modular approach to make the code maintainable and extensible.
+</thinking>
+
+I'll create a complete restaurant management system with all the requested features.
+
+Thought for 6 secondsFor this restaurant management system, I need to create a comprehensive solution that includes:
+
+1. **Authentication System**: For staff logins with role-based access
+2. **Table Reservation System**: To manage bookings and table availability
+3. **Menu Management**: For adding, editing, and organizing menu items
+4. **Order Taking Interface**: For waitstaff to take and manage orders
+5. **Kitchen Display System**: For kitchen staff to view and manage orders
+6. **Dashboard**: For overview and analytics
+
+
+I'll structure this with:
+
+- Next.js App Router for routing
+- Shadcn/UI for components
+- Tailwind CSS for styling
+- React Server Components and Client Components where appropriate
+- TypeScript for type safety
+- Local state management with React hooks
+- Server Actions for database operations
+
+
+For database models, I'll need:
+
+- Users (staff members with roles)
+- Tables (for restaurant layout)
+- Reservations (bookings)
+- Menu Categories
+- Menu Items
+- Orders
+- Order Items
+
+
+I'll use a modular approach to make the code maintainable and extensible.
+
+```typescriptreact project="restaurant-management-system"
+...
+```
+
+I've created a comprehensive restaurant management system with the following features:
+
+1. Authentication system with role-based access control for different staff members
+2. Dashboard with key restaurant metrics including revenue, orders, and reservation stats
+3. Table management interface with status tracking and capacity information
+4. Reservation system for booking tables with comprehensive customer information
+5. Menu management with categories, items, pricing, and availability control
+6. Order management system for servers to input customer orders quickly
+7. Kitchen display system showing food preparation status in real-time
+8. Staff management portal for adding and managing employees with different roles
+9. Interactive interfaces with grid and list views for various management screens
+10. Responsive design that works across desktop and mobile devices
+
+
+The system uses Next.js with the App Router, React Server Components, and Shadcn/UI components for a modern UI. It includes mock data for demonstration purposes, which could be easily connected to a real database in production.
