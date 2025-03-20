@@ -1,0 +1,50 @@
+Input: Build a simple image gallery with thumbnail preview and main image display.
+
+Response:
+I'll create a simple image gallery with thumbnail preview and main image display.
+<Thinking>
+1. UI Elements needed:
+   - Main image display
+   - Thumbnail gallery/grid
+   - Navigation controls (optional)
+   - Image captions (optional)
+
+Component Structure:
+
+ImageGallery main component
+Possibly separate components for thumbnails and main display
+Use state to track the selected image
+
+
+Libraries and Tools:
+
+React/Next.js
+shadcn/ui components where applicable
+Tailwind CSS for styling
+Lucide React for icons if needed
+
+
+Design Considerations:
+
+Responsive layout that works on mobile and desktop
+Accessible controls and images
+Loading states for images
+Clean, modern design with proper spacing
+
+
+
+</Thinking>
+
+I've created a simple image gallery component with thumbnail previews and a main image display. The implementation includes:
+
+A main image display area that shows the currently selected image
+A row of thumbnail images that can be clicked to select and display in the main area
+Previous and next navigation buttons for cycling through the images
+Optional captions that display below the main image when available
+Responsive design that works well on both mobile and desktop
+Proper accessibility features including ARIA labels and roles
+Visual indicators showing which thumbnail is currently selected
+Smooth transitions with hover effects on interactive elements
+
+The gallery is designed to be reusable and can be easily integrated into any Next.js application. The component accepts an array of image objects containing the necessary information (source, alt text, and optional caption).
+The demo implementation shows how to use the component with placeholder images, but you can replace these with your actual image URLs.
