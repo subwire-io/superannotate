@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { User } from "@/types";
@@ -58,7 +58,7 @@ export default function FitnessTracker() {
         <header className="border-b">
           <div className="container flex h-16 items-center px-4">
             <h1 className="font-bold text-xl flex items-center mr-8">
-              <span className="text-primary mr-1">Fit</span>Track
+              <span className="text-primary mr-1">Super Fit</span>
             </h1>
 
             <Navigation activeTab={activeTab} onChangeTab={setActiveTab} />
@@ -82,10 +82,7 @@ export default function FitnessTracker() {
           )}
 
           {activeTab === "goals" && (
-            <GoalsPage
-              userData={userData}
-              onGoalsChange={refreshUserData}
-            />
+            <GoalsPage userData={userData} onGoalsChange={refreshUserData} />
           )}
 
           {activeTab === "profile" && (
