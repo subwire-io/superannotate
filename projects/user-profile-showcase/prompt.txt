@@ -1,0 +1,29 @@
+Input: Design a user profile card showing avatar, name, job title, and a follow button.
+
+Response: I'll create a user profile card showing avatar, name, job title, and a follow button.
+<Thinking>
+For this task, I'll create a clean, professional user profile card with the following elements:
+1. Avatar/profile image
+2. User's name
+3. Job title
+4. Follow button with interactive state
+I'll use shadcn/ui components for the card structure and button, and Tailwind CSS for styling. The layout will be responsive and follow accessibility best practices with proper semantic HTML elements and ARIA attributes.
+Since this is a simple UI component (less than 5 UI elements), I'll keep it focused on just these requirements without adding unnecessary complexity.
+</Thinking>
+
+I've created a clean, modern user profile card component with the following features:
+
+A circular avatar with image support and fallback to user initials
+User's name displayed prominently with proper typography
+Job title shown below the name in a muted color for visual hierarchy
+An interactive follow button that toggles state when clicked
+Optional skill badges to provide additional context
+
+The component is fully responsive and follows accessibility best practices including:
+
+Semantic HTML structure
+Proper contrast between text and background
+ARIA attributes for the interactive button
+Alt text for the avatar image
+
+The design uses shadcn/ui components for consistency and Tailwind CSS for styling. The profile card includes sensible defaults but also accepts props for customization, making it reusable across different contexts in your application.
