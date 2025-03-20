@@ -1,3 +1,4 @@
+"use client"
 import { useState } from "react";
 import { User } from "@/types";
 import { CalendarDays, ChevronDown, Plus } from "lucide-react";
@@ -18,14 +19,14 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onAddWorkout, onAddGoal }: DashboardHeaderProps) {
   const userData = initUserData();
   const [currentDate] = useState(new Date());
-  
+
   const formattedDate = currentDate.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
-  
+
   return (
     <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <div>
@@ -35,7 +36,7 @@ export function DashboardHeader({ onAddWorkout, onAddGoal }: DashboardHeaderProp
           <span>{formattedDate}</span>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

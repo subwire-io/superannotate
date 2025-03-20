@@ -1,56 +1,58 @@
 "use client"
 
-import { useState, useEffect } from "react";
-import { User } from "@/types";
-import { initUserData } from "@/lib/storage";
-import { Navigation } from "@/components/navigation";
-import { DashboardPage } from "./dashboard/page";
-import { GoalsPage } from "./goals/page";
-import { WorkoutsPage } from "./workouts/page";
-import { ProfilePage } from "./profile/page";
-import { WorkoutForm } from "@/components/workouts/workout-form";
-import { GoalForm } from "@/components/goals/goal-form";
-import { addWorkout, addGoal } from "@/lib/storage";
+import { useState, useEffect } from "react"
+import type { User } from "@/types"
+import { initUserData } from "@/lib/storage"
+import { Navigation } from "@/components/navigation"
+import { WorkoutForm } from "@/components/workouts/workout-form"
+import { GoalForm } from "@/components/goals/goal-form"
+import { addWorkout, addGoal } from "@/lib/storage"
+import { DashboardView } from "@/components/dashboard/dashboard-view"
+import { GoalsView } from "@/components/goals/goals-view"
+import { ProfileView } from "@/components/profile/profile-view"
+import { WorkoutsView } from "@/components/workouts/workouts-view"
+
+// Import the view components
 
 export default function FitnessTracker() {
   const [userData, setUserData] = useState<User>({
     workouts: [],
     goals: [],
-  });
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [addWorkoutOpen, setAddWorkoutOpen] = useState(false);
-  const [addGoalOpen, setAddGoalOpen] = useState(false);
+  })
+  const [activeTab, setActiveTab] = useState("dashboard")
+  const [addWorkoutOpen, setAddWorkoutOpen] = useState(false)
+  const [addGoalOpen, setAddGoalOpen] = useState(false)
 
   // Load user data from localStorage on initial render
   useEffect(() => {
-    const data = initUserData();
-    setUserData(data);
-  }, []);
+    const data = initUserData()
+    setUserData(data)
+  }, [])
 
   // Update userData when things change
   const refreshUserData = () => {
-    const data = initUserData();
-    setUserData(data);
-  };
+    const data = initUserData()
+    setUserData(data)
+  }
 
   // Handlers for adding workouts and goals
   const handleAddWorkout = () => {
-    setAddWorkoutOpen(true);
-  };
+    setAddWorkoutOpen(true)
+  }
 
   const handleAddGoal = () => {
-    setAddGoalOpen(true);
-  };
+    setAddGoalOpen(true)
+  }
 
   const handleSaveWorkout = (workout: any) => {
-    addWorkout(workout);
-    refreshUserData();
-  };
+    addWorkout(workout)
+    refreshUserData()
+  }
 
   const handleSaveGoal = (goal: any) => {
-    addGoal(goal);
-    refreshUserData();
-  };
+    addGoal(goal)
+    refreshUserData()
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -67,47 +69,20 @@ export default function FitnessTracker() {
 
         <div className="flex-1 container py-6 px-4">
           {activeTab === "dashboard" && (
-            <DashboardPage
-              onAddWorkout={handleAddWorkout}
-              onAddGoal={handleAddGoal}
-              userData={userData}
-            />
+            <DashboardView onAddWorkout={handleAddWorkout} onAddGoal={handleAddGoal} userData={userData} />
           )}
 
-          {activeTab === "workouts" && (
-            <WorkoutsPage
-              userData={userData}
-              onWorkoutsChange={refreshUserData}
-            />
-          )}
+          {activeTab === "workouts" && <WorkoutsView userData={userData} onWorkoutsChange={refreshUserData} />}
 
-          {activeTab === "goals" && (
-            <GoalsPage
-              userData={userData}
-              onGoalsChange={refreshUserData}
-            />
-          )}
+          {activeTab === "goals" && <GoalsView userData={userData} onGoalsChange={refreshUserData} />}
 
-          {activeTab === "profile" && (
-            <ProfilePage
-              userData={userData}
-              onProfileChange={refreshUserData}
-            />
-          )}
+          {activeTab === "profile" && <ProfileView userData={userData} onProfileChange={refreshUserData} />}
         </div>
       </div>
 
-      <WorkoutForm
-        open={addWorkoutOpen}
-        onClose={() => setAddWorkoutOpen(false)}
-        onSave={handleSaveWorkout}
-      />
+      <WorkoutForm open={addWorkoutOpen} onClose={() => setAddWorkoutOpen(false)} onSave={handleSaveWorkout} />
 
-      <GoalForm
-        open={addGoalOpen}
-        onClose={() => setAddGoalOpen(false)}
-        onSave={handleSaveGoal}
-      />
+      <GoalForm open={addGoalOpen} onClose={() => setAddGoalOpen(false)} onSave={handleSaveGoal} />
     </main>
-  );
+  )
 }
