@@ -1,72 +1,54 @@
-Input: Develop a React fitness tracking application that monitors workout routines, tracks  progress, and sets fitness goals. Include features for different exercise categories and  performance metrics.
+Input: Create a comprehensive e-commerce dashboard with order management, inventory tracking, customer analytics, and sales reports.
 
-Response: I'll create a comprehensive fitness tracking application with workout routine monitoring, progress tracking, and goal setting functionality.
+Response: I'll create a comprehensive e-commerce dashboard with order management, inventory tracking, customer analytics, and sales reports.
 <Thinking>
-For this fitness tracking application, I need to consider:
-1. Main components needed:
-   - Dashboard overview
-   - Workout logger/tracker
-   - Exercise library with categories
-   - Progress visualization
-   - Goal setting interface
+For this comprehensive e-commerce dashboard, I need to structure a complete application with multiple interconnected components:
 
-Data structure:
+Main Layout
 
-Workout data (date, exercises, sets, reps, weight)
-Goal data (target, deadline, current progress)
-Exercise categories and types
+Sidebar navigation
+Header with user profile and notifications
+Main content area
 
 
-UI elements:
+Dashboard Overview Page
 
-Charts for progress visualization
-Forms for adding workouts and goals
-Cards for displaying workout summaries
-Dashboard widgets for quick stats
-Navigation between different sections
-
-
-Key features:
-
-Add and track workouts
-Set and monitor fitness goals
-View progress over time with charts
-Categorize exercises
-Track performance metrics
+Sales overview cards
+Recent orders table
+Revenue charts
+Top selling products
 
 
-State management:
+Order Management
 
-Use React hooks for state
-Store workout data in localStorage for persistence
-
-
-Libraries:
-
-shadcn/ui for UI components
-Lucide React for icons
-Recharts for data visualization
+Orders table with filtering and pagination
+Order detail view
+Order status management
 
 
+Inventory Tracking
 
-This is a complex UI with more than 10 elements and multiple interactions between components.
+Product list with stock levels
+Low stock alerts
+Product category breakdown
+
+
+Customer Analytics
+
+Customer demographics charts
+Customer activity metrics
+Customer acquisition chart
+
+
+Sales Reports
+
+Revenue over time charts
+Sales by category
+Sales by region
+Export functionality
+
+
+
+I'll use shadcn/ui components for a consistent modern UI, Lucide icons for visuals, and implement mock data for demonstration. For charts, I'll use the recharts library which is compatible with shadcn/ui.
+The dashboard should be fully responsive and follow best accessibility practices with semantic HTML, proper ARIA attributes, and screen reader support.
 </Thinking>
-
-<ReactProject></ReactProject>
-
-I've created a comprehensive fitness tracking application with the following features:
-
-Dashboard with workout summary statistics and goal progress tracking
-Interactive charts showing weekly activity and exercise distribution
-Workout management with the ability to add, edit, and delete workouts
-Goal setting and tracking with visual progress indicators
-Exercise categorization (strength, cardio, flexibility, balance)
-Detailed workout logging with sets, reps, weight, duration, and distance
-BMI calculation in the user profile section
-Data persistence using localStorage
-Responsive design that works on mobile and desktop screens
-Progress tracking with visual indicators and percentage completion
-Deadline tracking for fitness goals
-Navigation between different app sections
-
-The application uses React hooks for state management, shadcn/ui components for the interface, and Recharts for data visualization. All data is stored locally on the user's device, allowing them to track their fitness progress without requiring a backend server.
