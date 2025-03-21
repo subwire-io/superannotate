@@ -1,17 +1,17 @@
 "use client"
 
+import { useState } from "react"
 import ImageGallery from "@/components/image-gallery"
 import { galleryData } from "@/lib/gallery-data"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
 export default function Home() {
   const [category, setCategory] = useState<"nature" | "cities" | "abstract">("nature")
 
   const categoryData = {
-    nature: galleryData.nature,
-    cities: galleryData.city,
-    abstract: galleryData.abstract,
+    nature: galleryData.nature || [],
+    cities: galleryData.city || [],
+    abstract: galleryData.abstract || [],
   }
 
   return (

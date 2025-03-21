@@ -21,10 +21,17 @@ interface ImageGalleryProps {
   className?: string
 }
 
-export default function ImageGallery({ images, className }: ImageGalleryProps) {
+export default function ImageGallery({ images = [], className }: ImageGalleryProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const galleryRef = useRef<HTMLDivElement>(null)
+
+  // Reset selected index if images change
+  useEffect(() => {
+    if (images.length > 0 && selectedImageIndex >= images.length) {
+      setSelectedImageIndex(0)
+    }
+  }, [images, selectedImageIndex])
 
   // Reset loading state when selected image changes
   useEffect(() => {
@@ -36,10 +43,12 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
   }
 
   const handlePrevious = useCallback(() => {
+    if (images.length === 0) return
     setSelectedImageIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1))
   }, [images.length])
 
   const handleNext = useCallback(() => {
+    if (images.length === 0) return
     setSelectedImageIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1))
   }, [images.length])
 
@@ -80,9 +89,8 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
     }
   }
 
-  const selectedImage = images[selectedImageIndex]
-
-  if (images.length === 0) {
+  // Check if images array is empty
+  if (!images || images.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed h-[200px]">
         <h3 className="mb-1 text-lg font-medium">No images to display</h3>
@@ -90,6 +98,10 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
       </div>
     )
   }
+
+  // Ensure selectedImageIndex is valid
+  const validIndex = Math.min(Math.max(0, selectedImageIndex), images.length - 1)
+  const selectedImage = images[validIndex]
 
   return (
     <div ref={galleryRef} className={cn("flex flex-col space-y-3", className)} onKeyDown={handleKeyDown} tabIndex={0}>
@@ -108,8 +120,8 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
         )}
 
         <Image
-          src={selectedImage.src || "/placeholder.svg"}
-          alt={selectedImage.alt}
+          src={selectedImage?.src || "/placeholder.svg"}
+          alt={selectedImage?.alt || "Gallery image"}
           fill
           priority
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -118,7 +130,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
         />
 
         {/* Caption (if any) */}
-        {selectedImage.caption && (
+        {selectedImage?.caption && (
           <div className="absolute bottom-0 left-0 right-0 bg-background/70 p-2 backdrop-blur-sm">
             <p className="text-sm text-foreground">{selectedImage.caption}</p>
           </div>
@@ -155,7 +167,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
       >
         {images.map((image, index) => (
           <button
-            key={image.id}
+            key={image.id || index}
             className={cn(
               "relative overflow-hidden rounded-md border transition-all",
               index === selectedImageIndex
