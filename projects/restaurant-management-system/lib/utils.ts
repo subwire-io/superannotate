@@ -89,3 +89,14 @@ export function getNextWeekDates(): Date[] {
   return dates
 }
 
+// New utility functions for our modifications - without JSX
+export function refreshData() {
+  // In a real app, this would fetch fresh data from the API
+  return new Promise((resolve) => setTimeout(resolve, 500))
+}
+
+export function exportData(format: "csv" | "pdf" | "excel" = "csv") {
+  // In a real app, this would generate and download the export file
+  return new Promise((resolve) => setTimeout(resolve, 1000))
+}
+

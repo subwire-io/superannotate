@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -12,23 +13,37 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Edit, Plus, Trash } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { Edit, Plus, Trash, Users } from "lucide-react"
 
 import { users } from "@/data/mock-data"
-import type { UserRole } from "@/types"
-import Image from "next/image"
+import type { User, UserRole } from "@/types"
 
 export default function StaffPage() {
   const [searchText, setSearchText] = useState<string>("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
+  const [staffList, setStaffList] = useState<User[]>(users)
+  const [deletedStaff, setDeletedStaff] = useState<User | null>(null)
+  const { toast } = useToast()
 
   // Filter staff based on role and search text
-  const filteredStaff = users.filter((user) => {
+  const filteredStaff = staffList.filter((user) => {
     const matchesRole = roleFilter === "all" || user.role === roleFilter
     const matchesSearch =
       searchText === "" ||
@@ -37,6 +52,42 @@ export default function StaffPage() {
 
     return matchesRole && matchesSearch
   })
+
+  // Function to handle staff deletion
+  const handleDeleteStaff = (staffId: string) => {
+    const staffToDelete = staffList.find((staff) => staff.id === staffId)
+    if (staffToDelete) {
+      setDeletedStaff(staffToDelete)
+      setStaffList(staffList.filter((staff) => staff.id !== staffId))
+
+      toast({
+        title: "Staff member deleted",
+        description: `${staffToDelete.name} has been removed`,
+        action: (
+          <Button
+            variant="outline"
+            onClick={handleUndoDelete}
+            className="transition-all hover:bg-primary hover:text-primary-foreground"
+          >
+            Undo
+          </Button>
+        ),
+      })
+    }
+  }
+
+  // Function to undo staff deletion
+  const handleUndoDelete = () => {
+    if (deletedStaff) {
+      setStaffList([...staffList, deletedStaff])
+      setDeletedStaff(null)
+
+      toast({
+        title: "Deletion undone",
+        description: `${deletedStaff.name} has been restored`,
+      })
+    }
+  }
 
   // Function to render role badge with appropriate color
   const renderRoleBadge = (role: UserRole) => {
@@ -64,7 +115,7 @@ export default function StaffPage() {
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="transition-all hover:shadow-md">
                 <Plus className="h-4 w-4 mr-2" /> Add Staff
               </Button>
             </DialogTrigger>
@@ -73,51 +124,74 @@ export default function StaffPage() {
                 <DialogTitle>Add New Staff Member</DialogTitle>
                 <DialogDescription>Enter the details for the new staff member</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input id="name" className="col-span-3" placeholder="Full name" />
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  const formData = new FormData(e.currentTarget)
+                  const newStaff: User = {
+                    id: (staffList.length + 1).toString(),
+                    name: formData.get("name") as string,
+                    email: formData.get("email") as string,
+                    role: formData.get("role") as UserRole,
+                    avatar: "/placeholder.svg?height=40&width=40",
+                  }
+                  setStaffList([...staffList, newStaff])
+                  toast({
+                    title: "Staff member added",
+                    description: `${newStaff.name} has been added to the staff list`,
+                  })
+                  ;(e.target as HTMLFormElement).reset()
+                }}
+              >
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input id="name" name="name" className="col-span-3" placeholder="Full name" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      className="col-span-3"
+                      placeholder="Email address"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="role" className="text-right">
+                      Role
+                    </Label>
+                    <Select name="role" defaultValue="waiter">
+                      <SelectTrigger id="role" className="col-span-3">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="waiter">Waiter</SelectItem>
+                        <SelectItem value="chef">Chef</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input id="email" type="email" className="col-span-3" placeholder="Email address" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">
-                    Role
-                  </Label>
-                  <Select>
-                    <SelectTrigger id="role" className="col-span-3">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="waiter">Waiter</SelectItem>
-                      <SelectItem value="chef">Chef</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="avatar" className="text-right">
-                    Avatar URL
-                  </Label>
-                  <Input id="avatar" className="col-span-3" placeholder="Avatar image URL" />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Add Staff Member</Button>
-              </DialogFooter>
+                <DialogFooter>
+                  <Button type="submit" className="transition-all hover:shadow-md">
+                    Add Staff Member
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      <Card>
+      <Card className="transition-all hover:shadow-md">
         <CardHeader className="flex flex-col sm:flex-row">
           <div>
             <CardTitle>Staff Directory</CardTitle>
@@ -147,87 +221,152 @@ export default function StaffPage() {
         <CardContent>
           <Tabs defaultValue="grid" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="grid">Grid View</TabsTrigger>
-              <TabsTrigger value="table">Table View</TabsTrigger>
+              <TabsTrigger value="grid" className="transition-all hover:bg-accent">
+                Grid View
+              </TabsTrigger>
+              <TabsTrigger value="table" className="transition-all hover:bg-accent">
+                Table View
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="grid" className="space-y-4">
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredStaff.map((staff) => (
-                  <Card key={staff.id}>
-                    <CardHeader className="text-center pb-2">
-                      <div className="flex justify-center mb-2">
-                        <div className="w-20 h-20 rounded-full overflow-hidden relative">
-                          <Image
-                            src={staff.avatar || "/placeholder.svg?height=80&width=80"}
-                            alt={staff.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      </div>
-                      <CardTitle className="text-lg">{staff.name}</CardTitle>
-                      <CardDescription>{staff.email}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-center">{renderRoleBadge(staff.role)}</CardContent>
-                    <CardFooter className="flex justify-center gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4 mr-2" /> Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Edit Staff Member</DialogTitle>
-                            <DialogDescription>Update staff member details</DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor={`edit-name-${staff.id}`} className="text-right">
-                                Name
-                              </Label>
-                              <Input id={`edit-name-${staff.id}`} className="col-span-3" defaultValue={staff.name} />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor={`edit-email-${staff.id}`} className="text-right">
-                                Email
-                              </Label>
-                              <Input
-                                id={`edit-email-${staff.id}`}
-                                type="email"
-                                className="col-span-3"
-                                defaultValue={staff.email}
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor={`edit-role-${staff.id}`} className="text-right">
-                                Role
-                              </Label>
-                              <Select defaultValue={staff.role}>
-                                <SelectTrigger id={`edit-role-${staff.id}`} className="col-span-3">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="admin">Admin</SelectItem>
-                                  <SelectItem value="manager">Manager</SelectItem>
-                                  <SelectItem value="waiter">Waiter</SelectItem>
-                                  <SelectItem value="chef">Chef</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+              {filteredStaff.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="rounded-full bg-muted p-3 mb-4">
+                    <Users className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold">No staff members found</h3>
+                  <p className="text-muted-foreground mt-1">
+                    Try adjusting your search or filters to find what you're looking for.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredStaff.map((staff) => (
+                    <Card key={staff.id} className="transition-all hover:shadow-md">
+                      <CardHeader className="text-center pb-2">
+                        <div className="flex justify-center mb-2">
+                          <div className="w-20 h-20 rounded-full overflow-hidden relative">
+                            <Image
+                              src={staff.avatar || "/placeholder.svg?height=80&width=80"}
+                              alt={staff.name}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
-                          <DialogFooter>
-                            <Button type="submit">Save Changes</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Button variant="destructive" size="sm">
-                        <Trash className="h-4 w-4 mr-2" /> Delete
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
+                        </div>
+                        <CardTitle className="text-lg">{staff.name}</CardTitle>
+                        <CardDescription>{staff.email}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="text-center">{renderRoleBadge(staff.role)}</CardContent>
+                      <CardFooter className="flex justify-center gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="transition-all hover:bg-accent">
+                              <Edit className="h-4 w-4 mr-2" /> Edit
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Staff Member</DialogTitle>
+                              <DialogDescription>Update staff member details</DialogDescription>
+                            </DialogHeader>
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault()
+                                const formData = new FormData(e.currentTarget)
+                                const updatedStaff = {
+                                  ...staff,
+                                  name: formData.get("edit-name") as string,
+                                  email: formData.get("edit-email") as string,
+                                  role: formData.get("edit-role") as UserRole,
+                                }
+                                setStaffList(staffList.map((s) => (s.id === staff.id ? updatedStaff : s)))
+                                toast({
+                                  title: "Staff member updated",
+                                  description: `${updatedStaff.name}'s information has been updated`,
+                                })
+                              }}
+                            >
+                              <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor={`edit-name-${staff.id}`} className="text-right">
+                                    Name
+                                  </Label>
+                                  <Input
+                                    id={`edit-name-${staff.id}`}
+                                    name="edit-name"
+                                    className="col-span-3"
+                                    defaultValue={staff.name}
+                                    required
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor={`edit-email-${staff.id}`} className="text-right">
+                                    Email
+                                  </Label>
+                                  <Input
+                                    id={`edit-email-${staff.id}`}
+                                    name="edit-email"
+                                    type="email"
+                                    className="col-span-3"
+                                    defaultValue={staff.email}
+                                    required
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor={`edit-role-${staff.id}`} className="text-right">
+                                    Role
+                                  </Label>
+                                  <Select name="edit-role" defaultValue={staff.role}>
+                                    <SelectTrigger id={`edit-role-${staff.id}`} className="col-span-3">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="admin">Admin</SelectItem>
+                                      <SelectItem value="manager">Manager</SelectItem>
+                                      <SelectItem value="waiter">Waiter</SelectItem>
+                                      <SelectItem value="chef">Chef</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button type="submit" className="transition-all hover:shadow-md">
+                                  Save Changes
+                                </Button>
+                              </DialogFooter>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="transition-all hover:bg-destructive/90">
+                              <Trash className="h-4 w-4 mr-2" /> Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove {staff.name} from the staff list. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="transition-all hover:bg-accent">Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteStaff(staff.id)}
+                                className="transition-all hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
             <TabsContent value="table" className="space-y-4">
               <div className="rounded-md border">
@@ -249,7 +388,7 @@ export default function StaffPage() {
                       </TableRow>
                     ) : (
                       filteredStaff.map((staff) => (
-                        <TableRow key={staff.id}>
+                        <TableRow key={staff.id} className="transition-colors hover:bg-muted/50">
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full overflow-hidden relative">
@@ -269,7 +408,7 @@ export default function StaffPage() {
                             <div className="flex justify-end gap-2">
                               <Dialog>
                                 <DialogTrigger asChild>
-                                  <Button variant="outline" size="sm">
+                                  <Button variant="outline" size="sm" className="transition-all hover:bg-accent">
                                     <Edit className="h-4 w-4 mr-2" /> Edit
                                   </Button>
                                 </DialogTrigger>
@@ -277,53 +416,104 @@ export default function StaffPage() {
                                   <DialogHeader>
                                     <DialogTitle>Edit Staff Member</DialogTitle>
                                   </DialogHeader>
-                                  <div className="grid gap-4 py-4">
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                      <Label htmlFor={`edit-name-table-${staff.id}`} className="text-right">
-                                        Name
-                                      </Label>
-                                      <Input
-                                        id={`edit-name-table-${staff.id}`}
-                                        className="col-span-3"
-                                        defaultValue={staff.name}
-                                      />
+                                  <form
+                                    onSubmit={(e) => {
+                                      e.preventDefault()
+                                      const formData = new FormData(e.currentTarget)
+                                      const updatedStaff = {
+                                        ...staff,
+                                        name: formData.get("edit-name-table") as string,
+                                        email: formData.get("edit-email-table") as string,
+                                        role: formData.get("edit-role-table") as UserRole,
+                                      }
+                                      setStaffList(staffList.map((s) => (s.id === staff.id ? updatedStaff : s)))
+                                      toast({
+                                        title: "Staff member updated",
+                                        description: `${updatedStaff.name}'s information has been updated`,
+                                      })
+                                    }}
+                                  >
+                                    <div className="grid gap-4 py-4">
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor={`edit-name-table-${staff.id}`} className="text-right">
+                                          Name
+                                        </Label>
+                                        <Input
+                                          id={`edit-name-table-${staff.id}`}
+                                          name="edit-name-table"
+                                          className="col-span-3"
+                                          defaultValue={staff.name}
+                                          required
+                                        />
+                                      </div>
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor={`edit-email-table-${staff.id}`} className="text-right">
+                                          Email
+                                        </Label>
+                                        <Input
+                                          id={`edit-email-table-${staff.id}`}
+                                          name="edit-email-table"
+                                          type="email"
+                                          className="col-span-3"
+                                          defaultValue={staff.email}
+                                          required
+                                        />
+                                      </div>
+                                      <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor={`edit-role-table-${staff.id}`} className="text-right">
+                                          Role
+                                        </Label>
+                                        <Select name="edit-role-table" defaultValue={staff.role}>
+                                          <SelectTrigger id={`edit-role-table-${staff.id}`} className="col-span-3">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="admin">Admin</SelectItem>
+                                            <SelectItem value="manager">Manager</SelectItem>
+                                            <SelectItem value="waiter">Waiter</SelectItem>
+                                            <SelectItem value="chef">Chef</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
                                     </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                      <Label htmlFor={`edit-email-table-${staff.id}`} className="text-right">
-                                        Email
-                                      </Label>
-                                      <Input
-                                        id={`edit-email-table-${staff.id}`}
-                                        type="email"
-                                        className="col-span-3"
-                                        defaultValue={staff.email}
-                                      />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                      <Label htmlFor={`edit-role-table-${staff.id}`} className="text-right">
-                                        Role
-                                      </Label>
-                                      <Select defaultValue={staff.role}>
-                                        <SelectTrigger id={`edit-role-table-${staff.id}`} className="col-span-3">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="admin">Admin</SelectItem>
-                                          <SelectItem value="manager">Manager</SelectItem>
-                                          <SelectItem value="waiter">Waiter</SelectItem>
-                                          <SelectItem value="chef">Chef</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  </div>
-                                  <DialogFooter>
-                                    <Button type="submit">Save Changes</Button>
-                                  </DialogFooter>
+                                    <DialogFooter>
+                                      <Button type="submit" className="transition-all hover:shadow-md">
+                                        Save Changes
+                                      </Button>
+                                    </DialogFooter>
+                                  </form>
                                 </DialogContent>
                               </Dialog>
-                              <Button variant="destructive" size="sm">
-                                <Trash className="h-4 w-4" />
-                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="transition-all hover:bg-destructive/90"
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will remove {staff.name} from the staff list. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="transition-all hover:bg-accent">
+                                      Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteStaff(staff.id)}
+                                      className="transition-all hover:bg-destructive/90"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </TableCell>
                         </TableRow>
