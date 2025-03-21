@@ -16,14 +16,23 @@ const categories = [
   { value: "opinion", label: "Opinion" },
 ]
 
-export function CategorySelector() {
+interface CategorySelectorProps {
+  value: string
+  onValueChange: (value: string) => void
+}
+
+export function CategorySelector({ value, onValueChange }: CategorySelectorProps) {
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState("")
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between sm:w-[200px]">
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between sm:w-[200px] transition-colors hover:bg-muted"
+        >
           {value ? categories.find((category) => category.value === value)?.label : "Select category..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -39,9 +48,10 @@ export function CategorySelector() {
                   key={category.value}
                   value={category.value}
                   onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue)
+                    onValueChange(currentValue === value ? "" : currentValue)
                     setOpen(false)
                   }}
+                  className="cursor-pointer"
                 >
                   <Check className={cn("mr-2 h-4 w-4", value === category.value ? "opacity-100" : "opacity-0")} />
                   {category.label}

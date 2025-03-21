@@ -2,24 +2,27 @@
 
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
-import CharacterCount from "@tiptap/extension-character-count"
 import { Bold, Italic, List, ListOrdered, Quote } from "lucide-react"
 
 import { Toggle } from "@/components/ui/toggle"
 
-export function PostEditor() {
+interface PostEditorProps {
+  value: string
+  onChange: (value: string) => void
+}
+
+export function PostEditor({ value, onChange }: PostEditorProps) {
   const editor = useEditor({
-    extensions: [StarterKit, CharacterCount],
-    content: `
-      <h2>Welcome to the Blog Editor</h2>
-      <p>This is a simple editor for your blog posts. You can format text, add headings, and more.</p>
-      <p>Start typing to create your content...</p>
-    `,
+    extensions: [StarterKit],
+    content: value,
     editorProps: {
       attributes: {
         class:
           "min-h-[500px] prose prose-stone dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-pre:rounded-md prose-pre:bg-muted prose-pre:p-4",
       },
+    },
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML())
     },
   })
 
@@ -35,6 +38,7 @@ export function PostEditor() {
           pressed={editor.isActive("bold")}
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
           aria-label="Bold"
+          className="hover:bg-muted data-[state=on]:bg-muted"
         >
           <Bold className="h-4 w-4" />
         </Toggle>
@@ -43,6 +47,7 @@ export function PostEditor() {
           pressed={editor.isActive("italic")}
           onPressedChange={() => editor.chain().focus().toggleItalic().run()}
           aria-label="Italic"
+          className="hover:bg-muted data-[state=on]:bg-muted"
         >
           <Italic className="h-4 w-4" />
         </Toggle>
@@ -51,6 +56,7 @@ export function PostEditor() {
           pressed={editor.isActive("bulletList")}
           onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
           aria-label="Bullet List"
+          className="hover:bg-muted data-[state=on]:bg-muted"
         >
           <List className="h-4 w-4" />
         </Toggle>
@@ -59,6 +65,7 @@ export function PostEditor() {
           pressed={editor.isActive("orderedList")}
           onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
           aria-label="Ordered List"
+          className="hover:bg-muted data-[state=on]:bg-muted"
         >
           <ListOrdered className="h-4 w-4" />
         </Toggle>
@@ -67,6 +74,7 @@ export function PostEditor() {
           pressed={editor.isActive("blockquote")}
           onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
           aria-label="Quote"
+          className="hover:bg-muted data-[state=on]:bg-muted"
         >
           <Quote className="h-4 w-4" />
         </Toggle>
