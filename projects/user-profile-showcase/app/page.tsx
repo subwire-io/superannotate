@@ -1,13 +1,7 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import UserProfileCard from "@/components/user-profile-card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
 
 export default function Home() {
-  const allUsers = [
+  const users = [
     {
       id: 1,
       name: "Olivia Martinez",
@@ -34,45 +28,12 @@ export default function Home() {
     },
   ]
 
-  const [users, setUsers] = useState(allUsers)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [hasSearched, setHasSearched] = useState(false)
-
-  useEffect(() => {
-    if (searchQuery) {
-      const filteredUsers = allUsers.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-      setUsers(filteredUsers)
-      setHasSearched(true)
-    } else {
-      setUsers(allUsers)
-      setHasSearched(false)
-    }
-  }, [searchQuery])
-
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8 text-center">
+        <header className="mb-12 text-center">
           <h1 className="text-3xl font-bold mb-2">User Profile Cards</h1>
-          <p className="text-muted-foreground mb-6">A collection of user profile cards with different data</p>
-
-          <div className="relative max-w-md mx-auto">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <Input
-              type="search"
-              placeholder="Search by name or job title..."
-              className="pl-10 focus-visible:ring-offset-2"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search users"
-            />
-          </div>
+          <p className="text-muted-foreground">A collection of user profile cards with different data</p>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -89,16 +50,7 @@ export default function Home() {
             ))
           ) : (
             <div className="col-span-full text-center py-12 border rounded-lg bg-muted/20">
-              {hasSearched ? (
-                <div className="space-y-2">
-                  <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
-                  <Button variant="outline" onClick={() => setSearchQuery("")} className="mt-2">
-                    Clear search
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No user profiles available</p>
-              )}
+              <p className="text-muted-foreground">No user profiles available</p>
             </div>
           )}
         </div>
