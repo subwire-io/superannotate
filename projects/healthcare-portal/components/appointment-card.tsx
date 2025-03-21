@@ -1,8 +1,12 @@
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, MapPin } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 interface AppointmentCardProps {
   doctor: string
@@ -23,16 +27,44 @@ export default function AppointmentCard({
   status = "confirmed",
   isUpcoming = false,
 }: AppointmentCardProps) {
+  const { toast } = useToast()
+  const [currentStatus, setCurrentStatus] = useState(status)
+
+  const handleReschedule = () => {
+    toast({
+      title: "Reschedule Requested",
+      description: `Your appointment with ${doctor} is being rescheduled. We'll contact you shortly.`,
+    })
+  }
+
+  const handleCancel = () => {
+    setCurrentStatus("cancelled")
+    toast({
+      title: "Appointment Cancelled",
+      description: `Your appointment with ${doctor} on ${date} has been cancelled.`,
+    })
+  }
+
   return (
-    <Card className={cn("border", isUpcoming && "border-primary/20 bg-primary/5")}>
+    <Card
+      className={cn(
+        "border",
+        isUpcoming && currentStatus === "confirmed" && "border-primary/20 bg-primary/5",
+        currentStatus === "cancelled" && "border-destructive/20 bg-destructive/5",
+      )}
+    >
       <CardContent className="p-4">
         <div className="flex justify-between">
           <div className="space-y-1">
             <h3 className="font-semibold">{doctor}</h3>
             <p className="text-sm text-muted-foreground">{specialty}</p>
           </div>
-          <Badge variant={status === "confirmed" ? "default" : status === "pending" ? "outline" : "destructive"}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+          <Badge
+            variant={
+              currentStatus === "confirmed" ? "default" : currentStatus === "pending" ? "outline" : "destructive"
+            }
+          >
+            {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
           </Badge>
         </div>
         <div className="mt-4 space-y-2">
@@ -49,12 +81,12 @@ export default function AppointmentCard({
             <span>{location}</span>
           </div>
         </div>
-        {isUpcoming && (
+        {isUpcoming && currentStatus === "confirmed" && (
           <div className="mt-4 flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1">
+            <Button size="sm" variant="outline" className="flex-1" onClick={handleReschedule}>
               Reschedule
             </Button>
-            <Button size="sm" variant="destructive" className="flex-1">
+            <Button size="sm" variant="destructive" className="flex-1" onClick={handleCancel}>
               Cancel
             </Button>
           </div>

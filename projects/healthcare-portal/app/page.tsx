@@ -1,15 +1,23 @@
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, Clock, FileText, MessageSquare, Pill } from "lucide-react"
 import Link from "next/link"
 import AppointmentCard from "@/components/appointment-card"
 import NotificationList from "@/components/notification-list"
-import HealthSummary from "@/components/health-summary"
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import { ScheduleAppointmentForm } from "@/components/schedule-appointment-form"
 
 export default function DashboardPage() {
+  const { toast } = useToast()
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false)
+
   return (
     <div className="flex flex-col">
+      <Toaster />
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:items-start sm:justify-between sm:pb-0 lg:px-8 lg:py-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold sm:text-2xl">Welcome, John</h1>
@@ -41,10 +49,13 @@ export default function DashboardPage() {
                 time="10:00 AM"
                 isUpcoming={true}
               />
-              <div className="mt-4">
-                <Link href="/appointments">
-                  <Button size="sm" variant="secondary" className="w-full">
-                    View All Appointments
+              <div className="mt-4 flex gap-2">
+                <Button size="sm" variant="secondary" className="flex-1" onClick={() => setIsScheduleModalOpen(true)}>
+                  Schedule New
+                </Button>
+                <Link href="/appointments" className="flex-1">
+                  <Button size="sm" variant="outline" className="w-full">
+                    View All
                   </Button>
                 </Link>
               </div>
@@ -63,7 +74,16 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">1 tablet daily</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Medication Reminder",
+                          description: "Reminder set for Lisinopril at 9:00 AM",
+                        })
+                      }}
+                    >
                       <Clock className="h-3 w-3 mr-1" />
                       9:00 AM
                     </Button>
@@ -75,7 +95,16 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">2 tablets daily</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Medication Reminder",
+                          description: "Reminder set for Metformin at 8:00 PM",
+                        })
+                      }}
+                    >
                       <Clock className="h-3 w-3 mr-1" />
                       8:00 PM
                     </Button>
@@ -108,86 +137,38 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-        <Tabs defaultValue="summary">
-          <TabsList>
-            <TabsTrigger value="summary">Health Summary</TabsTrigger>
-            <TabsTrigger value="vitals">Vitals</TabsTrigger>
-            <TabsTrigger value="records">Recent Records</TabsTrigger>
-          </TabsList>
-          <TabsContent value="summary" className="p-0 pt-4">
-            <HealthSummary />
-          </TabsContent>
-          <TabsContent value="vitals" className="p-0 pt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Vital Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="text-xs font-medium text-muted-foreground">Blood Pressure</div>
-                    <div className="text-2xl font-bold">120/80</div>
-                    <div className="text-xs text-muted-foreground">Last checked: June 1, 2024</div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="text-xs font-medium text-muted-foreground">Heart Rate</div>
-                    <div className="text-2xl font-bold">72 bpm</div>
-                    <div className="text-xs text-muted-foreground">Last checked: June 1, 2024</div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="text-xs font-medium text-muted-foreground">Weight</div>
-                    <div className="text-2xl font-bold">185 lbs</div>
-                    <div className="text-xs text-muted-foreground">Last checked: May 25, 2024</div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="text-xs font-medium text-muted-foreground">Blood Sugar</div>
-                    <div className="text-2xl font-bold">98 mg/dL</div>
-                    <div className="text-xs text-muted-foreground">Last checked: June 2, 2024</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="records" className="p-0 pt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Latest Medical Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">Annual Physical Exam</p>
-                      <p className="text-xs text-muted-foreground">May 15, 2024 - Dr. Robert Chen</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      View
-                    </Button>
-                  </div>
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">Blood Test Results</p>
-                      <p className="text-xs text-muted-foreground">May 10, 2024 - Lab Report</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      View
-                    </Button>
-                  </div>
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">Vaccination Record</p>
-                      <p className="text-xs text-muted-foreground">April 22, 2024 - Influenza</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      View
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+          <CardHeader>
+            <CardTitle>Health Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium text-muted-foreground">Blood Pressure</div>
+                <div className="text-2xl font-bold">120/80</div>
+                <div className="text-xs text-muted-foreground">Last checked: June 1, 2024</div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium text-muted-foreground">Heart Rate</div>
+                <div className="text-2xl font-bold">72 bpm</div>
+                <div className="text-xs text-muted-foreground">Last checked: June 1, 2024</div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium text-muted-foreground">Weight</div>
+                <div className="text-2xl font-bold">185 lbs</div>
+                <div className="text-xs text-muted-foreground">Last checked: May 25, 2024</div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="text-xs font-medium text-muted-foreground">Blood Sugar</div>
+                <div className="text-2xl font-bold">98 mg/dL</div>
+                <div className="text-xs text-muted-foreground">Last checked: June 2, 2024</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <ScheduleAppointmentForm open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen} />
     </div>
   )
 }

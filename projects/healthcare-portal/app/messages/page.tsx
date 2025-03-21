@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { PlaneIcon as PaperPlaneIcon, PaperclipIcon, User, Phone, Video, Search } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 
 interface Message {
   id: number
@@ -30,10 +32,10 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const { toast } = useToast()
   const [activeConversation, setActiveConversation] = useState<number>(1)
   const [newMessage, setNewMessage] = useState("")
-
-  const conversations: Conversation[] = [
+  const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: 1,
       doctor: {
@@ -136,20 +138,93 @@ export default function MessagesPage() {
       ],
       unread: 0,
     },
-  ]
+  ])
 
   const currentConversation = conversations.find((c) => c.id === activeConversation)
 
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return
 
-    // In a real app, this would send the message to an API
-    console.log("Message sent:", newMessage)
+    // Update the conversation with the new message
+    setConversations((prevConversations) =>
+      prevConversations.map((conv) => {
+        if (conv.id === activeConversation) {
+          return {
+            ...conv,
+            messages: [
+              ...conv.messages,
+              {
+                id: conv.messages.length + 1,
+                content: newMessage,
+                sender: "user",
+                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                read: true,
+              },
+            ],
+          }
+        }
+        return conv
+      }),
+    )
+
     setNewMessage("")
+
+    // Simulate doctor response after a delay
+    setTimeout(() => {
+      setConversations((prevConversations) =>
+        prevConversations.map((conv) => {
+          if (conv.id === activeConversation) {
+            return {
+              ...conv,
+              messages: [
+                ...conv.messages,
+                {
+                  id: conv.messages.length + 2,
+                  content: "I've received your message. I'll get back to you shortly with more information.",
+                  sender: "doctor",
+                  time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  read: false,
+                },
+              ],
+            }
+          }
+          return conv
+        }),
+      )
+    }, 2000)
+  }
+
+  const handleCall = () => {
+    toast({
+      title: "Starting Call",
+      description: `Initiating call with ${currentConversation?.doctor.name}...`,
+    })
+  }
+
+  const handleVideoCall = () => {
+    toast({
+      title: "Starting Video Call",
+      description: `Initiating video call with ${currentConversation?.doctor.name}...`,
+    })
+  }
+
+  const handleViewProfile = () => {
+    toast({
+      title: "Doctor Profile",
+      description: `Viewing profile for ${currentConversation?.doctor.name}`,
+    })
+  }
+
+  const handleAttachFile = () => {
+    toast({
+      title: "Attach File",
+      description: "File attachment dialog opened",
+    })
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
+      <Toaster />
       <div className="flex flex-1 overflow-hidden">
         {/* Conversation List */}
         <div className="w-80 border-r overflow-hidden flex flex-col">
@@ -166,7 +241,27 @@ export default function MessagesPage() {
                 className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-accent transition-colors ${
                   activeConversation === conversation.id ? "bg-accent" : ""
                 }`}
-                onClick={() => setActiveConversation(conversation.id)}
+                onClick={() => {
+                  setActiveConversation(conversation.id)
+                  // Mark messages as read when conversation is opened
+                  if (conversation.unread > 0) {
+                    setConversations((prevConversations) =>
+                      prevConversations.map((conv) => {
+                        if (conv.id === conversation.id) {
+                          return {
+                            ...conv,
+                            unread: 0,
+                            messages: conv.messages.map((msg) => ({
+                              ...msg,
+                              read: true,
+                            })),
+                          }
+                        }
+                        return conv
+                      }),
+                    )
+                  }
+                }}
               >
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={conversation.doctor.avatar} alt={conversation.doctor.name} />
@@ -218,13 +313,13 @@ export default function MessagesPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={handleCall}>
                   <Phone className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={handleVideoCall}>
                   <Video className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={handleViewProfile}>
                   <User className="h-4 w-4" />
                 </Button>
               </div>
@@ -261,7 +356,7 @@ export default function MessagesPage() {
             </ScrollArea>
             <div className="p-4 border-t">
               <div className="flex gap-2">
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={handleAttachFile}>
                   <PaperclipIcon className="h-4 w-4" />
                 </Button>
                 <Input

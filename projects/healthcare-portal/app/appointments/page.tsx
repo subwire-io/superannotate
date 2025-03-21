@@ -1,19 +1,27 @@
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PlusCircle } from "lucide-react"
 import AppointmentCard from "@/components/appointment-card"
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import { ScheduleAppointmentForm } from "@/components/schedule-appointment-form"
 
 export default function AppointmentsPage() {
+  const { toast } = useToast()
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false)
+
   return (
     <div className="flex flex-col">
+      <Toaster />
       <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 py-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-lg font-semibold md:text-2xl">Appointments</h1>
           <p className="text-sm text-muted-foreground">Schedule, view, and manage your healthcare appointments</p>
         </div>
-        <Button className="ml-auto gap-1">
+        <Button className="ml-auto gap-1" onClick={() => setIsScheduleModalOpen(true)}>
           <PlusCircle className="h-4 w-4" />
           <span>New Appointment</span>
         </Button>
@@ -23,7 +31,6 @@ export default function AppointmentsPage() {
           <TabsList>
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
             <TabsTrigger value="past">Past</TabsTrigger>
-            <TabsTrigger value="calendar">Calendar</TabsTrigger>
           </TabsList>
           <TabsContent value="upcoming" className="p-0 pt-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -78,22 +85,10 @@ export default function AppointmentsPage() {
               />
             </div>
           </TabsContent>
-          <TabsContent value="calendar" className="p-0 pt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Appointment Calendar</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Calendar mode="single" className="rounded-md border" />
-                <div className="mt-6">
-                  <h3 className="font-medium mb-3">Upcoming on Selected Date</h3>
-                  <div className="text-sm text-muted-foreground">Select a date with appointments to view details</div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
+
+      <ScheduleAppointmentForm open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen} />
     </div>
   )
 }
