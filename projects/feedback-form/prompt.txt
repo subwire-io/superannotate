@@ -1,0 +1,93 @@
+Input: Design a feedback form with a 5-star rating system and comment field.
+
+Response: <thinking>
+I'll create a feedback form with a 5-star rating system and comment field, keeping it under 5 UI elements.
+
+Thought for 5 secondsLet me analyze the requirements and plan the implementation:
+
+1. The user wants a feedback form with:
+
+1. 5-star rating system
+2. Comment field
+3. Submit button (implied)
+
+
+
+2. According to the UI Element Definition document , I need to keep this under 5 UI elements. Let's count:
+
+1. Rating system (1 element)
+2. Comment field (1 element)
+3. Submit button (1 element)
+4. Form container (not counted separately as it's just a wrapper)
+5. Success message after submission (1 element)
+
+
+
+
+
+That's 4 elements, which is within the limit of 5.
+
+3. I'll need to create:
+
+1. A form component with the rating and comment field
+2. A server action to handle form submission
+3. State management for the rating selection and form submission
+
+
+
+4. For styling, I'll use shadcn/ui components and Tailwind CSS.
+5. I'll implement proper form validation and accessibility features.
+</thinking>
+
+I'll create a feedback form with a 5-star rating system and comment field, keeping it under 5 UI elements.
+
+Thought for 5 secondsLet me analyze the requirements and plan the implementation:
+
+1. The user wants a feedback form with:
+
+1. 5-star rating system
+2. Comment field
+3. Submit button (implied)
+
+
+
+2. According to the UI Element Definition document , I need to keep this under 5 UI elements. Let's count:
+
+1. Rating system (1 element)
+2. Comment field (1 element)
+3. Submit button (1 element)
+4. Form container (not counted separately as it's just a wrapper)
+5. Success message after submission (1 element)
+
+
+
+
+
+That's 4 elements, which is within the limit of 5.
+
+3. I'll need to create:
+
+1. A form component with the rating and comment field
+2. A server action to handle form submission
+3. State management for the rating selection and form submission
+
+
+
+4. For styling, I'll use shadcn/ui components and Tailwind CSS.
+5. I'll implement proper form validation and accessibility features.
+
+
+```typescriptreact project="feedback-form"
+...
+```
+
+I've created a complete feedback form with the following features:
+
+1. A 5-star rating system that's fully interactive and accessible
+2. A comment field for additional feedback
+3. Form validation that requires a rating before submission
+4. A success message that appears after successful submission
+5. A responsive design that works well on all screen sizes
+
+
+The implementation follows best practices for accessibility, including proper ARIA attributes and keyboard navigation for the star rating component. The form also includes appropriate loading states during submission and error handling.
