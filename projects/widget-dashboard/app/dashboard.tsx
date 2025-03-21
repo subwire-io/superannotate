@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Bell,
   Calendar,
@@ -44,16 +44,6 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { EmptyState } from "@/components/empty-state"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 
 // Import our custom dialogs
 import { NewMessageDialog } from "@/components/new-message-dialog"
@@ -62,6 +52,10 @@ import { AllMessagesDialog } from "@/components/all-messages-dialog"
 import { ProfileDialog } from "@/components/profile-dialog"
 import { SettingsDialog } from "@/components/settings-dialog"
 import { DocumentDialog } from "@/components/document-dialog"
+import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog"
+import { KeyboardAccessibleActions } from "@/components/keyboard-accessible-actions"
+import { KeyboardAccessibleMessageList } from "@/components/keyboard-accessible-message-list"
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
 
 // Type definitions
 type WeatherData = {
@@ -288,7 +282,7 @@ const userSettings: UserSettings = {
   },
   appearance: {
     theme: "system",
-    density: "comfortable",
+    density: "comfortable" | "spacious",
     animations: true,
   },
   privacy: {
@@ -667,6 +661,48 @@ export default function Dashboard() {
     setNotificationsOpen(false)
   }
 
+  // Add keyboard shortcut event listeners
+  // Add this inside the Dashboard component, right after the state declarations
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if Alt key is pressed and not inside an input or textarea
+      if (e.altKey && !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)) {
+        switch (e.key.toLowerCase()) {
+          case "n":
+            e.preventDefault()
+            setNewMessageOpen(true)
+            break
+          case "d":
+            e.preventDefault()
+            setNewDocumentOpen(true)
+            break
+          case "s":
+            e.preventDefault()
+            if (!isLoading.schedule) handleScheduleMeeting()
+            break
+          case "t":
+            e.preventDefault()
+            if (!isLoading.team) handleTeamAction()
+            break
+          case "p":
+            e.preventDefault()
+            setProfileOpen(true)
+            break
+          case "k":
+            e.preventDefault()
+            // This would open the keyboard shortcuts dialog
+            // We'd need a ref to trigger it programmatically
+            break
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isLoading, handleScheduleMeeting, handleTeamAction])
+
   return (
     <div className={`min-h-screen bg-background ${darkMode ? "dark" : ""}`}>
       <div className="flex flex-col">
@@ -677,6 +713,7 @@ export default function Dashboard() {
               <span>Dashboard</span>
             </div>
             <div className="ml-auto flex items-center gap-4">
+              <KeyboardShortcutsDialog />
               <div className="flex items-center gap-2">
                 <Switch
                   id="dark-mode"
@@ -869,50 +906,46 @@ export default function Dashboard() {
                 <CardDescription>Commonly used functions and tools</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
-                    onClick={() => setNewDocumentOpen(true)}
-                  >
-                    <FileText className="h-6 w-6 text-primary" aria-hidden="true" />
-                    <span className="text-xs font-medium">New Document</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
-                    onClick={() => setNewMessageOpen(true)}
-                  >
-                    <MessageSquare className="h-6 w-6 text-primary" aria-hidden="true" />
-                    <span className="text-xs font-medium">Send Message</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
-                    onClick={handleScheduleMeeting}
-                    disabled={isLoading.schedule}
-                  >
-                    {isLoading.schedule ? (
-                      <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Calendar className="h-6 w-6 text-primary" aria-hidden="true" />
-                    )}
-                    <span className="text-xs font-medium">{isLoading.schedule ? "Scheduling..." : "Schedule"}</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
-                    onClick={handleTeamAction}
-                    disabled={isLoading.team}
-                  >
-                    {isLoading.team ? (
-                      <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Users className="h-6 w-6 text-primary" aria-hidden="true" />
-                    )}
-                    <span className="text-xs font-medium">{isLoading.team ? "Processing..." : "Team"}</span>
-                  </Button>
-                </div>
+                <KeyboardAccessibleActions
+                  actions={[
+                    {
+                      id: "new-document",
+                      label: "New Document",
+                      icon: <FileText className="h-6 w-6 text-primary" aria-hidden="true" />,
+                      onClick: () => setNewDocumentOpen(true),
+                      disabled: false,
+                    },
+                    {
+                      id: "send-message",
+                      label: "Send Message",
+                      icon: <MessageSquare className="h-6 w-6 text-primary" aria-hidden="true" />,
+                      onClick: () => setNewMessageOpen(true),
+                      disabled: false,
+                    },
+                    {
+                      id: "schedule",
+                      label: isLoading.schedule ? "Scheduling..." : "Schedule",
+                      icon: isLoading.schedule ? (
+                        <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Calendar className="h-6 w-6 text-primary" aria-hidden="true" />
+                      ),
+                      onClick: handleScheduleMeeting,
+                      disabled: isLoading.schedule,
+                    },
+                    {
+                      id: "team",
+                      label: isLoading.team ? "Processing..." : "Team",
+                      icon: isLoading.team ? (
+                        <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Users className="h-6 w-6 text-primary" aria-hidden="true" />
+                      ),
+                      onClick: handleTeamAction,
+                      disabled: isLoading.team,
+                    },
+                  ]}
+                />
               </CardContent>
             </Card>
 
@@ -924,47 +957,17 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {messages.length > 0 ? (
-                  <div className="space-y-0 divide-y" aria-label="Message list">
-                    {messages.slice(0, 3).map((message, i) => (
-                      <div
-                        key={message.id}
-                        className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors duration-200 group"
-                      >
-                        <Avatar>
-                          {message.sender.avatar ? (
-                            <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
-                          ) : (
-                            <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${i + 1}`} alt="Avatar" />
-                          )}
-                          <AvatarFallback>{message.sender.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center">
-                            <p className="text-sm font-medium leading-none">{message.sender.name}</p>
-                            {!message.read && (
-                              <span
-                                className="ml-2 h-2 w-2 rounded-full bg-blue-500"
-                                aria-label="Unread message"
-                              ></span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground truncate max-w-[15rem]">{message.content}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs text-muted-foreground whitespace-nowrap">{message.timestamp}</div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95"
-                            onClick={() => handleDeleteRequest("message", message.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            <span className="sr-only">Delete message</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <KeyboardAccessibleMessageList
+                    messages={messages}
+                    onDelete={(id) => handleDeleteRequest("message", id)}
+                    onView={(id) => {
+                      // View message functionality
+                      const message = messages.find((msg) => msg.id === id)
+                      if (message && !message.read) {
+                        setMessages(messages.map((msg) => (msg.id === id ? { ...msg, read: true } : msg)))
+                      }
+                    }}
+                  />
                 ) : (
                   <EmptyState
                     icon={Mail}
@@ -1170,26 +1173,16 @@ export default function Dashboard() {
         onCreateDocument={handleCreateDocument}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will delete the selected item. You can undo this action afterward if needed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="transition-colors hover:bg-muted active:scale-95">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700 transition-colors active:scale-95"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete item"
+        description="This action can be undone from the notification that appears."
+        itemName={
+          itemToDelete?.type === "document" ? documents.find((doc) => doc.id === itemToDelete.id)?.title : undefined
+        }
+      />
 
       {/* Notifications */}
       <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
