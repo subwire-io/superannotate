@@ -75,3 +75,18 @@
   }
 }
 
+/* Enhanced transitions for interactive elements */
+@layer components {
+  .btn-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .input-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .card-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+}
+

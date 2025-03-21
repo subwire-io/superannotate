@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,6 +17,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -23,8 +36,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { Search, MapPin, Briefcase, Calendar, BookmarkPlus, Filter, X, BookmarkCheck } from "lucide-react"
+import { Search, MapPin, Briefcase, Calendar, BookmarkPlus, Filter, X, BookmarkCheck, Loader2 } from "lucide-react"
 import { ApplicationForm } from "./application-form"
+import { useToast } from "@/components/ui/use-toast"
 
 // Mock data for jobs
 const jobsData = [
@@ -131,7 +145,20 @@ export default function JobBoard() {
   const [filteredJobs, setFilteredJobs] = useState(jobsData)
   const [currentPage, setCurrentPage] = useState(1)
   const [savedJobs, setSavedJobs] = useState<number[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
   const jobsPerPage = 4
+
+  // Handle search form submission
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    // Simulate loading
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+  }
 
   // Filter jobs based on search query and filters
   useEffect(() => {
@@ -165,18 +192,97 @@ export default function JobBoard() {
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage)
 
   const clearFilters = () => {
+    const hadFilters = searchQuery || selectedLocation || selectedJobType
+
     setSearchQuery("")
     setSelectedLocation("")
     setSelectedJobType("")
+
+    if (hadFilters) {
+      toast({
+        title: "Filters Cleared",
+        description: "All search filters have been cleared.",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearchQuery(searchQuery)
+              setSelectedLocation(selectedLocation)
+              setSelectedJobType(selectedJobType)
+            }}
+          >
+            Undo
+          </Button>
+        ),
+      })
+    }
   }
 
   const toggleSaveJob = (jobId: number) => {
-    setSavedJobs((prev) => {
-      if (prev.includes(jobId)) {
-        return prev.filter((id) => id !== jobId)
-      } else {
-        return [...prev, jobId]
-      }
+    if (savedJobs.includes(jobId)) {
+      // Job is already saved, so we're removing it
+      const job = jobsData.find((j) => j.id === jobId)
+      const jobTitle = job ? job.title : "this job"
+
+      // Store previous state for undo functionality
+      const previousSavedJobs = [...savedJobs]
+
+      // Update state
+      setSavedJobs((prev) => prev.filter((id) => id !== jobId))
+
+      // Show toast with undo option
+      toast({
+        title: "Job Removed",
+        description: `${jobTitle} has been removed from your saved jobs.`,
+        action: (
+          <Button variant="outline" size="sm" onClick={() => setSavedJobs(previousSavedJobs)}>
+            Undo
+          </Button>
+        ),
+      })
+    } else {
+      // Job is not saved, so we're adding it
+      setSavedJobs((prev) => [...prev, jobId])
+
+      const job = jobsData.find((j) => j.id === jobId)
+      const jobTitle = job ? job.title : "Job"
+
+      toast({
+        title: "Job Saved",
+        description: `${jobTitle} has been added to your saved jobs.`,
+      })
+    }
+  }
+
+  const removeFilter = (type: "search" | "location" | "jobType") => {
+    // Store previous values for undo functionality
+    const prevSearch = searchQuery
+    const prevLocation = selectedLocation
+    const prevJobType = selectedJobType
+
+    // Update state based on filter type
+    if (type === "search") setSearchQuery("")
+    if (type === "location") setSelectedLocation("")
+    if (type === "jobType") setSelectedJobType("")
+
+    // Show toast with undo option
+    toast({
+      title: "Filter Removed",
+      description: `The ${type} filter has been removed.`,
+      action: (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (type === "search") setSearchQuery(prevSearch)
+            if (type === "location") setSelectedLocation(prevLocation)
+            if (type === "jobType") setSelectedJobType(prevJobType)
+          }}
+        >
+          Undo
+        </Button>
+      ),
     })
   }
 
@@ -188,12 +294,12 @@ export default function JobBoard() {
       </header>
 
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-4 mb-4">
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search for jobs..."
-              className="pl-10"
+              className="pl-10 transition-all hover:border-primary focus:border-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Search for jobs"
@@ -201,33 +307,63 @@ export default function JobBoard() {
           </div>
 
           {/* Only show one clear button based on screen size */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={clearFilters}
-            disabled={!searchQuery && !selectedLocation && !selectedJobType}
-            aria-label="Clear all filters"
-            title="Clear all filters"
-            className="md:hidden" // Only show on mobile
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={!searchQuery && !selectedLocation && !selectedJobType}
+                aria-label="Clear all filters"
+                title="Clear all filters"
+                className="md:hidden transition-all hover:bg-secondary" // Only show on mobile
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear All Filters?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove all your current search filters and show all available jobs.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={clearFilters}>Clear Filters</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            disabled={!searchQuery && !selectedLocation && !selectedJobType}
-            className="hidden md:flex" // Only show on desktop
-          >
-            <X className="mr-2 h-4 w-4" />
-            Clear Filters
-          </Button>
-        </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={!searchQuery && !selectedLocation && !selectedJobType}
+                className="hidden md:flex transition-all hover:bg-secondary" // Only show on desktop
+              >
+                <X className="mr-2 h-4 w-4" />
+                Clear Filters
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear All Filters?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove all your current search filters and show all available jobs.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={clearFilters}>Clear Filters</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </form>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Select value={selectedJobType} onValueChange={setSelectedJobType}>
-              <SelectTrigger>
+              <SelectTrigger className="transition-all hover:border-primary focus:border-primary">
                 <div className="flex items-center">
                   <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Job Type" />
@@ -246,7 +382,7 @@ export default function JobBoard() {
 
           <div>
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger>
+              <SelectTrigger className="transition-all hover:border-primary focus:border-primary">
                 <div className="flex items-center">
                   <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Location" />
@@ -267,33 +403,82 @@ export default function JobBoard() {
         {(searchQuery || selectedLocation || selectedJobType) && (
           <div className="flex flex-wrap gap-2 mt-4">
             {searchQuery && (
-              <Badge variant="outline" className="flex items-center gap-1">
+              <Badge variant="outline" className="flex items-center gap-1 group">
                 Search: {searchQuery}
-                <button onClick={() => setSearchQuery("")} aria-label={`Remove search for ${searchQuery}`}>
-                  <X className="h-3 w-3" />
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      className="group-hover:text-primary transition-colors"
+                      aria-label={`Remove search for ${searchQuery}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Search Filter?</AlertDialogTitle>
+                      <AlertDialogDescription>This will clear your search for "{searchQuery}".</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeFilter("search")}>Remove</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </Badge>
             )}
             {selectedJobType && selectedJobType !== "all" && (
-              <Badge variant="outline" className="flex items-center gap-1">
+              <Badge variant="outline" className="flex items-center gap-1 group">
                 Type: {selectedJobType}
-                <button
-                  onClick={() => setSelectedJobType("")}
-                  aria-label={`Remove job type filter for ${selectedJobType}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      className="group-hover:text-primary transition-colors"
+                      aria-label={`Remove job type filter for ${selectedJobType}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Job Type Filter?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will clear your filter for {selectedJobType} jobs.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeFilter("jobType")}>Remove</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </Badge>
             )}
             {selectedLocation && selectedLocation !== "all" && (
-              <Badge variant="outline" className="flex items-center gap-1">
+              <Badge variant="outline" className="flex items-center gap-1 group">
                 Location: {selectedLocation}
-                <button
-                  onClick={() => setSelectedLocation("")}
-                  aria-label={`Remove location filter for ${selectedLocation}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      className="group-hover:text-primary transition-colors"
+                      aria-label={`Remove location filter for ${selectedLocation}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Location Filter?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will clear your filter for jobs in {selectedLocation}.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeFilter("location")}>Remove</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </Badge>
             )}
           </div>
@@ -314,7 +499,12 @@ export default function JobBoard() {
           )}
         </div>
 
-        {filteredJobs.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="sr-only">Loading jobs...</span>
+          </div>
+        ) : filteredJobs.length === 0 ? (
           <div className="text-center py-12 border rounded-lg">
             <Filter className="mx-auto h-12 w-12 text-muted-foreground mb-4" aria-hidden="true" />
             <h2 className="text-xl font-medium">No matching jobs found</h2>
@@ -324,32 +514,64 @@ export default function JobBoard() {
         ) : (
           <div className="grid gap-6" role="list" aria-label="Job listings">
             {currentJobs.map((job) => (
-              <Card key={job.id} role="listitem" aria-labelledby={`job-title-${job.id}`}>
+              <Card
+                key={job.id}
+                role="listitem"
+                aria-labelledby={`job-title-${job.id}`}
+                className="transition-all duration-200 hover:shadow-md hover:border-primary/20 group"
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle id={`job-title-${job.id}`} className="text-xl mb-1">
+                      <CardTitle
+                        id={`job-title-${job.id}`}
+                        className="text-xl mb-1 group-hover:text-primary transition-colors"
+                      >
                         {job.title}
                       </CardTitle>
                       <CardDescription className="text-base">{job.company}</CardDescription>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleSaveJob(job.id)}
-                      aria-label={
-                        savedJobs.includes(job.id)
-                          ? `Remove ${job.title} job from bookmarks`
-                          : `Save ${job.title} job to bookmarks`
-                      }
-                      aria-pressed={savedJobs.includes(job.id)}
-                    >
-                      {savedJobs.includes(job.id) ? (
-                        <BookmarkCheck className="h-5 w-5 text-primary" />
-                      ) : (
-                        <BookmarkPlus className="h-5 w-5" />
-                      )}
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="transition-all hover:bg-secondary"
+                          aria-label={
+                            savedJobs.includes(job.id)
+                              ? `Remove ${job.title} job from bookmarks`
+                              : `Save ${job.title} job to bookmarks`
+                          }
+                          aria-pressed={savedJobs.includes(job.id)}
+                        >
+                          {savedJobs.includes(job.id) ? (
+                            <BookmarkCheck className="h-5 w-5 text-primary" />
+                          ) : (
+                            <BookmarkPlus className="h-5 w-5 group-hover:text-primary transition-colors" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {savedJobs.includes(job.id)
+                              ? `Remove ${job.title} from saved jobs?`
+                              : `Save ${job.title} to your list?`}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {savedJobs.includes(job.id)
+                              ? "This job will be removed from your saved jobs list."
+                              : "This job will be added to your saved jobs list for easy access later."}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => toggleSaveJob(job.id)}>
+                            {savedJobs.includes(job.id) ? "Remove" : "Save"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -370,7 +592,11 @@ export default function JobBoard() {
                   <p className="mb-3 text-muted-foreground">{job.description}</p>
                   <div className="flex flex-wrap gap-2 mt-4">
                     {job.skills.map((skill) => (
-                      <Badge key={skill} variant="outline">
+                      <Badge
+                        key={skill}
+                        variant="outline"
+                        className="transition-colors hover:bg-secondary hover:text-secondary-foreground"
+                      >
                         {skill}
                       </Badge>
                     ))}
@@ -380,7 +606,7 @@ export default function JobBoard() {
                   <p className="font-medium">{job.salary}</p>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button>Apply Now</Button>
+                      <Button className="transition-all hover:bg-primary/90 active:bg-primary/80">Apply Now</Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[500px]">
                       <DialogHeader>
@@ -406,7 +632,7 @@ export default function JobBoard() {
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   aria-disabled={currentPage === 1}
                   tabIndex={currentPage === 1 ? -1 : 0}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  className={`${currentPage === 1 ? "pointer-events-none opacity-50" : ""} transition-colors hover:text-primary hover:bg-secondary/50`}
                   aria-label="Go to previous page"
                 />
               </PaginationItem>
@@ -428,6 +654,7 @@ export default function JobBoard() {
                         isActive={isCurrentPage}
                         aria-current={isCurrentPage ? "page" : undefined}
                         aria-label={`Page ${pageNumber}`}
+                        className="transition-colors hover:text-primary hover:bg-secondary/50"
                       >
                         {pageNumber}
                       </PaginationLink>
@@ -455,7 +682,7 @@ export default function JobBoard() {
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   aria-disabled={currentPage === totalPages}
                   tabIndex={currentPage === totalPages ? -1 : 0}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : ""} transition-colors hover:text-primary hover:bg-secondary/50`}
                   aria-label="Go to next page"
                 />
               </PaginationItem>
