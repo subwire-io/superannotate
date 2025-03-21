@@ -1,0 +1,49 @@
+Input: Design a multi-step checkout process with shipping information, payment details, and order review steps.
+
+Response: I'll create a multi-step checkout process with shipping information, payment details, and order review steps.
+
+<Thinking>
+For this multi-step checkout process, I need to create a user interface that guides users through completing their purchase. This is a medium complexity task that requires multiple components and state management.
+
+Key components needed:
+1. A step indicator showing progress (shipping → payment → review)
+2. Form components for each step (shipping address, payment details, order summary)
+3. Navigation controls to move between steps
+4. State management to track the current step and store form data
+5. Order summary component that shows the items being purchased
+
+I'll use the following approach:
+- Create a main checkout component that manages the overall state and step transitions
+- Use shadcn/ui components like Card, Form elements, and Buttons
+- Implement responsive design with Tailwind CSS
+- Add proper loading states and validation
+- Ensure accessibility with ARIA attributes and semantic HTML
+
+State management:
+- Track current active step
+- Store form data for each step
+- Validation status for each step
+
+I'll structure the code into the following files:
+- checkout.tsx (main component)
+- components/checkout/checkout-steps.tsx (step indicator)
+- components/checkout/shipping-form.tsx (shipping info form)
+- components/checkout/payment-form.tsx (payment details form)
+- components/checkout/order-summary.tsx (order review component)
+</Thinking>
+
+I've created a comprehensive multi-step checkout process with shipping information, payment details, and order review steps. This implementation provides a complete user flow for completing a purchase.
+
+The checkout process includes:
+
+1. A step indicator showing the user's progress through the checkout flow
+2. Shipping information form with address fields and country selection
+3. Payment details form with credit card information fields
+4. Order review page showing order items, shipping information, and payment method
+5. Navigation controls to move between steps (Previous/Next buttons)
+6. Form state management to maintain user inputs across steps
+7. Responsive design that works well on all screen sizes
+8. Visual feedback showing the current active step
+9. Order summary with itemized list, quantities, and price calculations
+
+The implementation uses modern React patterns with hooks for state management and follows best practices for form handling. The UI is built with shadcn/ui components and Tailwind CSS for styling, creating a clean and professional checkout experience.
