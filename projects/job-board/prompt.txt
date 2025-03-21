@@ -1,0 +1,81 @@
+Input: Design a job board with search functionality, filters for job type and location, and job card listings.
+
+Response: <Thinking>
+This is a medium complexity project requiring me to create a job board interface with several features:
+
+Search functionality for jobs
+Filters for job type and location
+Job card listings
+
+I'll design a responsive job board UI using Next.js, React, Tailwind CSS, and shadcn/ui components.
+Component Structure:
+
+Main JobBoard component
+SearchBar component for job search
+FilterSection for job type and location filters
+JobList to display job cards
+JobCard to display individual job listings
+
+UI Elements (5-10 for medium complexity):
+
+Search input
+Job type filter (dropdown)
+Location filter (dropdown)
+Job cards (displaying title, company, location, etc.)
+Clear filters button
+Pagination controls
+Sort options
+Save/bookmark job button
+
+Data Structure:
+I'll use a mock data structure for jobs with fields like:
+
+id
+title
+company
+location
+description
+jobType (full-time, part-time, contract, etc.)
+salary
+postedDate
+skills/requirements
+
+State Management:
+
+Search query state
+Filter states (job type, location)
+Loading state for job results
+Pagination state
+
+Functionality:
+
+Search by job title/keyword
+Filter by job type (full-time, part-time, contract)
+Filter by location
+Clear all filters option
+Responsive design for mobile/tablet/desktop
+
+This seems like a complete job board interface that fits the medium complexity requirements.
+</Thinking>
+
+I've created a comprehensive job board interface with search functionality, filters, and job card listings. Here's what's included:
+
+Job search functionality with real-time filtering
+Job type filter (Full-time, Part-time, Contract)
+Location filter with auto-populated options
+Interactive job cards with detailed information
+Active filter indicators with easy removal
+Responsive pagination system
+Empty state handling when no jobs match filters
+Bookmark functionality for saving interesting jobs
+
+The interface is fully responsive and designed with accessibility in mind, including proper ARIA attributes, semantic HTML, and keyboard navigation support. The job board features a clean, modern design using shadcn/ui components and Tailwind CSS for styling.
+The implementation includes:
+
+Mock job data with realistic fields (title, company, location, etc.)
+State management for search queries and filters
+Real-time filtering based on user input
+Pagination to handle large numbers of job listings
+Clear visual feedback when filters are applied
+
+This job board provides a solid foundation that could be extended with additional features like saved job collections, application tracking, or integration with a real job API.
