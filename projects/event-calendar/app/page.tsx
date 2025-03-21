@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react"
 import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isSameDay } from "date-fns"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import type { Event } from "@/types/event"
+import type { Event, EventCategory } from "@/types/event"
 import { CalendarHeader } from "@/components/calendar-header"
 import { CalendarDay } from "@/components/calendar-day"
 import { CategoryLegend } from "@/components/category-legend"
 import { AddEventForm } from "@/components/add-event-form"
 import { Toaster } from "@/components/ui/toaster"
-import { generateId, filterEventsByQuery } from "@/lib/utils"
+import { generateId } from "@/lib/utils"
+import { CalendarX } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 // Sample events with current month dates
 const getCurrentMonthEvents = (): Event[] => {
@@ -53,17 +55,32 @@ export default function EventCalendarPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategories, setSelectedCategories] = useState<EventCategory[]>([])
   const [deletedEvents, setDeletedEvents] = useState<Event[]>([])
 
-  // Filter events when search query changes
+  // Filter events when category filter changes
   useEffect(() => {
-    setFilteredEvents(filterEventsByQuery(events, searchQuery))
-  }, [events, searchQuery])
+    if (selectedCategories.length === 0) {
+      setFilteredEvents(events)
+    } else {
+      setFilteredEvents(events.filter((event) => selectedCategories.includes(event.category)))
+    }
+  }, [events, selectedCategories])
 
   // Calendar navigation
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+
+  // Category filter handlers
+  const handleCategoryToggle = (category: EventCategory) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
+    )
+  }
+
+  const handleClearFilters = () => {
+    setSelectedCategories([])
+  }
 
   // Event handlers
   const handleAddEvent = (newEventData: Omit<Event, "id">) => {
@@ -152,7 +169,7 @@ export default function EventCalendarPage() {
   }
 
   return (
-    <div className="container py-10">
+    <div className="container py-10 px-4 sm:px-6">
       <Card className="w-full max-w-5xl mx-auto">
         <CardHeader>
           <CalendarHeader
@@ -163,16 +180,26 @@ export default function EventCalendarPage() {
               setEditingEvent(null)
               setIsModalOpen(true)
             }}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            selectedCategories={selectedCategories}
+            onCategoryToggle={handleCategoryToggle}
+            onClearFilters={handleClearFilters}
           />
         </CardHeader>
         <CardContent>
           {renderDays()}
 
-          {/* No events message */}
-          {!hasEventsInMonth && searchQuery && (
-            <div className="text-center py-4 text-muted-foreground">No events found matching "{searchQuery}"</div>
+          {/* No events message - improved styling */}
+          {!hasEventsInMonth && selectedCategories.length > 0 && (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <CalendarX className="h-12 w-12 mb-2 text-muted-foreground/60" />
+              <h3 className="text-lg font-medium mb-1">No events found</h3>
+              <p className="text-sm text-center max-w-md">
+                No events match your selected categories. Try selecting different categories or clear your filters.
+              </p>
+              <Button variant="outline" className="mt-4" onClick={handleClearFilters}>
+                Clear filters
+              </Button>
+            </div>
           )}
 
           <CategoryLegend />

@@ -32,7 +32,7 @@ export function CalendarDay({
   return (
     <button
       className={`
-        h-24 p-1 border text-left overflow-y-auto transition-colors
+        h-16 sm:h-24 p-1 border text-left overflow-y-auto transition-colors
         ${isCurrentDay ? "bg-muted/50 border-primary" : "hover:bg-muted/30"}
         ${isSelected ? "ring-2 ring-primary" : ""}
         ${isDifferentMonth ? "text-muted-foreground opacity-50" : ""}
@@ -49,7 +49,7 @@ export function CalendarDay({
           </Badge>
         )}
       </div>
-      <div className="mt-1 space-y-1 max-h-16 text-xs">
+      <div className="mt-1 space-y-1 max-h-10 sm:max-h-16 text-xs">
         {events.length > 0 ? (
           events.map((event) => (
             <EventItem
@@ -61,7 +61,7 @@ export function CalendarDay({
             />
           ))
         ) : (
-          <div className="text-xs text-center text-muted-foreground py-1">No events</div>
+          <div className="text-xs text-center text-muted-foreground py-1 hidden sm:block">No events</div>
         )}
       </div>
     </button>

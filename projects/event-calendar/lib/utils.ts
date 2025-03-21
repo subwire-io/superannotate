@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { Event, EventCategory } from "@/types/event"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -10,17 +11,10 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2, 11)
 }
 
-// Function to filter events by search query
-export function filterEventsByQuery(events: any[], query: string): any[] {
-  if (!query.trim()) return events
+// Function to filter events by category
+export function filterEventsByCategory(events: Event[], categories: EventCategory[]): Event[] {
+  if (categories.length === 0) return events
 
-  const lowerQuery = query.toLowerCase().trim()
-
-  return events.filter(
-    (event) =>
-      event.title.toLowerCase().includes(lowerQuery) ||
-      event.description.toLowerCase().includes(lowerQuery) ||
-      event.category.toLowerCase().includes(lowerQuery),
-  )
+  return events.filter((event) => categories.includes(event.category))
 }
 

@@ -1,7 +1,8 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import { Edit, Trash2 } from "lucide-react"
 import type { Event } from "@/types/event"
 import { colorMap } from "@/types/event"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { format, parseISO } from "date-fns"
 
 interface EventItemProps {
   event: Event
@@ -25,8 +35,8 @@ interface EventItemProps {
 }
 
 export function EventItem({ event, onEdit, onDelete, onUndoDelete }: EventItemProps) {
-  const [showActions, setShowActions] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showEventDetails, setShowEventDetails] = useState(false)
   const { toast } = useToast()
 
   const handleDelete = () => {
@@ -50,50 +60,67 @@ export function EventItem({ event, onEdit, onDelete, onUndoDelete }: EventItemPr
     })
   }
 
+  const handleEventClick = (e: React.MouseEvent) => {
+    // Prevent the click from bubbling up to the calendar day
+    e.stopPropagation()
+    // Show event details
+    setShowEventDetails(true)
+  }
+
   return (
     <>
       <div
-        className={`px-1.5 py-0.5 rounded-sm truncate ${colorMap[event.category]} relative transition-all cursor-pointer group`}
-        onMouseEnter={() => setShowActions(true)}
-        onMouseLeave={() => setShowActions(false)}
-        title={`${event.title} - ${event.time} - ${event.description}`}
+        className={`relative px-1.5 py-0.5 rounded-sm ${colorMap[event.category]} transition-all cursor-pointer hover:brightness-110`}
+        onClick={handleEventClick}
       >
-        <span>
+        <span className="truncate block">
           {event.time} {event.title}
         </span>
-
-        {/* Action buttons that appear on hover */}
-        <div
-          className={`absolute right-0.5 top-0.5 flex gap-1 transition-opacity ${
-            showActions ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-4 w-4 bg-white/20 hover:bg-white/40 rounded-sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(event)
-            }}
-          >
-            <Edit className="h-2.5 w-2.5" />
-            <span className="sr-only">Edit</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-4 w-4 bg-white/20 hover:bg-white/40 rounded-sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowDeleteDialog(true)
-            }}
-          >
-            <Trash2 className="h-2.5 w-2.5" />
-            <span className="sr-only">Delete</span>
-          </Button>
-        </div>
       </div>
+
+      {/* Event details dialog */}
+      <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{event.title}</DialogTitle>
+            <DialogDescription>
+              {format(parseISO(event.date), "PPPP")} at {event.time}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`w-3 h-3 rounded-full ${colorMap[event.category].split(" ")[0]}`}></div>
+              <span className="capitalize">{event.category}</span>
+            </div>
+            {event.description && (
+              <div className="mt-2">
+                <h4 className="text-sm font-medium mb-1">Description</h4>
+                <p className="text-sm text-muted-foreground">{event.description}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEventDetails(false)
+                onEdit(event)
+              }}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowEventDetails(false)
+                setShowDeleteDialog(true)
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

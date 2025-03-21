@@ -1,17 +1,28 @@
 "use client"
 
+import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Filter } from "lucide-react"
+import type { EventCategory } from "@/types/event"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 interface CalendarHeaderProps {
   currentMonth: Date
   onPrevMonth: () => void
   onNextMonth: () => void
   onAddEvent: () => void
-  searchQuery: string
-  onSearchChange: (query: string) => void
+  selectedCategories: EventCategory[]
+  onCategoryToggle: (category: EventCategory) => void
+  onClearFilters: () => void
 }
 
 export function CalendarHeader({
@@ -19,9 +30,20 @@ export function CalendarHeader({
   onPrevMonth,
   onNextMonth,
   onAddEvent,
-  searchQuery,
-  onSearchChange,
+  selectedCategories,
+  onCategoryToggle,
+  onClearFilters,
 }: CalendarHeaderProps) {
+  const allCategories: { label: string; value: EventCategory }[] = [
+    { label: "Personal", value: "personal" },
+    { label: "Work", value: "work" },
+    { label: "Meeting", value: "meeting" },
+    { label: "Social", value: "social" },
+    { label: "Other", value: "other" },
+  ]
+
+  const isFiltered = selectedCategories.length > 0 && selectedCategories.length < allCategories.length
+
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <h2 className="text-lg font-semibold">Event Calendar</h2>
@@ -49,19 +71,39 @@ export function CalendarHeader({
       </div>
 
       <div className="flex gap-2 items-center">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search events..."
-            className="pl-8 w-[180px] h-9"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={isFiltered ? "default" : "outline"} size="sm" className="gap-1">
+              <Filter className="h-4 w-4" />
+              <span>Filter</span>
+              {isFiltered && (
+                <span className="ml-1 rounded-full bg-primary-foreground text-primary w-5 h-5 text-xs flex items-center justify-center">
+                  {selectedCategories.length}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {allCategories.map((category) => (
+              <DropdownMenuCheckboxItem
+                key={category.value}
+                checked={selectedCategories.includes(category.value)}
+                onCheckedChange={() => onCategoryToggle(category.value)}
+              >
+                {category.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onClearFilters}>Clear filters</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button onClick={onAddEvent} className="gap-1 transition-all hover:bg-primary/90">
           <Plus className="h-4 w-4" />
-          <span>Add Event</span>
+          <span className="hidden sm:inline">Add Event</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
     </div>
