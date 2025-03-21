@@ -29,14 +29,16 @@ export default function Home() {
   ]
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-12 text-center">
-          <h1 className="text-3xl font-bold mb-2">User Profile Cards</h1>
-          <p className="text-muted-foreground">A collection of user profile cards with different data</p>
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-16 px-6">
+      <div className="max-w-5xl mx-auto">
+        <header className="mb-16 text-center">
+          <h1 className="text-4xl font-bold mb-3">User Profile Cards</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            A collection of user profile cards with different data
+          </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {users.length > 0 ? (
             users.map((user) => (
               <UserProfileCard
@@ -49,8 +51,8 @@ export default function Home() {
               />
             ))
           ) : (
-            <div className="col-span-full text-center py-12 border rounded-lg bg-muted/20">
-              <p className="text-muted-foreground">No user profiles available</p>
+            <div className="col-span-full text-center py-16 border rounded-lg bg-muted/20">
+              <p className="text-muted-foreground text-lg">No user profiles available</p>
             </div>
           )}
         </div>
