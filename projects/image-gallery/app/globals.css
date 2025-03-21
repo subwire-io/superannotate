@@ -139,11 +139,10 @@ button:not([disabled]):hover {
   transition: colors 0.2s ease;
 }
 
-/* Define touch-friendly classes */
-@layer utilities {
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .tabs-list {
+    flex-wrap: wrap;
   }
 }
 

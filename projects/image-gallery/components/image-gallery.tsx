@@ -129,7 +129,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed h-[300px]">
+      <div className="flex flex-col items-center justify-center p-6 md:p-12 text-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed h-[300px]">
         <div className="mb-4 rounded-full bg-background p-3 shadow-sm">
           <Image
             src="/images/empty-gallery.svg"
@@ -151,7 +151,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
     <div
       ref={galleryRef}
       className={cn(
-        "flex flex-col space-y-4 p-4 md:p-6",
+        "flex flex-col space-y-4 p-3 md:p-6",
         isFullscreen ? "fixed inset-0 z-50 bg-background" : "",
         className,
       )}
@@ -198,13 +198,13 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
         )}
 
         {/* Navigation Buttons */}
-        <div className="absolute inset-0 flex items-center justify-between px-4">
+        <div className="absolute inset-0 flex items-center justify-between px-2 md:px-4">
           <Button
             variant="secondary"
             size="icon"
             className={cn(
               "h-10 w-10 rounded-full bg-background/70 backdrop-blur-sm shadow-md hover:bg-background/90 transition-all hover:scale-110 focus-visible:ring-offset-2 focus-visible:ring-2 focus-visible:ring-primary",
-              isMobile && "touch-target",
+              "min-h-[44px] min-w-[44px]",
             )}
             onClick={handlePrevious}
             aria-label="Previous image"
@@ -216,7 +216,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
             size="icon"
             className={cn(
               "h-10 w-10 rounded-full bg-background/70 backdrop-blur-sm shadow-md hover:bg-background/90 transition-all hover:scale-110 focus-visible:ring-offset-2 focus-visible:ring-2 focus-visible:ring-primary",
-              isMobile && "touch-target",
+              "min-h-[44px] min-w-[44px]",
             )}
             onClick={handleNext}
             aria-label="Next image"
@@ -235,7 +235,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
                   size="icon"
                   className={cn(
                     "h-8 w-8 rounded-full bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-all hover:scale-110",
-                    isMobile && "touch-target",
+                    "min-h-[40px] min-w-[40px]",
                   )}
                   onClick={() => setShowInfo(!showInfo)}
                   aria-label={showInfo ? "Hide image info" : "Show image info"}
@@ -257,7 +257,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
                   size="icon"
                   className={cn(
                     "h-8 w-8 rounded-full bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-all hover:scale-110",
-                    isMobile && "touch-target",
+                    "min-h-[40px] min-w-[40px]",
                   )}
                   onClick={toggleFullscreen}
                   aria-label={isFullscreen ? "Exit fullscreen" : "View fullscreen"}
@@ -291,12 +291,12 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
           <button
             key={image.id}
             className={cn(
-              "relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border transition-all duration-200",
+              "relative overflow-hidden rounded-md border transition-all duration-200",
               index === selectedImageIndex
                 ? "border-primary ring-2 ring-primary ring-offset-2"
                 : "border-border hover:border-primary/50",
               "hover:scale-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-              isMobile && "touch-target",
+              "h-16 w-16 md:h-20 md:w-20 flex-shrink-0 min-h-[44px] min-w-[44px]",
             )}
             onClick={() => handleThumbnailClick(index)}
             aria-label={`Select image: ${image.alt}`}
@@ -309,7 +309,7 @@ export default function ImageGallery({ images, className }: ImageGalleryProps) {
               src={image.src || "/placeholder.svg"}
               alt=""
               fill
-              sizes="80px"
+              sizes="(max-width: 768px) 64px, 80px"
               className="object-cover"
               aria-hidden="true"
               onLoad={(e) => {
