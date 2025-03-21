@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import Link from "next/link"
 import { ShoppingCart, User, Search, Menu, X } from "lucide-react"
@@ -8,8 +10,18 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 
+// Mock navigation items
+const navigationItems = [
+  { name: "Home", href: "#" },
+  { name: "Products", href: "#" },
+  { name: "Categories", href: "#" },
+  { name: "Deals", href: "#" },
+]
+
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [showSearchResults, setShowSearchResults] = useState(false)
   const { toast } = useToast()
 
   const handleCartClick = () => {
@@ -26,83 +38,100 @@ export function Header() {
     })
   }
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      setShowSearchResults(true)
+      // In a real app, you would fetch results here
+      toast({
+        title: "Search",
+        description: `No results found for "${searchQuery}"`,
+      })
+    }
+  }
+
   return (
     <header className="border-b">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center">
-          <Link href="/" className="text-2xl font-bold">
+          <Link href="/" className="text-2xl font-bold hover-brightness">
             ShopNow
           </Link>
-          <nav className="ml-10 hidden space-x-4 md:flex">
-            <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-              Home
-            </Link>
-            <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-              Products
-            </Link>
-            <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-              Categories
-            </Link>
-            <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-              Deals
-            </Link>
+          <nav className="ml-10 hidden space-x-6 md:flex">
+            {navigationItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="text-sm font-medium nav-link transition-colors hover:text-primary"
+              >
+                {item.name}
+              </Link>
+            ))}
           </nav>
         </div>
 
         <div className="flex items-center space-x-4">
           {isSearchOpen ? (
-            <div className="flex items-center">
-              <Input type="search" placeholder="Search products..." className="w-full md:w-[200px]" />
-              <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(false)}>
+            <form onSubmit={handleSearch} className="flex items-center">
+              <Input
+                type="search"
+                placeholder="Search products..."
+                className="w-full md:w-[200px]"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              <Button type="submit" variant="ghost" size="icon" className="ml-1">
+                <Search className="h-5 w-5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setIsSearchOpen(false)
+                  setShowSearchResults(false)
+                }}
+              >
                 <X className="h-5 w-5" />
               </Button>
-            </div>
+            </form>
           ) : (
-            <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+            <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)} className="hover-brightness">
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
             </Button>
           )}
 
-          <Button variant="ghost" size="icon" onClick={handleAccountClick}>
+          <Button variant="ghost" size="icon" onClick={handleAccountClick} className="hover-brightness">
             <User className="h-5 w-5" />
             <span className="sr-only">Account</span>
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={handleCartClick}>
+          <Button variant="ghost" size="icon" onClick={handleCartClick} className="hover-brightness">
             <ShoppingCart className="h-5 w-5" />
             <span className="sr-only">Cart</span>
           </Button>
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden hover-brightness">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
               <nav className="flex flex-col space-y-4 mt-8">
-                <SheetClose asChild>
-                  <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-                    Home
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-                    Products
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-                    Categories
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link href="#" className="text-sm font-medium transition-colors hover:text-primary">
-                    Deals
-                  </Link>
-                </SheetClose>
+                {navigationItems.map((item) => (
+                  <SheetClose asChild key={item.name}>
+                    <Link
+                      href={item.href}
+                      className="text-sm font-medium transition-colors hover:text-primary p-2 rounded-md hover:bg-accent"
+                    >
+                      {item.name}
+                    </Link>
+                  </SheetClose>
+                ))}
               </nav>
             </SheetContent>
           </Sheet>

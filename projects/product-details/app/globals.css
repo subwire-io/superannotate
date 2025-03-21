@@ -93,3 +93,39 @@ body {
   }
 }
 
+/* Custom hover transitions */
+.hover-scale {
+  @apply transition-transform duration-200;
+}
+.hover-scale:hover {
+  @apply transform scale-105;
+}
+
+.hover-brightness {
+  @apply transition-all duration-200;
+}
+.hover-brightness:hover {
+  @apply brightness-110;
+}
+
+.hover-border {
+  @apply transition-all duration-200;
+}
+.hover-border:hover {
+  @apply border-primary;
+}
+
+.nav-link {
+  @apply relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300;
+}
+.nav-link:hover {
+  @apply after:w-full;
+}
+
+.color-option {
+  @apply transition-all duration-200;
+}
+.color-option:hover {
+  @apply transform scale-110 shadow-md;
+}
+
