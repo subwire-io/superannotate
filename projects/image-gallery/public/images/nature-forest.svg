@@ -1,0 +1,23 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#E9F5DB"/>
+  <rect y="400" width="800" height="200" fill="#8A9A5B"/>
+  <path d="M100 400L150 300L200 400H100Z" fill="#4D7031"/>
+  <path d="M100 350L150 250L200 350H100Z" fill="#4D7031"/>
+  <path d="M100 300L150 200L200 300H100Z" fill="#4D7031"/>
+  <rect x="140" y="400" width="20" height="100" fill="#8B4513"/>
+  <path d="M300 400L350 300L400 400H300Z" fill="#4D7031"/>
+  <path d="M300 350L350 250L400 350H300Z" fill="#4D7031"/>
+  <path d="M300 300L350 200L400 300H300Z" fill="#4D7031"/>
+  <rect x="340" y="400" width="20" height="100" fill="#8B4513"/>
+  <path d="M500 400L550 300L600 400H500Z" fill="#4D7031"/>
+  <path d="M500 350L550 250L600 350H500Z" fill="#4D7031"/>
+  <path d="M500 300L550 200L600 300H500Z" fill="#4D7031"/>
+  <rect x="540" y="400" width="20" height="100" fill="#8B4513"/>
+  <path d="M700 400L750 300L800 400H700Z" fill="#4D7031"/>
+  <path d="M700 350L750 250L800 350H700Z" fill="#4D7031"/>
+  <path d="M700 300L750 200L800 300H700Z" fill="#4D7031"/>
+  <rect x="740" y="400" width="20" height="100" fill="#8B4513"/>
+  <circle cx="650" cy="120" r="60" fill="#FFF9C4"/>
+  <path d="M0 400C100 380 200 390 300 385C400 380 500 390 600 385C700 380 800 390 800 390V600H0V400Z" fill="#8A9A5B"/>
+</svg>
+

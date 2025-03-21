@@ -1,0 +1,13 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#E3F4FF"/>
+  <path d="M0 400L200 200L400 350L600 150L800 300V600H0V400Z" fill="#FFFFFF"/>
+  <path d="M0 450L200 250L400 400L600 200L800 350V600H0V450Z" fill="#E0E0E0"/>
+  <circle cx="650" cy="120" r="60" fill="#F9F9F9"/>
+  <path d="M300 400L500 250L700 400V600H300V400Z" fill="#FFFFFF"/>
+  <path d="M0 500L200 400L400 500L600 450L800 500V600H0V500Z" fill="#E0E0E0"/>
+  <path d="M350 350L450 300L550 350V600H350V350Z" fill="#FFFFFF"/>
+  <rect x="150" y="350" width="200" height="250" fill="#FFFFFF"/>
+  <path d="M150 350L250 250L350 350H150Z" fill="#E0E0E0"/>
+  <ellipse cx="400" cy="500" rx="150" ry="20" fill="#E0E0E0"/>
+</svg>
+

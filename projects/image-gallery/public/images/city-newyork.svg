@@ -1,0 +1,31 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#1A1B35"/>
+  <rect y="300" width="800" height="300" fill="#101124"/>
+  <rect x="100" y="200" width="80" height="400" fill="#2C2F63"/>
+  <rect x="110" y="220" width="15" height="380" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="135" y="220" width="15" height="380" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="160" y="220" width="15" height="380" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="200" y="150" width="100" height="450" fill="#2C2F63"/>
+  <rect x="210" y="170" width="20" height="430" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="240" y="170" width="20" height="430" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="270" y="170" width="20" height="430" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="320" y="250" width="60" height="350" fill="#2C2F63"/>
+  <rect x="330" y="270" width="10" height="330" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="350" y="270" width="10" height="330" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="370" y="270" width="10" height="330" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="400" y="100" width="120" height="500" fill="#2C2F63"/>
+  <rect x="420" y="120" width="20" height="480" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="460" y="120" width="20" height="480" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="500" y="120" width="20" height="480" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="540" y="200" width="80" height="400" fill="#2C2F63"/>
+  <rect x="550" y="220" width="15" height="380" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="575" y="220" width="15" height="380" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="600" y="220" width="15" height="380" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="640" y="250" width="60" height="350" fill="#2C2F63"/>
+  <rect x="650" y="270" width="10" height="330" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="670" y="270" width="10" height="330" fill="#FFEB3B" fill-opacity="0.5"/>
+  <rect x="690" y="270" width="10" height="330" fill="#FFEB3B" fill-opacity="0.5"/>
+  <circle cx="100" cy="100" r="40" fill="#FFEB3B"/>
+  <ellipse cx="400" cy="580" rx="400" ry="20" fill="#101124"/>
+</svg>
+

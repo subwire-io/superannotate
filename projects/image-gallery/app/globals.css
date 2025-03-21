@@ -92,3 +92,25 @@
   @apply bg-muted-foreground/60;
 }
 
+/* Image gallery animations */
+.image-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.thumbnail-hover {
+  transition: transform 0.2s ease-in-out;
+}
+
+.thumbnail-hover:hover {
+  transform: scale(1.05);
+}
+
