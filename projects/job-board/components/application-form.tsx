@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -13,16 +11,32 @@ import { DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import type { Job } from "@/lib/types"
 import { useToast } from "@/components/ui/use-toast"
+import { CheckCircle2 } from "lucide-react"
 
 interface ApplicationFormProps {
   job: Job
 }
 
+// Create a schema that validates all fields at once
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
   coverLetter: z.string().optional(),
+  resume: z
+    .any()
+    .refine((file) => file instanceof File, {
+      message: "Please upload your resume",
+    })
+    .refine(
+      (file) => {
+        if (!(file instanceof File)) return false
+        const validTypes = [".pdf", ".doc", ".docx"]
+        const fileExtension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase()
+        return validTypes.includes(fileExtension)
+      },
+      { message: "Please upload a PDF, DOC, or DOCX file" },
+    ),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -30,10 +44,9 @@ type FormValues = z.infer<typeof formSchema>
 export function ApplicationForm({ job }: ApplicationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const [resumeError, setResumeError] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // Initialize the form with all fields including resume
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,30 +55,10 @@ export function ApplicationForm({ job }: ApplicationFormProps) {
       phone: "",
       coverLetter: "",
     },
+    mode: "onTouched", // Validate on blur for better UX
   })
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setResumeError(null)
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      const allowedTypes = [".pdf", ".doc", ".docx"]
-      const fileExtension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase()
-
-      if (!allowedTypes.includes(fileExtension)) {
-        setResumeError("Please upload a PDF, DOC, or DOCX file")
-        return
-      }
-
-      setResumeFile(file)
-    }
-  }
-
   const onSubmit = (data: FormValues) => {
-    if (!resumeFile) {
-      setResumeError("Please upload your resume")
-      return
-    }
-
     setIsSubmitting(true)
 
     // Simulate API call
@@ -77,7 +70,7 @@ export function ApplicationForm({ job }: ApplicationFormProps) {
         jobTitle: job.title,
         company: job.company,
         ...data,
-        resume: resumeFile.name,
+        resume: data.resume.name,
       })
 
       toast({
@@ -89,15 +82,20 @@ export function ApplicationForm({ job }: ApplicationFormProps) {
 
   if (isSubmitted) {
     return (
-      <div className="py-6 text-center">
-        <h3 className="text-lg font-medium mb-2">Application Submitted!</h3>
-        <p className="text-muted-foreground mb-6">
-          Thank you for applying to the {job.title} position at {job.company}. We'll review your application and get
-          back to you soon.
-        </p>
-        <DialogClose asChild>
-          <Button>Close</Button>
-        </DialogClose>
+      <div className="py-8 text-center">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <div className="rounded-full bg-primary/10 p-3 text-primary">
+            <CheckCircle2 className="h-10 w-10" />
+          </div>
+          <h3 className="text-xl font-semibold">Application Submitted!</h3>
+          <p className="text-muted-foreground max-w-md">
+            Thank you for applying to the {job.title} position at {job.company}. We'll review your application and get
+            back to you soon.
+          </p>
+          <DialogClose asChild>
+            <Button className="mt-4">Close</Button>
+          </DialogClose>
+        </div>
       </div>
     )
   }
@@ -147,12 +145,30 @@ export function ApplicationForm({ job }: ApplicationFormProps) {
           )}
         />
 
-        <div className="space-y-2">
-          <FormLabel htmlFor="resume">Resume/CV</FormLabel>
-          <Input id="resume" type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
-          {resumeError && <p className="text-sm font-medium text-destructive">{resumeError}</p>}
-          <p className="text-xs text-muted-foreground">Accepted formats: PDF, DOC, DOCX</p>
-        </div>
+        <FormField
+          control={form.control}
+          name="resume"
+          render={({ field: { value, onChange, ...fieldProps } }) => (
+            <FormItem>
+              <FormLabel>Resume/CV</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      onChange(file)
+                    }
+                  }}
+                  {...fieldProps}
+                />
+              </FormControl>
+              <p className="text-xs text-muted-foreground">Accepted formats: PDF, DOC, DOCX</p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -168,7 +184,7 @@ export function ApplicationForm({ job }: ApplicationFormProps) {
           )}
         />
 
-        <DialogFooter>
+        <DialogFooter className="pt-4">
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Cancel

@@ -8,14 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +32,7 @@ import {
 import { Search, MapPin, Briefcase, Calendar, BookmarkPlus, Filter, X, BookmarkCheck, Loader2 } from "lucide-react"
 import { ApplicationForm } from "./application-form"
 import { useToast } from "@/components/ui/use-toast"
+import type { Job } from "@/lib/types"
 
 // Mock data for jobs
 const jobsData = [
@@ -146,6 +140,8 @@ export default function JobBoard() {
   const [currentPage, setCurrentPage] = useState(1)
   const [savedJobs, setSavedJobs] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
   const jobsPerPage = 4
 
@@ -158,6 +154,13 @@ export default function JobBoard() {
     setTimeout(() => {
       setIsLoading(false)
     }, 500)
+  }
+
+  // Handle search on Enter key press
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearchSubmit(e)
+    }
   }
 
   // Filter jobs based on search query and filters
@@ -286,6 +289,11 @@ export default function JobBoard() {
     })
   }
 
+  const handleApplyNow = (job: Job) => {
+    setSelectedJob(job)
+    setIsDialogOpen(true)
+  }
+
   return (
     <main className="container mx-auto p-4 md:p-6 max-w-5xl">
       <header className="mb-8">
@@ -302,6 +310,7 @@ export default function JobBoard() {
               className="pl-10 transition-all hover:border-primary focus:border-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               aria-label="Search for jobs"
             />
           </div>
@@ -486,7 +495,7 @@ export default function JobBoard() {
       </div>
 
       <div aria-live="polite">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
           <p className="text-sm text-muted-foreground">
             Showing {filteredJobs.length === 0 ? 0 : indexOfFirstJob + 1} -{" "}
             {Math.min(indexOfLastJob, filteredJobs.length)} of {filteredJobs.length} jobs
@@ -531,47 +540,24 @@ export default function JobBoard() {
                       </CardTitle>
                       <CardDescription className="text-base">{job.company}</CardDescription>
                     </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="transition-all hover:bg-secondary"
-                          aria-label={
-                            savedJobs.includes(job.id)
-                              ? `Remove ${job.title} job from bookmarks`
-                              : `Save ${job.title} job to bookmarks`
-                          }
-                          aria-pressed={savedJobs.includes(job.id)}
-                        >
-                          {savedJobs.includes(job.id) ? (
-                            <BookmarkCheck className="h-5 w-5 text-primary" />
-                          ) : (
-                            <BookmarkPlus className="h-5 w-5 group-hover:text-primary transition-colors" />
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            {savedJobs.includes(job.id)
-                              ? `Remove ${job.title} from saved jobs?`
-                              : `Save ${job.title} to your list?`}
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {savedJobs.includes(job.id)
-                              ? "This job will be removed from your saved jobs list."
-                              : "This job will be added to your saved jobs list for easy access later."}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => toggleSaveJob(job.id)}>
-                            {savedJobs.includes(job.id) ? "Remove" : "Save"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="transition-all hover:bg-secondary"
+                      aria-label={
+                        savedJobs.includes(job.id)
+                          ? `Remove ${job.title} job from bookmarks`
+                          : `Save ${job.title} job to bookmarks`
+                      }
+                      aria-pressed={savedJobs.includes(job.id)}
+                      onClick={() => toggleSaveJob(job.id)}
+                    >
+                      {savedJobs.includes(job.id) ? (
+                        <BookmarkCheck className="h-5 w-5 text-primary" />
+                      ) : (
+                        <BookmarkPlus className="h-5 w-5 group-hover:text-primary transition-colors" />
+                      )}
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -602,22 +588,14 @@ export default function JobBoard() {
                     ))}
                   </div>
                 </CardContent>
-                <CardFooter className="flex items-center justify-between border-t pt-4">
+                <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t pt-4 gap-4">
                   <p className="font-medium">{job.salary}</p>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="transition-all hover:bg-primary/90 active:bg-primary/80">Apply Now</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
-                      <DialogHeader>
-                        <DialogTitle>Apply for {job.title}</DialogTitle>
-                        <DialogDescription>
-                          Complete the form below to apply for this position at {job.company}.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <ApplicationForm job={job} />
-                    </DialogContent>
-                  </Dialog>
+                  <Button
+                    className="w-full sm:w-auto transition-all hover:bg-primary/90 active:bg-primary/80"
+                    onClick={() => handleApplyNow(job)}
+                  >
+                    Apply Now
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
@@ -625,8 +603,8 @@ export default function JobBoard() {
         )}
 
         {filteredJobs.length > 0 && totalPages > 1 && (
-          <Pagination className="mt-6">
-            <PaginationContent>
+          <Pagination className="mt-6 overflow-x-auto">
+            <PaginationContent className="flex-wrap justify-center">
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -690,6 +668,19 @@ export default function JobBoard() {
           </Pagination>
         )}
       </div>
+
+      {/* Application Dialog - Controlled manually instead of using DialogTrigger */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Apply for {selectedJob?.title}</DialogTitle>
+            <DialogDescription>
+              Complete the form below to apply for this position at {selectedJob?.company}.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedJob && <ApplicationForm job={selectedJob} />}
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }
