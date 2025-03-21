@@ -1,0 +1,44 @@
+Input: Build a progress indicator that shows steps completed in a multi-step process. 
+
+Response: <thinking>
+I'll create a simple progress indicator for a multi-step process.
+
+Thought for 6 secondsFor this task, I need to create a progress indicator that shows completed steps in a multi-step process. The user has specified that it should have no more than 5 UI elements to fall under the simple complexity category.
+
+Let's analyze what UI elements we need:
+
+1. The progress indicator itself (visual representation of progress)
+2. Step labels/titles
+3. Current step indicator
+4. Navigation buttons (previous/next)
+5. Step content container
+
+
+For the implementation approach:
+
+- I'll create a client component since we need interactivity
+- I'll use React state to track the current step
+- I'll implement a clean, accessible design with proper ARIA attributes
+- I'll ensure the component is responsive
+- I'll use shadcn/ui components where appropriate
+
+
+The component will need to:
+
+- Display the current step and total steps
+- Show visual progress (completed vs. remaining steps)
+- Allow navigation between steps
+- Clearly indicate the active step
+
+
+I'll keep the design minimal but effective, focusing on the core functionality while ensuring it meets accessibility standards.
+</thinking>
+
+1. Visual progress indicator showing completed and remaining steps
+2. Step labels with clear indication of the current active step
+3. Step content display area showing the current step's information
+4. Navigation controls (previous/next buttons) with appropriate disabled states
+5. Completion handling with an optional callback function
+
+
+The progress indicator is fully interactive and responsive, with a clean design that clearly shows the user's progress through a multi-step process. The component accepts an array of steps, an optional initial step, and an optional completion callback. I've kept it under 5 UI elements as requested, focusing on the core functionality while maintaining a good user experience.
