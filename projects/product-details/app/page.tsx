@@ -36,7 +36,7 @@ const product = {
   colors: [
     { name: "Black", value: "#000000" },
     { name: "Silver", value: "#C0C0C0" },
-    { name: "Blue", value: "#0000FF" },
+    { name: "Purple", value: "#800080" }, // Changed from Blue to Purple
   ],
   specifications: [
     { name: "Connectivity", value: "Bluetooth 5.0, 3.5mm audio jack" },
@@ -91,6 +91,13 @@ export default function ProductDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [reviewToDelete, setReviewToDelete] = useState<number | null>(null)
   const [reviews, setReviews] = useState(product.reviews)
+  const [cartItems, setCartItems] = useState<
+    Array<{
+      name: string
+      color: string
+      quantity: number
+    }>
+  >([])
   const { toast } = useToast()
 
   // Form
@@ -119,6 +126,15 @@ export default function ProductDetailsPage() {
   }
 
   const addToCart = () => {
+    // Add the item to the cart
+    const newItem = {
+      name: product.name,
+      color: selectedColor.name,
+      quantity: quantity,
+    }
+
+    setCartItems([...cartItems, newItem])
+
     toast({
       title: "Added to cart",
       description: `${quantity} ${product.name} (${selectedColor.name}) added to your cart`,
