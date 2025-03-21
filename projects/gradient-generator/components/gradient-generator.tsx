@@ -111,12 +111,13 @@ export default function GradientGenerator() {
   }
 
   // Handle form submission
-  const onSubmit = (values: z.infer<typeof customColorSchema>) => {
-    toast({
-      title: "Custom Gradient Applied",
-      description: "Your custom gradient has been applied",
-    })
-  }
+  // Remove this function
+  // const onSubmit = (values: z.infer<typeof customColorSchema>) => {
+  //   toast({
+  //     title: "Custom Gradient Applied",
+  //     description: "Your custom gradient has been applied",
+  //   })
+  // }
 
   // Copy CSS to clipboard
   const copyToClipboard = () => {
@@ -221,7 +222,7 @@ export default function GradientGenerator() {
 
             <TabsContent value="custom">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Start Color */}
                     <FormField
@@ -299,10 +300,6 @@ export default function GradientGenerator() {
                       </FormItem>
                     )}
                   />
-
-                  <Button type="submit" className="w-full">
-                    Apply Custom Gradient
-                  </Button>
                 </form>
               </Form>
             </TabsContent>
