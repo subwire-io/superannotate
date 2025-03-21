@@ -114,3 +114,36 @@
   transform: scale(1.05);
 }
 
+/* Animation delay utility */
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+/* Thumbnail loading fade out */
+.thumbnail-loading {
+  transition: opacity 0.3s ease-out;
+}
+
+/* Focus styles for better accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2;
+}
+
+/* Improved button hover effects */
+button:not([disabled]):hover {
+  transition: all 0.2s ease;
+}
+
+/* Tab hover effects */
+[role="tab"]:hover {
+  transition: colors 0.2s ease;
+}
+
+/* Define touch-friendly classes */
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
