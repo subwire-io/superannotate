@@ -5,6 +5,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-24">
       <div className="w-full max-w-3xl">
         <h1 className="text-3xl font-bold mb-6 text-center">Color Gradient Generator</h1>
+        <p className="text-center text-muted-foreground mb-8">Select from presets or create your own custom gradient</p>
         <GradientGenerator />
       </div>
     </main>
