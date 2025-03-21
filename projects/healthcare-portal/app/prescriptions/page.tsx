@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, RefreshCw, MoreHorizontal, AlarmClock, Pill } from "lucide-react"
+import { Calendar, RefreshCw, MoreHorizontal, AlarmClock, Pill, PlusCircle } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,13 +93,19 @@ export default function PrescriptionsPage() {
     })
   }
 
+  // Filter medications by status
+  const activeMedications = medications.filter((med) => med.status === "active")
+  const pendingMedications = medications.filter((med) => med.status === "pending")
+
   return (
     <div className="flex flex-col">
       <Toaster />
-      <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background px-6 py-8">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-lg font-semibold md:text-2xl">Prescriptions</h1>
-          <p className="text-sm text-muted-foreground">View and manage your medications and request refills</p>
+      <header className="sticky top-0 z-30 flex h-14 lg:h-[60px] items-center border-b bg-background px-4 md:px-6">
+        <div className="flex w-full items-center justify-between">
+          <div className="ml-12 md:ml-0">
+            <h1 className="text-lg font-semibold md:text-2xl">Prescriptions</h1>
+            <p className="text-sm text-muted-foreground">View and manage your medications and request refills</p>
+          </div>
         </div>
       </header>
       <div className="flex-1 space-y-6 p-6">
@@ -108,17 +114,13 @@ export default function PrescriptionsPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">Active Medications</CardTitle>
             </CardHeader>
-            <CardContent className="text-2xl font-bold">
-              {medications.filter((med) => med.status === "active").length}
-            </CardContent>
+            <CardContent className="text-2xl font-bold">{activeMedications.length}</CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">Pending Refills</CardTitle>
             </CardHeader>
-            <CardContent className="text-2xl font-bold">
-              {medications.filter((med) => med.status === "pending").length}
-            </CardContent>
+            <CardContent className="text-2xl font-bold">{pendingMedications.length}</CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
@@ -135,10 +137,9 @@ export default function PrescriptionsPage() {
             <TabsTrigger value="refills">Pending Refills</TabsTrigger>
           </TabsList>
           <TabsContent value="active" className="p-0 pt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {medications
-                .filter((med) => med.status === "active")
-                .map((medication) => (
+            {activeMedications.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {activeMedications.map((medication) => (
                   <Card key={medication.id}>
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                       <CardTitle className="text-base">{medication.name}</CardTitle>
@@ -206,13 +207,35 @@ export default function PrescriptionsPage() {
                     </CardFooter>
                   </Card>
                 ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Pill className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">No active medications</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                  You don't have any active medications at the moment. If you need to add a medication, please contact
+                  your healthcare provider.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4 gap-2"
+                  onClick={() => {
+                    toast({
+                      title: "Contact Doctor",
+                      description: "Opening message form to discuss medications with your doctor.",
+                    })
+                  }}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Contact Doctor
+                </Button>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="refills" className="p-0 pt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {medications
-                .filter((med) => med.status === "pending")
-                .map((medication) => (
+            {pendingMedications.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {pendingMedications.map((medication) => (
                   <Card key={medication.id}>
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                       <CardTitle className="text-base">{medication.name}</CardTitle>
@@ -251,7 +274,17 @@ export default function PrescriptionsPage() {
                     </CardFooter>
                   </Card>
                 ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <RefreshCw className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">No pending refills</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                  You don't have any pending medication refills at the moment. You can request a refill from the Active
+                  tab.
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

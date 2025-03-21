@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Calendar, FileText, Home, MessageSquare, Pill, Settings, Menu } from "lucide-react"
+import { Calendar, FileText, Home, MessageSquare, Pill, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -15,10 +16,10 @@ const navItems = [
   { name: "Medical Records", href: "/medical-records", icon: FileText },
   { name: "Prescriptions", href: "/prescriptions", icon: Pill },
   { name: "Messages", href: "/messages", icon: MessageSquare },
-  { name: "Settings", href: "/settings", icon: Settings },
 ]
 
 export default function Sidebar() {
+  const pathname = usePathname()
   const isMobile = useMobile()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -34,14 +35,17 @@ export default function Sidebar() {
         <nav className="grid items-start px-2 text-sm font-medium">
           {navItems.map((item, index) => {
             const Icon = item.icon
+            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+
             return (
               <Link
                 key={index}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent transition-all",
-                  item.href === "/" ? "bg-accent" : "transparent",
+                  isActive ? "bg-accent text-accent-foreground" : "transparent",
                 )}
+                onClick={() => isMobile && setIsOpen(false)}
               >
                 <Icon className="h-4 w-4" />
                 {item.name}
@@ -54,7 +58,7 @@ export default function Sidebar() {
         <div className="flex items-center gap-2 rounded-lg border p-4">
           <Avatar>
             <AvatarImage src="/placeholder.svg" alt="Avatar" />
-            <AvatarFallback>PA</AvatarFallback>
+            <AvatarFallback>JD</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <div className="text-sm font-medium">John Doe</div>
@@ -71,7 +75,7 @@ export default function Sidebar() {
         <Button
           variant="outline"
           size="icon"
-          className="fixed left-4 top-4 z-40 lg:hidden"
+          className="fixed left-3 top-3 z-50 lg:hidden"
           onClick={() => setIsOpen(true)}
         >
           <Menu className="h-4 w-4" />

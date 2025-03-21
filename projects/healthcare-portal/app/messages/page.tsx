@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { PlaneIcon as PaperPlaneIcon, PaperclipIcon, User, Phone, Video, Search } from "lucide-react"
+import { PlaneIcon as PaperPlaneIcon, User, Phone, Video, Search } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
@@ -35,6 +35,7 @@ export default function MessagesPage() {
   const { toast } = useToast()
   const [activeConversation, setActiveConversation] = useState<number>(1)
   const [newMessage, setNewMessage] = useState("")
+  const [showConversationList, setShowConversationList] = useState(true)
   const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: 1,
@@ -215,19 +216,50 @@ export default function MessagesPage() {
     })
   }
 
-  const handleAttachFile = () => {
-    toast({
-      title: "Attach File",
-      description: "File attachment dialog opened",
-    })
+  const handleSelectConversation = (id: number) => {
+    setActiveConversation(id)
+
+    // On mobile, hide the conversation list when a conversation is selected
+    if (window.innerWidth < 768) {
+      setShowConversationList(false)
+    }
+
+    // Mark messages as read when conversation is opened
+    if (conversations.find((c) => c.id === id)?.unread ?? 0 > 0) {
+      setConversations((prevConversations) =>
+        prevConversations.map((conv) => {
+          if (conv.id === id) {
+            return {
+              ...conv,
+              unread: 0,
+              messages: conv.messages.map((msg) => ({
+                ...msg,
+                read: true,
+              })),
+            }
+          }
+          return conv
+        }),
+      )
+    }
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
       <Toaster />
+      <header className="sticky top-0 z-30 flex h-14 items-center border-b bg-background px-4 md:px-6">
+        <div className="flex w-full items-center justify-between">
+          <div className="ml-12 md:ml-0">
+            <h1 className="text-lg font-semibold md:text-2xl">Messages</h1>
+            <p className="text-sm text-muted-foreground">Communicate with your healthcare providers</p>
+          </div>
+        </div>
+      </header>
       <div className="flex flex-1 overflow-hidden">
-        {/* Conversation List */}
-        <div className="w-80 border-r overflow-hidden flex flex-col">
+        {/* Conversation List - Hidden on mobile when viewing a conversation */}
+        <div
+          className={`${showConversationList ? "flex" : "hidden"} md:flex w-full md:w-80 border-r overflow-hidden flex-col`}
+        >
           <div className="p-4 border-b">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -241,27 +273,7 @@ export default function MessagesPage() {
                 className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-accent transition-colors ${
                   activeConversation === conversation.id ? "bg-accent" : ""
                 }`}
-                onClick={() => {
-                  setActiveConversation(conversation.id)
-                  // Mark messages as read when conversation is opened
-                  if (conversation.unread > 0) {
-                    setConversations((prevConversations) =>
-                      prevConversations.map((conv) => {
-                        if (conv.id === conversation.id) {
-                          return {
-                            ...conv,
-                            unread: 0,
-                            messages: conv.messages.map((msg) => ({
-                              ...msg,
-                              read: true,
-                            })),
-                          }
-                        }
-                        return conv
-                      }),
-                    )
-                  }
-                }}
+                onClick={() => handleSelectConversation(conversation.id)}
               >
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={conversation.doctor.avatar} alt={conversation.doctor.name} />
@@ -293,10 +305,33 @@ export default function MessagesPage() {
           </ScrollArea>
         </div>
 
-        {/* Chat Area */}
+        {/* Chat Area - Shown on mobile when a conversation is selected */}
         {currentConversation && (
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className={`${!showConversationList ? "flex" : "hidden"} md:flex flex-1 flex-col overflow-hidden`}>
             <div className="p-4 border-b flex items-center justify-between">
+              {/* Back button on mobile */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden mr-2"
+                onClick={() => setShowConversationList(true)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </Button>
+
               <div className="flex items-center gap-3">
                 <Avatar>
                   <AvatarImage src={currentConversation.doctor.avatar} alt={currentConversation.doctor.name} />
@@ -313,10 +348,10 @@ export default function MessagesPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={handleCall}>
+                <Button variant="outline" size="icon" onClick={handleCall} className="hidden sm:flex">
                   <Phone className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={handleVideoCall}>
+                <Button variant="outline" size="icon" onClick={handleVideoCall} className="hidden sm:flex">
                   <Video className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="icon" onClick={handleViewProfile}>
@@ -356,9 +391,6 @@ export default function MessagesPage() {
             </ScrollArea>
             <div className="p-4 border-t">
               <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={handleAttachFile}>
-                  <PaperclipIcon className="h-4 w-4" />
-                </Button>
                 <Input
                   placeholder="Type your message..."
                   value={newMessage}

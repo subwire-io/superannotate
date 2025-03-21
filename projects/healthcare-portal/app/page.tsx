@@ -8,7 +8,6 @@ import Link from "next/link"
 import AppointmentCard from "@/components/appointment-card"
 import NotificationList from "@/components/notification-list"
 import { useToast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
 import { ScheduleAppointmentForm } from "@/components/schedule-appointment-form"
 
 export default function DashboardPage() {
@@ -17,21 +16,22 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col">
-      <Toaster />
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:items-start sm:justify-between sm:pb-0 lg:px-8 lg:py-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold sm:text-2xl">Welcome, John</h1>
-          <p className="text-sm text-muted-foreground">Your health dashboard and recent activity</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/messages">
-            <Button variant="outline" size="icon" className="relative">
-              <MessageSquare className="h-4 w-4" />
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                3
-              </span>
-            </Button>
-          </Link>
+      <header className="sticky top-0 z-30 flex h-14 items-center border-b bg-background px-4 md:px-6">
+        <div className="flex w-full items-center justify-between">
+          <div className="ml-12 md:ml-0">
+            <h1 className="text-xl font-semibold sm:text-2xl">Welcome, John</h1>
+            <p className="text-sm text-muted-foreground">Your health dashboard and recent activity</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/messages">
+              <Button variant="outline" size="icon" className="relative">
+                <MessageSquare className="h-4 w-4" />
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                  3
+                </span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
       <div className="flex-1 space-y-6 p-6">

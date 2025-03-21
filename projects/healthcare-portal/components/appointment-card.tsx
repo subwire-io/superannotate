@@ -16,6 +16,7 @@ interface AppointmentCardProps {
   location?: string
   status?: "confirmed" | "pending" | "cancelled"
   isUpcoming?: boolean
+  onCancel?: () => void
 }
 
 export default function AppointmentCard({
@@ -26,6 +27,7 @@ export default function AppointmentCard({
   location = "Main Hospital - Room 302",
   status = "confirmed",
   isUpcoming = false,
+  onCancel,
 }: AppointmentCardProps) {
   const { toast } = useToast()
   const [currentStatus, setCurrentStatus] = useState(status)
@@ -39,10 +41,15 @@ export default function AppointmentCard({
 
   const handleCancel = () => {
     setCurrentStatus("cancelled")
-    toast({
-      title: "Appointment Cancelled",
-      description: `Your appointment with ${doctor} on ${date} has been cancelled.`,
-    })
+
+    if (onCancel) {
+      onCancel()
+    } else {
+      toast({
+        title: "Appointment Cancelled",
+        description: `Your appointment with ${doctor} on ${date} has been cancelled.`,
+      })
+    }
   }
 
   return (
