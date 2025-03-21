@@ -25,7 +25,7 @@ export default function RecipeDetail({ params }: { params: { id: string } }) {
         Back to recipes
       </Button>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2">
         <div className="rounded-lg overflow-hidden">
           <img
             src={recipe.image || "/placeholder.svg"}
@@ -38,36 +38,42 @@ export default function RecipeDetail({ params }: { params: { id: string } }) {
         </div>
 
         <Card className="transition-all duration-200 hover:shadow-sm">
-          <CardHeader>
-            <div className="flex justify-between items-start">
+          <CardHeader className="pb-2 md:pb-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
               <CardTitle className="text-2xl md:text-3xl">{recipe.title}</CardTitle>
-              <Badge variant="outline">{recipe.cuisine}</Badge>
+              <Badge variant="outline" className="self-start">
+                {recipe.cuisine}
+              </Badge>
             </div>
-            <CardDescription className="text-base">{recipe.description}</CardDescription>
+            <CardDescription className="text-base mt-2">{recipe.description}</CardDescription>
           </CardHeader>
 
-          <CardContent className="grid gap-4">
-            <div className="flex items-center gap-4">
+          <CardContent className="grid gap-6">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="text-sm">Prep: {recipe.prepTime} min</span>
               </div>
               <div className="flex items-center">
-                <ChefHat className="h-4 w-4 mr-2" />
+                <ChefHat className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="text-sm">Cook: {recipe.cookTime} min</span>
               </div>
               <div className="flex items-center">
-                <Utensils className="h-4 w-4 mr-2" />
+                <Utensils className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="text-sm">Total: {recipe.prepTime + recipe.cookTime} min</span>
               </div>
             </div>
 
             {recipe.dietaryRestrictions.length > 0 && (
               <div>
-                <h3 className="font-medium mb-2">Dietary Information:</h3>
+                <h3 className="font-medium mb-3">Dietary Information:</h3>
                 <div className="flex flex-wrap gap-2">
                   {recipe.dietaryRestrictions.map((diet) => (
-                    <Badge key={diet} variant="secondary" className="transition-colors hover:bg-secondary/80">
+                    <Badge
+                      key={diet}
+                      variant="secondary"
+                      className="transition-colors hover:bg-secondary/80 text-sm py-1"
+                    >
                       {diet}
                     </Badge>
                   ))}
@@ -78,15 +84,15 @@ export default function RecipeDetail({ params }: { params: { id: string } }) {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mt-8">
+      <div className="grid gap-8 md:grid-cols-2 mt-10">
         <Card className="transition-all duration-200 hover:shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-xl">Ingredients</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="list-disc pl-5 space-y-2">
+            <ul className="list-disc pl-5 space-y-3">
               {recipe.ingredients.map((ingredient, index) => (
-                <li key={index} className="transition-colors hover:text-primary">
+                <li key={index} className="transition-colors hover:text-primary pl-2">
                   {ingredient}
                 </li>
               ))}
@@ -95,11 +101,11 @@ export default function RecipeDetail({ params }: { params: { id: string } }) {
         </Card>
 
         <Card className="transition-all duration-200 hover:shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-xl">Instructions</CardTitle>
           </CardHeader>
           <CardContent>
-            <ol className="list-decimal pl-5 space-y-4">
+            <ol className="list-decimal pl-5 space-y-5">
               {recipe.instructions.map((step, index) => (
                 <li key={index} className="pl-2 transition-colors hover:text-primary">
                   {step}

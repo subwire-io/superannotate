@@ -12,8 +12,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
-import { Search, Clock, X } from "lucide-react"
+import { Search, Clock, X, Filter, ChevronDown, ChevronUp } from "lucide-react"
 import { type Recipe, recipesData, cuisineTypes, dietaryOptions } from "@/lib/data"
+import { cn } from "@/lib/utils"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 // Form schema
 const searchFormSchema = z.object({
@@ -76,6 +78,9 @@ export default function RecipeFinder() {
   const [selectedDietary, setSelectedDietary] = useState<string[]>([])
   const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>(recipesData)
   const [isLoading, setIsLoading] = useState(true)
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
+
+  const isMobile = useMediaQuery("(max-width: 640px)")
 
   // Initialize form
   const form = useForm<z.infer<typeof searchFormSchema>>({
@@ -173,8 +178,32 @@ export default function RecipeFinder() {
           <p className="text-muted-foreground mt-1">Find delicious recipes filtered by cuisine and dietary needs</p>
         </header>
 
+        {/* Mobile Filters Toggle */}
+        {isMobile && (
+          <Button
+            variant="outline"
+            className="flex items-center justify-between w-full"
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+          >
+            <div className="flex items-center">
+              <Filter className="h-4 w-4 mr-2" />
+              <span>Filters</span>
+            </div>
+            {filtersExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        )}
+
         {/* Filters Section */}
-        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <section
+          className={cn(
+            "grid gap-6 transition-all duration-300",
+            isMobile
+              ? filtersExpanded
+                ? "max-h-[500px] opacity-100"
+                : "max-h-0 opacity-0 overflow-hidden"
+              : "sm:grid-cols-2 lg:grid-cols-4",
+          )}
+        >
           <div className="relative">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSearchSubmit)} className="relative">
@@ -223,12 +252,26 @@ export default function RecipeFinder() {
             </Select>
           </div>
 
-          <div className="sm:col-span-2">
+          <div className={cn("sm:col-span-2", isMobile ? "" : "")}>
             <div className="flex flex-wrap gap-4 p-4 border rounded-md">
-              <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Dietary Restrictions:
-              </span>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex justify-between items-center w-full">
+                <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Dietary Restrictions:
+                </span>
+                {selectedDietary.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedDietary([])}
+                    aria-label="Clear dietary filters"
+                    className="transition-colors hover:bg-destructive/10 hover:text-destructive h-7 ml-auto"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-4 w-full min-h-[28px]">
                 {dietaryOptions.map((option) => (
                   <div key={option} className="flex items-center space-x-2 group">
                     <Checkbox
@@ -245,18 +288,6 @@ export default function RecipeFinder() {
                     </label>
                   </div>
                 ))}
-                {selectedDietary.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedDietary([])}
-                    aria-label="Clear dietary filters"
-                    className="transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Clear
-                  </Button>
-                )}
               </div>
             </div>
           </div>
@@ -264,7 +295,7 @@ export default function RecipeFinder() {
 
         {/* Applied filters */}
         {(searchTerm || selectedCuisine !== "All" || selectedDietary.length > 0) && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">Applied filters:</span>
             <div className="flex flex-wrap gap-2">
               {searchTerm && (
