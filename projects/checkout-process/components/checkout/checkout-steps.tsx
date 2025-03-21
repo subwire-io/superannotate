@@ -12,13 +12,13 @@ interface CheckoutStepsProps {
 
 export function CheckoutSteps({ steps, currentStep }: CheckoutStepsProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-6 md:mb-8">
       <div className="flex items-center justify-between">
         {steps.map((step, index) => (
           <div key={step.id} className="flex flex-col items-center">
             <div
               className={`
-              flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
+              flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full border-2 transition-colors
               ${
                 index <= currentStep
                   ? "bg-primary border-primary text-primary-foreground"
@@ -26,11 +26,15 @@ export function CheckoutSteps({ steps, currentStep }: CheckoutStepsProps) {
               }
             `}
             >
-              {index < currentStep ? <CheckCircle2 className="h-6 w-6" /> : <span>{index + 1}</span>}
+              {index < currentStep ? (
+                <CheckCircle2 className="h-4 w-4 md:h-6 md:w-6" />
+              ) : (
+                <span className="text-xs md:text-sm">{index + 1}</span>
+              )}
             </div>
             <span
               className={`
-              mt-2 text-sm font-medium
+              mt-2 text-xs md:text-sm font-medium
               ${index <= currentStep ? "text-primary" : "text-muted-foreground"}
             `}
             >
@@ -40,7 +44,7 @@ export function CheckoutSteps({ steps, currentStep }: CheckoutStepsProps) {
         ))}
       </div>
       <div className="relative mt-1">
-        <div className="absolute inset-x-0 top-5 h-0.5 bg-muted"></div>
+        <div className="absolute inset-x-0 top-4 md:top-5 h-0.5 bg-muted"></div>
       </div>
     </div>
   )

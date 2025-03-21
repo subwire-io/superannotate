@@ -6,6 +6,7 @@ import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect } from "react"
 
 // Define validation schema
 const shippingFormSchema = z.object({
@@ -31,6 +32,14 @@ export function ShippingForm({ formData, updateFormData, onNext }: ShippingFormP
     defaultValues: formData,
     mode: "onChange",
   })
+
+  // Update parent component when form values change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      updateFormData(value as ShippingFormValues)
+    })
+    return () => subscription.unsubscribe()
+  }, [form, updateFormData])
 
   function onSubmit(data: ShippingFormValues) {
     updateFormData(data)
@@ -68,7 +77,7 @@ export function ShippingForm({ formData, updateFormData, onNext }: ShippingFormP
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="city"
@@ -98,7 +107,7 @@ export function ShippingForm({ formData, updateFormData, onNext }: ShippingFormP
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="zipCode"

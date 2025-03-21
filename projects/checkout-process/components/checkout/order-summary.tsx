@@ -105,7 +105,10 @@ export function OrderSummary({ orderItems, total, shippingData, paymentData }: O
         <h3 className="font-medium text-lg mb-3">Payment Method</h3>
         <div className="border rounded-md p-4 space-y-2 transition-colors hover:bg-muted/10">
           <p className="font-medium">{paymentData.cardName}</p>
-          <p>Credit Card ending in {paymentData.cardNumber ? `**** ${paymentData.cardNumber.slice(-4)}` : "****"}</p>
+          <p>
+            Credit Card ending in{" "}
+            {paymentData.cardNumber ? `**** ${paymentData.cardNumber.replace(/\s/g, "").slice(-4)}` : "****"}
+          </p>
           <p>Expiry Date: {paymentData.expiryDate}</p>
         </div>
       </div>

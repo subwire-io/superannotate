@@ -9,11 +9,20 @@ import { PaymentForm } from "./checkout/payment-form"
 import { OrderSummary } from "./checkout/order-summary"
 import { CheckoutSteps } from "./checkout/checkout-steps"
 import { useRouter } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 // Main checkout component that orchestrates the multi-step process
 export default function Checkout() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
+  const [showConfirmation, setShowConfirmation] = useState(false)
   const [formData, setFormData] = useState({
     shipping: {
       fullName: "",
@@ -73,17 +82,22 @@ export default function Checkout() {
   }
 
   const handleSubmitOrder = () => {
+    setShowConfirmation(true)
+  }
+
+  const handleCompleteOrder = () => {
+    setShowConfirmation(false)
     // In a real application, this would submit the order to a backend API
-    alert("Order submitted successfully!")
     // Reset form or redirect to confirmation page
+    router.push("/")
   }
 
   // Check if cart is empty
   const isCartEmpty = orderItems.length === 0
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-8 text-center">Checkout</h1>
+    <div className="container mx-auto py-6 md:py-10 px-4 max-w-3xl">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-center">Checkout</h1>
 
       {isCartEmpty ? (
         <Card>
@@ -103,7 +117,7 @@ export default function Checkout() {
 
           {/* Current Step Form */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle>{steps[currentStep].title}</CardTitle>
               <CardDescription>
                 {currentStep === 0 && "Please enter your shipping information"}
@@ -136,7 +150,7 @@ export default function Checkout() {
               )}
 
               {/* Navigation Buttons */}
-              <div className={`flex ${currentStep === 0 ? "justify-end" : "justify-between"} mt-8`}>
+              <div className={`flex ${currentStep === 0 ? "justify-end" : "justify-between"} mt-6 md:mt-8`}>
                 {currentStep > 0 && (
                   <Button
                     variant="outline"
@@ -149,10 +163,9 @@ export default function Checkout() {
                 )}
                 {currentStep < steps.length - 1 ? (
                   <Button
-                    onClick={handleNext}
-                    className="flex items-center transition-colors hover:bg-primary/90"
                     type="submit"
                     form={currentStep === 0 ? "shipping-form" : "payment-form"}
+                    className="flex items-center transition-colors hover:bg-primary/90"
                   >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -167,6 +180,29 @@ export default function Checkout() {
           </Card>
         </>
       )}
+
+      {/* Order Confirmation Dialog */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Order Confirmation</DialogTitle>
+            <DialogDescription>
+              Thank you for your order! Your order has been received and is being processed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-center text-muted-foreground">Order total: ${calculateTotal().toFixed(2)}</p>
+            <p className="text-center text-muted-foreground mt-2">
+              A confirmation email has been sent to your email address.
+            </p>
+          </div>
+          <DialogFooter className="sm:justify-center">
+            <Button onClick={handleCompleteOrder} className="transition-colors hover:bg-primary/90">
+              Continue Shopping
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
