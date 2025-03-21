@@ -4,8 +4,8 @@ import { useState } from "react"
 import { ParticipantGrid } from "./participant-grid"
 import { ChatSidebar } from "./chat-sidebar"
 import { MeetingControls } from "./meeting-controls"
-import { Button } from "@/components/ui/button"
-import { ChevronRight } from "lucide-react"
+import { Toaster } from "@/components/ui/toaster"
+import { useToast } from "@/components/ui/use-toast"
 
 // Mock participants data
 const mockParticipants = [
@@ -30,6 +30,9 @@ export default function VideoConference() {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [hasLeftCall, setHasLeftCall] = useState(false)
+  const { toast } = useToast()
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
@@ -64,11 +67,98 @@ export default function VideoConference() {
 
   const toggleScreenShare = () => {
     setIsScreenSharing(!isScreenSharing)
+
+    if (!isScreenSharing) {
+      toast({
+        title: "Screen sharing started",
+        description: "Your screen is now visible to all participants",
+      })
+    }
+  }
+
+  const togglePinParticipant = (participantId: number) => {
+    // Check if this participant is already pinned
+    const isCurrentlyPinned = participants.find((p) => p.id === participantId)?.isPinned
+
+    if (isCurrentlyPinned) {
+      // If already pinned, unpin them
+      const updatedParticipants = participants.map((p) => (p.id === participantId ? { ...p, isPinned: false } : p))
+
+      setParticipants(updatedParticipants)
+
+      // Show toast notification
+      const participant = participants.find((p) => p.id === participantId)
+      toast({
+        title: `Unpinned ${participant?.name}`,
+        description: "Returned to grid view",
+      })
+    } else {
+      // First unpinning all participants
+      const updatedParticipants = participants.map((p) => ({
+        ...p,
+        isPinned: false,
+      }))
+
+      // Then pin the selected participant
+      const finalParticipants = updatedParticipants.map((p) => (p.id === participantId ? { ...p, isPinned: true } : p))
+
+      setParticipants(finalParticipants)
+
+      // Show toast notification
+      const participant = participants.find((p) => p.id === participantId)
+      toast({
+        title: `Pinned ${participant?.name}`,
+        description: "This participant will be highlighted in the view",
+      })
+    }
   }
 
   const leaveCall = () => {
-    // In a real app, this would handle cleanup and navigation
-    alert("You've left the call. This would normally redirect you to the post-call screen.")
+    setHasLeftCall(true)
+    toast({
+      title: "Call ended",
+      description: "You've left the meeting",
+      action: (
+        <button
+          onClick={rejoinCall}
+          className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs font-medium"
+        >
+          Undo
+        </button>
+      ),
+    })
+  }
+
+  const rejoinCall = () => {
+    setHasLeftCall(false)
+    toast({
+      title: "Rejoined call",
+      description: "Welcome back to the meeting",
+    })
+  }
+
+  const searchParticipants = (term: string) => {
+    setSearchTerm(term)
+  }
+
+  // Filter participants based on search term
+  const filteredParticipants = searchTerm
+    ? participants.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : participants
+
+  if (hasLeftCall) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 p-4">
+        <h1 className="text-2xl font-bold mb-4">You've left the meeting</h1>
+        <button
+          onClick={rejoinCall}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+        >
+          Rejoin Meeting
+        </button>
+        <Toaster />
+      </div>
+    )
   }
 
   return (
@@ -77,16 +167,24 @@ export default function VideoConference() {
         {/* Main content area with participant grid */}
         <div className={`relative flex-1 flex flex-col ${isChatOpen ? "md:mr-[320px]" : ""}`}>
           <div className="flex-1 p-4 overflow-auto">
-            <ParticipantGrid participants={participants} isScreenSharing={isScreenSharing} />
+            <ParticipantGrid
+              participants={filteredParticipants}
+              isScreenSharing={isScreenSharing}
+              searchTerm={searchTerm}
+              onPinParticipant={togglePinParticipant}
+            />
           </div>
           <MeetingControls
             isAudioEnabled={isAudioEnabled}
             isVideoEnabled={isVideoEnabled}
             isScreenSharing={isScreenSharing}
+            isChatOpen={isChatOpen}
             onToggleAudio={toggleAudio}
             onToggleVideo={toggleVideo}
             onToggleScreenShare={toggleScreenShare}
+            onToggleChat={toggleChat}
             onLeaveCall={leaveCall}
+            onSearch={searchParticipants}
           />
         </div>
 
@@ -98,18 +196,8 @@ export default function VideoConference() {
         >
           <ChatSidebar messages={messages} onSendMessage={sendMessage} onClose={toggleChat} />
         </div>
-
-        {/* Mobile chat toggle button */}
-        <Button
-          variant="outline"
-          size="icon"
-          className={`fixed bottom-24 right-4 z-30 rounded-full md:hidden ${isChatOpen ? "hidden" : "flex"}`}
-          onClick={toggleChat}
-          aria-label="Open chat"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </main>
+      <Toaster />
     </div>
   )
 }
