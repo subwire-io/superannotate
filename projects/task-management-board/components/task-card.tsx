@@ -16,9 +16,17 @@ interface TaskCardProps {
   columnId: string
   deleteTask: (taskId: string, columnId: string) => void
   updateTask: (task: Task) => void
+  isMobileView?: boolean
 }
 
-export default function TaskCard({ task, index, columnId, deleteTask, updateTask }: TaskCardProps) {
+export default function TaskCard({
+  task,
+  index,
+  columnId,
+  deleteTask,
+  updateTask,
+  isMobileView = false,
+}: TaskCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const { toast } = useToast()
@@ -46,22 +54,27 @@ export default function TaskCard({ task, index, columnId, deleteTask, updateTask
             {...provided.dragHandleProps}
             className={`${
               snapshot.isDragging ? "shadow-lg" : ""
-            } transition-all duration-200 hover:shadow-md hover:translate-y-[-2px] hover:border-primary/50`}
+            } transition-all duration-200 hover:shadow-md hover:translate-y-[-2px] hover:border-primary/50 touch-manipulation`}
           >
-            <CardContent className="p-3">
+            <CardContent className={`${isMobileView ? "p-2 sm:p-3" : "p-3"}`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">{task.title}</h3>
                   <div className="flex items-center space-x-1">
                     {getPriorityIcon()}
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsEditOpen(true)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 sm:h-7 sm:w-7"
+                      onClick={() => setIsEditOpen(true)}
+                    >
                       <Edit className="h-4 w-4" />
                       <span className="sr-only">Edit task</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:bg-destructive/10 transition-colors"
+                      className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:bg-destructive/10 transition-colors"
                       onClick={() => setIsDeleteDialogOpen(true)}
                     >
                       <Trash2 className="h-4 w-4" />

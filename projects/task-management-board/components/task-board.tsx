@@ -2,24 +2,36 @@
 
 import { useState, useEffect } from "react"
 import { DragDropContext, type DropResult } from "react-beautiful-dnd"
-import { Plus } from "lucide-react"
+import { Plus, LayoutGrid, LayoutList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import TaskColumn from "./task-column"
 import AddTaskDialog from "./add-task-dialog"
 import type { Task, Column } from "@/types/task"
+import { useMobile } from "@/hooks/use-mobile"
 
 export default function TaskBoard() {
   const { toast } = useToast()
+  const isMobile = useMobile()
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [columns, setColumns] = useState<Column[]>([
     { id: "todo", title: "To Do", tasks: [] },
     { id: "inProgress", title: "In Progress", tasks: [] },
     { id: "done", title: "Done", tasks: [] },
   ])
   const [deletedTasks, setDeletedTasks] = useState<{ task: Task; columnId: string }[]>([])
+
+  // Set view mode based on screen size
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode("list")
+    } else {
+      setViewMode("grid")
+    }
+  }, [isMobile])
 
   // Load tasks from localStorage on component mount
   useEffect(() => {
@@ -195,13 +207,27 @@ export default function TaskBoard() {
   const hasSearchResults = filteredColumns.some((column) => column.tasks.length > 0)
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto py-4 px-4 sm:px-6 sm:py-6">
       <div className="flex flex-col space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold">Task Management Board</h1>
-          <Button onClick={() => setIsAddTaskOpen(true)} className="transition-all duration-200 hover:scale-105">
-            <Plus className="mr-2 h-4 w-4" /> Add Task
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+              aria-label={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+            >
+              {viewMode === "grid" ? <LayoutList className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+            </Button>
+            <Button
+              onClick={() => setIsAddTaskOpen(true)}
+              className="transition-all duration-200 hover:scale-105 w-full sm:w-auto"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Task
+            </Button>
+          </div>
         </div>
 
         <div className="w-full max-w-sm">
@@ -219,11 +245,34 @@ export default function TaskBoard() {
               No results found for "{searchQuery}"
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {filteredColumns.map((column) => (
-              <TaskColumn key={column.id} column={column} deleteTask={deleteTask} updateTask={updateTask} />
-            ))}
-          </div>
+
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {filteredColumns.map((column) => (
+                <TaskColumn key={column.id} column={column} deleteTask={deleteTask} updateTask={updateTask} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {filteredColumns.map((column) => (
+                <div key={column.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold">{column.title}</h2>
+                    <div className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                      {column.tasks.length}
+                    </div>
+                  </div>
+                  <TaskColumn
+                    key={column.id}
+                    column={column}
+                    deleteTask={deleteTask}
+                    updateTask={updateTask}
+                    isMobileView={true}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </DragDropContext>
       </div>
 

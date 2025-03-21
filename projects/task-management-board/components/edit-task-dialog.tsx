@@ -66,7 +66,7 @@ export default function EditTaskDialog({ open, onOpenChange, task, onUpdateTask 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
         </DialogHeader>
@@ -101,13 +101,13 @@ export default function EditTaskDialog({ open, onOpenChange, task, onUpdateTask 
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Task description" className="resize-none" {...field} />
+                    <Textarea placeholder="Task description" className="resize-none min-h-[80px]" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="status"
@@ -166,8 +166,10 @@ export default function EditTaskDialog({ open, onOpenChange, task, onUpdateTask 
                 </FormItem>
               )}
             />
-            <DialogFooter>
-              <Button type="submit">Update Task</Button>
+            <DialogFooter className="mt-6">
+              <Button type="submit" className="w-full sm:w-auto">
+                Update Task
+              </Button>
             </DialogFooter>
           </form>
         </Form>
