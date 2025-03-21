@@ -5,17 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  BarChart3,
-  CalendarDays,
-  ChefHat,
-  ClipboardList,
-  Home,
-  LayoutGrid,
-  MenuSquare,
-  Settings,
-  Users,
-} from "lucide-react"
+import { ChefHat, ClipboardList, Home, LayoutGrid, MenuSquare } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -30,6 +20,7 @@ export function Sidebar({ className, isCollapsed = false }: SidebarProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
+  // Reduced navigation items to essential pages only
   const navItems = [
     {
       name: "Dashboard",
@@ -40,11 +31,6 @@ export function Sidebar({ className, isCollapsed = false }: SidebarProps) {
       name: "Tables",
       href: "/tables",
       icon: LayoutGrid,
-    },
-    {
-      name: "Reservations",
-      href: "/reservations",
-      icon: CalendarDays,
     },
     {
       name: "Menu",
@@ -60,21 +46,6 @@ export function Sidebar({ className, isCollapsed = false }: SidebarProps) {
       name: "Kitchen",
       href: "/kitchen",
       icon: ChefHat,
-    },
-    {
-      name: "Staff",
-      href: "/staff",
-      icon: Users,
-    },
-    {
-      name: "Reports",
-      href: "/reports",
-      icon: BarChart3,
-    },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: Settings,
     },
   ]
 
