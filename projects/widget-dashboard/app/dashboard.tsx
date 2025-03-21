@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import {
   Bell,
   Calendar,
@@ -56,259 +56,39 @@ import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog"
 import { KeyboardAccessibleActions } from "@/components/keyboard-accessible-actions"
 import { KeyboardAccessibleMessageList } from "@/components/keyboard-accessible-message-list"
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog"
+import { useDebounce } from "@/hooks/use-debounce"
+import { useThrottle } from "@/hooks/use-throttle"
+import { createTransition } from "@/lib/animation-config"
 
-// Type definitions
-type WeatherData = {
-  location: string
-  temperature: number
-  condition: "sunny" | "cloudy" | "rainy" | "stormy" | "snowy" | "partly-cloudy"
-  high: number
-  low: number
-  humidity: number
-  windSpeed: number
-}
-
-type Activity = {
-  id: string
-  user: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-  action: string
-  target: string
-  timestamp: string
-  status?: "pending" | "completed" | "failed"
-}
-
-type Message = {
-  id: string
-  sender: {
-    name: string
-    avatar?: string
-    initials: string
-  }
-  content: string
-  timestamp: string
-  read: boolean
-}
-
-type Document = {
-  id: string
-  title: string
-  content: string
-  lastModified: string
-}
-
-type UserProfile = {
-  name: string
-  email: string
-  avatar?: string
-  initials: string
-  role: string
-  department: string
-  location: string
-  bio: string
-}
-
-type UserSettings = {
-  notifications: {
-    email: boolean
-    push: boolean
-    sms: boolean
-    inApp: boolean
-  }
-  appearance: {
-    theme: "light" | "dark" | "system"
-    density: "compact" | "comfortable" | "spacious"
-    animations: boolean
-  }
-  privacy: {
-    profileVisibility: "public" | "team" | "private"
-    activityStatus: boolean
-    readReceipts: boolean
-  }
-}
-
-// Mock data
-const weatherData: WeatherData = {
-  location: "New York, NY",
-  temperature: 72,
-  condition: "partly-cloudy",
-  high: 78,
-  low: 65,
-  humidity: 45,
-  windSpeed: 8,
-}
-
-const initialActivities: Activity[] = [
-  {
-    id: "1",
-    user: {
-      name: "Alex Johnson",
-      initials: "AJ",
-    },
-    action: "commented on",
-    target: "Project Outline",
-    timestamp: "5 minutes ago",
-    status: "completed",
-  },
-  {
-    id: "2",
-    user: {
-      name: "Sarah Miller",
-      avatar: "/placeholder.svg?height=32&width=32",
-      initials: "SM",
-    },
-    action: "uploaded",
-    target: "Q3 Financial Report.pdf",
-    timestamp: "1 hour ago",
-    status: "completed",
-  },
-  {
-    id: "3",
-    user: {
-      name: "David Chen",
-      initials: "DC",
-    },
-    action: "assigned",
-    target: "Website Redesign Task",
-    timestamp: "3 hours ago",
-    status: "pending",
-  },
-  {
-    id: "4",
-    user: {
-      name: "Emily Wang",
-      avatar: "/placeholder.svg?height=32&width=32",
-      initials: "EW",
-    },
-    action: "scheduled",
-    target: "Team Meeting",
-    timestamp: "Yesterday at 4:30 PM",
-    status: "completed",
-  },
-  {
-    id: "5",
-    user: {
-      name: "Michael Brown",
-      initials: "MB",
-    },
-    action: "shared",
-    target: "Marketing Strategy",
-    timestamp: "Yesterday at 11:20 AM",
-    status: "completed",
-  },
-]
-
-const initialMessages: Message[] = [
-  {
-    id: "1",
-    sender: {
-      name: "Jane Miller",
-      initials: "JM",
-    },
-    content: "Hi, could you review the latest design files I sent?",
-    timestamp: "10m",
-    read: false,
-  },
-  {
-    id: "2",
-    sender: {
-      name: "Robert Wilson",
-      avatar: "/placeholder.svg?height=40&width=40&text=RW",
-      initials: "RW",
-    },
-    content: "The meeting has been rescheduled to 3pm tomorrow.",
-    timestamp: "2h",
-    read: true,
-  },
-  {
-    id: "3",
-    sender: {
-      name: "Anna Smith",
-      initials: "AS",
-    },
-    content: "Just finished the project report, take a look when you can.",
-    timestamp: "1d",
-    read: true,
-  },
-]
-
-const initialDocuments: Document[] = [
-  {
-    id: "1",
-    title: "Q3 Strategy.pdf",
-    content: "This document outlines our strategy for Q3...",
-    lastModified: "Modified 2 days ago",
-  },
-  {
-    id: "2",
-    title: "Project Brief.docx",
-    content: "Project brief for the new website redesign...",
-    lastModified: "Modified 5 days ago",
-  },
-  {
-    id: "3",
-    title: "Team Roster.xlsx",
-    content: "Current team roster with contact information...",
-    lastModified: "Modified 1 week ago",
-  },
-]
-
-const initialLinks = [
-  { icon: <Globe className="h-4 w-4" />, name: "Company Wiki", url: "https://wiki.example.com" },
-  { icon: <Calendar className="h-4 w-4" />, name: "Team Calendar", url: "https://calendar.example.com" },
-  { icon: <FileText className="h-4 w-4" />, name: "Documentation", url: "https://docs.example.com" },
-]
-
-const userProfile: UserProfile = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  initials: "JD",
-  avatar: "/placeholder.svg?height=32&width=32",
-  role: "Product Manager",
-  department: "Product",
-  location: "New York, NY",
-  bio: "Passionate about building great products and leading teams.",
-}
-
-const userSettings: UserSettings = {
-  notifications: {
-    email: true,
-    push: true,
-    sms: false,
-    inApp: true,
-  },
-  appearance: {
-    theme: "system",
-    density: "comfortable" | "spacious",
-    animations: true,
-  },
-  privacy: {
-    profileVisibility: "team",
-    activityStatus: true,
-    readReceipts: true,
-  },
-}
+// Import types and mock data
+import type { WeatherData, Activity, Message, Document, UserProfile, UserSettings } from "@/types"
+import {
+  weatherData,
+  initialActivities,
+  initialMessages,
+  initialDocuments,
+  initialLinks,
+  userProfile,
+  userSettings,
+} from "@/data/mock-data"
 
 // Helper function to get weather icon based on condition
 function getWeatherIcon(condition: WeatherData["condition"]) {
   switch (condition) {
     case "sunny":
-      return <Sun className="h-8 w-8 text-amber-500" aria-hidden="true" />
+      return <Sun className="h-8 w-8 text-amber-500 hardware-accelerated" aria-hidden="true" />
     case "cloudy":
-      return <Cloud className="h-8 w-8 text-gray-500" aria-hidden="true" />
+      return <Cloud className="h-8 w-8 text-gray-500 hardware-accelerated" aria-hidden="true" />
     case "rainy":
-      return <CloudRain className="h-8 w-8 text-blue-500" aria-hidden="true" />
+      return <CloudRain className="h-8 w-8 text-blue-500 hardware-accelerated" aria-hidden="true" />
     case "stormy":
-      return <CloudLightning className="h-8 w-8 text-purple-500" aria-hidden="true" />
+      return <CloudLightning className="h-8 w-8 text-purple-500 hardware-accelerated" aria-hidden="true" />
     case "snowy":
-      return <CloudSnow className="h-8 w-8 text-blue-300" aria-hidden="true" />
+      return <CloudSnow className="h-8 w-8 text-blue-300 hardware-accelerated" aria-hidden="true" />
     case "partly-cloudy":
-      return <CloudDrizzle className="h-8 w-8 text-blue-400" aria-hidden="true" />
+      return <CloudDrizzle className="h-8 w-8 text-blue-400 hardware-accelerated" aria-hidden="true" />
     default:
-      return <Cloud className="h-8 w-8" aria-hidden="true" />
+      return <Cloud className="h-8 w-8 hardware-accelerated" aria-hidden="true" />
   }
 }
 
@@ -319,19 +99,19 @@ function StatusBadge({ status }: { status?: Activity["status"] }) {
   switch (status) {
     case "completed":
       return (
-        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
+        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200 hardware-accelerated">
           Completed
         </Badge>
       )
     case "pending":
       return (
-        <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200">
+        <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 hardware-accelerated">
           Pending
         </Badge>
       )
     case "failed":
       return (
-        <Badge variant="outline" className="ml-2 bg-red-50 text-red-700 border-red-200">
+        <Badge variant="outline" className="ml-2 bg-red-50 text-red-700 border-red-200 hardware-accelerated">
           Failed
         </Badge>
       )
@@ -341,7 +121,11 @@ function StatusBadge({ status }: { status?: Activity["status"] }) {
 }
 
 export default function Dashboard() {
-  // State management
+  // Refs for performance optimization
+  const animationFrameRef = useRef<number | null>(null)
+  const renderCountRef = useRef(0)
+
+  // State management with memoization
   const [darkMode, setDarkMode] = useState(false)
   const [activities, setActivities] = useState<Activity[]>(initialActivities)
   const [messages, setMessages] = useState<Message[]>(initialMessages)
@@ -379,74 +163,98 @@ export default function Dashboard() {
 
   const { toast } = useToast()
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
-    if (!darkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }
+  // Debounce state changes to prevent UI glitches
+  const debouncedDarkMode = useDebounce(darkMode, 10)
 
-  // Handle sending a new message
-  const handleSendMessage = (message: any) => {
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      sender: {
-        name: message.recipient.name,
-        avatar: message.recipient.avatar,
-        initials: message.recipient.initials,
-      },
-      content: message.content,
-      timestamp: "Just now",
-      read: false,
+  // Memoize expensive calculations
+  const unreadMessageCount = useMemo(() => {
+    return messages.filter((msg) => !msg.read).length
+  }, [messages])
+
+  // Toggle dark mode with optimized rendering
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode((prev) => !prev)
+
+    // Use requestAnimationFrame for smoother transitions
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
     }
 
-    setMessages([newMessage, ...messages])
-
-    toast({
-      title: "Message Sent",
-      description: `Your message to ${message.recipient.name} has been sent.`,
+    animationFrameRef.current = requestAnimationFrame(() => {
+      if (!darkMode) {
+        document.documentElement.classList.add("dark")
+      } else {
+        document.documentElement.classList.remove("dark")
+      }
+      animationFrameRef.current = null
     })
-  }
+  }, [darkMode])
 
-  // Handle creating a new document
-  const handleCreateDocument = (document: any) => {
-    const newDocument: Document = {
-      id: `doc-${Date.now()}`,
-      title: document.title,
-      content: document.content,
-      lastModified: "Just now",
-    }
+  // Handle sending a new message with optimized state updates
+  const handleSendMessage = useCallback(
+    (message: any) => {
+      const newMessage: Message = {
+        id: `msg-${Date.now()}`,
+        sender: {
+          name: message.recipient.name,
+          avatar: message.recipient.avatar,
+          initials: message.recipient.initials,
+        },
+        content: message.content,
+        timestamp: "Just now",
+        read: false,
+      }
 
-    setDocuments([newDocument, ...documents])
+      setMessages((prev) => [newMessage, ...prev])
 
-    // Add a new activity for document creation
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      user: {
-        name: profile.name,
-        avatar: profile.avatar,
-        initials: profile.initials,
-      },
-      action: "created",
-      target: document.title,
-      timestamp: "Just now",
-      status: "completed",
-    }
+      toast({
+        title: "Message Sent",
+        description: `Your message to ${message.recipient.name} has been sent.`,
+      })
+    },
+    [toast],
+  )
 
-    setActivities([newActivity, ...activities])
+  // Handle creating a new document with optimized state updates
+  const handleCreateDocument = useCallback(
+    (document: any) => {
+      const newDocument: Document = {
+        id: `doc-${Date.now()}`,
+        title: document.title,
+        content: document.content,
+        lastModified: "Just now",
+      }
 
-    toast({
-      title: "Document Created",
-      description: `Your document "${document.title}" has been created.`,
-    })
-  }
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        user: {
+          name: profile.name,
+          avatar: profile.avatar,
+          initials: profile.initials,
+        },
+        action: "created",
+        target: document.title,
+        timestamp: "Just now",
+        status: "completed",
+      }
 
-  // Handle scheduling a meeting
-  const handleScheduleMeeting = async () => {
-    setIsLoading({ ...isLoading, schedule: true })
+      // Batch state updates for better performance
+      requestAnimationFrame(() => {
+        setDocuments((prev) => [newDocument, ...prev])
+        setActivities((prev) => [newActivity, ...prev])
+      })
+
+      toast({
+        title: "Document Created",
+        description: `Your document "${document.title}" has been created.`,
+      })
+    },
+    [profile, toast],
+  )
+
+  // Handle scheduling a meeting with throttling
+  const handleScheduleMeeting = useThrottle(async () => {
+    setIsLoading((prev) => ({ ...prev, schedule: true }))
 
     try {
       // Simulate network delay
@@ -466,20 +274,20 @@ export default function Dashboard() {
         status: "pending",
       }
 
-      setActivities([newActivity, ...activities])
+      setActivities((prev) => [newActivity, ...prev])
 
       toast({
         title: "Meeting Scheduled",
         description: "Your team meeting has been scheduled.",
       })
     } finally {
-      setIsLoading({ ...isLoading, schedule: false })
+      setIsLoading((prev) => ({ ...prev, schedule: false }))
     }
-  }
+  }, 500)
 
-  // Handle team action
-  const handleTeamAction = async () => {
-    setIsLoading({ ...isLoading, team: true })
+  // Handle team action with throttling
+  const handleTeamAction = useThrottle(async () => {
+    setIsLoading((prev) => ({ ...prev, team: true }))
 
     try {
       // Simulate network delay
@@ -499,57 +307,69 @@ export default function Dashboard() {
         status: "pending",
       }
 
-      setActivities([newActivity, ...activities])
+      setActivities((prev) => [newActivity, ...prev])
 
       toast({
         title: "Team Action",
         description: "You've invited a new team member.",
       })
     } finally {
-      setIsLoading({ ...isLoading, team: false })
+      setIsLoading((prev) => ({ ...prev, team: false }))
     }
-  }
+  }, 500)
 
-  // Handle updating profile
-  const handleUpdateProfile = (updatedProfile: UserProfile) => {
-    setProfile(updatedProfile)
+  // Handle updating profile with optimized state updates
+  const handleUpdateProfile = useCallback(
+    (updatedProfile: UserProfile) => {
+      setProfile(updatedProfile)
 
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been updated successfully.",
-    })
-  }
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      })
+    },
+    [toast],
+  )
 
-  // Handle updating settings
-  const handleUpdateSettings = (updatedSettings: UserSettings) => {
-    setSettings(updatedSettings)
+  // Handle updating settings with optimized state updates
+  const handleUpdateSettings = useCallback(
+    (updatedSettings: UserSettings) => {
+      setSettings(updatedSettings)
 
-    toast({
-      title: "Settings Updated",
-      description: "Your settings have been updated successfully.",
-    })
-  }
+      toast({
+        title: "Settings Updated",
+        description: "Your settings have been updated successfully.",
+      })
+    },
+    [toast],
+  )
 
   // Handle downloading a document
-  const handleDownloadDocument = (document: Document) => {
-    toast({
-      title: "Download Started",
-      description: `Downloading "${document.title}"...`,
-    })
-  }
+  const handleDownloadDocument = useCallback(
+    (document: Document) => {
+      toast({
+        title: "Download Started",
+        description: `Downloading "${document.title}"...`,
+      })
+    },
+    [toast],
+  )
 
   // Handle opening a link
-  const handleOpenLink = (link: { name: string; url: string }) => {
-    window.open(link.url, "_blank")
+  const handleOpenLink = useCallback(
+    (link: { name: string; url: string; iconType: string }) => {
+      window.open(link.url, "_blank")
 
-    toast({
-      title: "Opening Link",
-      description: `Opening ${link.name} in a new tab.`,
-    })
-  }
+      toast({
+        title: "Opening Link",
+        description: `Opening ${link.name} in a new tab.`,
+      })
+    },
+    [toast],
+  )
 
-  // Handle delete confirmation
-  const handleDeleteConfirm = () => {
+  // Handle delete confirmation with optimized state updates
+  const handleDeleteConfirm = useCallback(() => {
     if (!itemToDelete) return
 
     const { type, id } = itemToDelete
@@ -557,8 +377,11 @@ export default function Dashboard() {
     if (type === "document") {
       const documentToDelete = documents.find((doc) => doc.id === id)
       if (documentToDelete) {
-        setDeletedItems([...deletedItems, { type, item: documentToDelete }])
-        setDocuments(documents.filter((doc) => doc.id !== id))
+        // Batch state updates
+        requestAnimationFrame(() => {
+          setDeletedItems((prev) => [...prev, { type, item: documentToDelete }])
+          setDocuments((prev) => prev.filter((doc) => doc.id !== id))
+        })
 
         toast({
           title: "Document Deleted",
@@ -568,7 +391,8 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               onClick={() => handleUndo({ type, item: documentToDelete })}
-              className="hover:bg-muted"
+              className="hover:bg-muted hardware-accelerated"
+              style={{ transition: createTransition(["background-color", "transform"]) }}
             >
               Undo
             </Button>
@@ -578,8 +402,11 @@ export default function Dashboard() {
     } else if (type === "message") {
       const messageToDelete = messages.find((msg) => msg.id === id)
       if (messageToDelete) {
-        setDeletedItems([...deletedItems, { type, item: messageToDelete }])
-        setMessages(messages.filter((msg) => msg.id !== id))
+        // Batch state updates
+        requestAnimationFrame(() => {
+          setDeletedItems((prev) => [...prev, { type, item: messageToDelete }])
+          setMessages((prev) => prev.filter((msg) => msg.id !== id))
+        })
 
         toast({
           title: "Message Deleted",
@@ -589,7 +416,8 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               onClick={() => handleUndo({ type, item: messageToDelete })}
-              className="hover:bg-muted"
+              className="hover:bg-muted hardware-accelerated"
+              style={{ transition: createTransition(["background-color", "transform"]) }}
             >
               Undo
             </Button>
@@ -599,8 +427,11 @@ export default function Dashboard() {
     } else if (type === "activity") {
       const activityToDelete = activities.find((act) => act.id === id)
       if (activityToDelete) {
-        setDeletedItems([...deletedItems, { type, item: activityToDelete }])
-        setActivities(activities.filter((act) => act.id !== id))
+        // Batch state updates
+        requestAnimationFrame(() => {
+          setDeletedItems((prev) => [...prev, { type, item: activityToDelete }])
+          setActivities((prev) => prev.filter((act) => act.id !== id))
+        })
 
         toast({
           title: "Activity Deleted",
@@ -610,7 +441,8 @@ export default function Dashboard() {
               variant="outline"
               size="sm"
               onClick={() => handleUndo({ type, item: activityToDelete })}
-              className="hover:bg-muted"
+              className="hover:bg-muted hardware-accelerated"
+              style={{ transition: createTransition(["background-color", "transform"]) }}
             >
               Undo
             </Button>
@@ -621,37 +453,43 @@ export default function Dashboard() {
 
     setDeleteDialogOpen(false)
     setItemToDelete(null)
-  }
+  }, [itemToDelete, documents, messages, activities, toast])
 
-  // Handle undo delete
-  const handleUndo = ({ type, item }: { type: "document" | "message" | "activity"; item: any }) => {
-    if (type === "document") {
-      setDocuments([item, ...documents])
-    } else if (type === "message") {
-      setMessages([item, ...messages])
-    } else if (type === "activity") {
-      setActivities([item, ...activities])
-    }
+  // Handle undo delete with optimized state updates
+  const handleUndo = useCallback(
+    ({ type, item }: { type: "document" | "message" | "activity"; item: any }) => {
+      // Batch state updates
+      requestAnimationFrame(() => {
+        if (type === "document") {
+          setDocuments((prev) => [item, ...prev])
+        } else if (type === "message") {
+          setMessages((prev) => [item, ...prev])
+        } else if (type === "activity") {
+          setActivities((prev) => [item, ...prev])
+        }
 
-    setDeletedItems(
-      deletedItems.filter((deletedItem) => !(deletedItem.type === type && deletedItem.item.id === item.id)),
-    )
+        setDeletedItems((prev) =>
+          prev.filter((deletedItem) => !(deletedItem.type === type && deletedItem.item.id === item.id)),
+        )
+      })
 
-    toast({
-      title: "Item Restored",
-      description: "The deleted item has been restored.",
-    })
-  }
+      toast({
+        title: "Item Restored",
+        description: "The deleted item has been restored.",
+      })
+    },
+    [toast],
+  )
 
   // Handle delete request
-  const handleDeleteRequest = (type: "document" | "message" | "activity", id: string) => {
+  const handleDeleteRequest = useCallback((type: "document" | "message" | "activity", id: string) => {
     setItemToDelete({ type, id })
     setDeleteDialogOpen(true)
-  }
+  }, [])
 
   // Mark all notifications as read
-  const handleMarkAllAsRead = () => {
-    setMessages(messages.map((message) => ({ ...message, read: true })))
+  const handleMarkAllAsRead = useCallback(() => {
+    setMessages((prev) => prev.map((message) => ({ ...message, read: true })))
 
     toast({
       title: "Notifications Cleared",
@@ -659,10 +497,9 @@ export default function Dashboard() {
     })
 
     setNotificationsOpen(false)
-  }
+  }, [toast])
 
   // Add keyboard shortcut event listeners
-  // Add this inside the Dashboard component, right after the state declarations
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only trigger if Alt key is pressed and not inside an input or textarea
@@ -691,7 +528,6 @@ export default function Dashboard() {
           case "k":
             e.preventDefault()
             // This would open the keyboard shortcuts dialog
-            // We'd need a ref to trigger it programmatically
             break
         }
       }
@@ -703,10 +539,26 @@ export default function Dashboard() {
     }
   }, [isLoading, handleScheduleMeeting, handleTeamAction])
 
+  // Performance monitoring
+  useEffect(() => {
+    renderCountRef.current += 1
+    console.log(`Dashboard render count: ${renderCountRef.current}`)
+
+    return () => {
+      // Clean up any animations on unmount
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [])
+
   return (
-    <div className={`min-h-screen bg-background ${darkMode ? "dark" : ""}`}>
+    <div
+      className={`min-h-screen bg-background ${debouncedDarkMode ? "dark" : ""}`}
+      style={{ transition: createTransition(["background-color", "color"], "slow") }}
+    >
       <div className="flex flex-col">
-        <header className="sticky top-0 z-10 border-b bg-background">
+        <header className="sticky top-0 z-10 border-b bg-background hardware-accelerated">
           <div className="flex h-16 items-center px-4 sm:px-6">
             <div className="flex items-center gap-2 font-semibold">
               <Home className="h-5 w-5" />
@@ -720,15 +572,15 @@ export default function Dashboard() {
                   checked={darkMode}
                   onCheckedChange={toggleDarkMode}
                   aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}
-                  className="transition-opacity data-[state=checked]:bg-primary"
+                  className="transition-opacity data-[state=checked]:bg-primary hardware-accelerated"
                 />
                 <Label htmlFor="dark-mode" className="sr-only">
                   Toggle dark mode
                 </Label>
                 {darkMode ? (
-                  <Moon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <Moon className="h-4 w-4 text-muted-foreground hardware-accelerated" aria-hidden="true" />
                 ) : (
-                  <Sun className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <Sun className="h-4 w-4 text-muted-foreground hardware-accelerated" aria-hidden="true" />
                 )}
               </div>
               <Button
@@ -736,18 +588,18 @@ export default function Dashboard() {
                 size="icon"
                 aria-label="Show notifications"
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative transition-colors hover:bg-muted active:scale-95"
+                className="relative transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                style={{ transition: createTransition(["background-color", "transform"]) }}
               >
                 <Bell className="h-5 w-5 text-muted-foreground" />
-                {messages.some((msg) => !msg.read) && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-                )}
+                {unreadMessageCount > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative h-8 w-8 rounded-full transition-colors hover:bg-muted active:scale-95"
+                    className="relative h-8 w-8 rounded-full transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                    style={{ transition: createTransition(["background-color", "transform"]) }}
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={profile.avatar} alt={profile.name} />
@@ -760,14 +612,16 @@ export default function Dashboard() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setProfileOpen(true)}
-                    className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted"
+                    className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted hardware-accelerated"
+                    style={{ transition: createTransition(["background-color"]) }}
                   >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setSettingsOpen(true)}
-                    className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted"
+                    className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted hardware-accelerated"
+                    style={{ transition: createTransition(["background-color"]) }}
                   >
                     <Cog className="mr-2 h-4 w-4" />
                     <span>Settings</span>
@@ -784,7 +638,10 @@ export default function Dashboard() {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Weather Widget */}
-            <Card className="overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              className="overflow-hidden transition-shadow hover:shadow-md hardware-accelerated"
+              style={{ transition: createTransition(["box-shadow"]) }}
+            >
               <CardHeader className="pb-2">
                 <CardTitle>Weather</CardTitle>
                 <CardDescription>{weatherData.location}</CardDescription>
@@ -817,13 +674,21 @@ export default function Dashboard() {
             </Card>
 
             {/* Recent Activities Widget */}
-            <Card className="overflow-hidden transition-shadow hover:shadow-md md:col-span-2 lg:col-span-1">
+            <Card
+              className="overflow-hidden transition-shadow hover:shadow-md md:col-span-2 lg:col-span-1 hardware-accelerated"
+              style={{ transition: createTransition(["box-shadow"]) }}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Recent Activities</CardTitle>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="transition-colors hover:bg-muted active:scale-95">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                        style={{ transition: createTransition(["background-color", "transform"]) }}
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Menu</span>
                       </Button>
@@ -831,11 +696,15 @@ export default function Dashboard() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => setAllActivitiesOpen(true)}
-                        className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted"
+                        className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted hardware-accelerated"
+                        style={{ transition: createTransition(["background-color"]) }}
                       >
                         View all
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted">
+                      <DropdownMenuItem
+                        className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted hardware-accelerated"
+                        style={{ transition: createTransition(["background-color"]) }}
+                      >
                         Mark all as read
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -845,10 +714,14 @@ export default function Dashboard() {
               <CardContent className="p-0">
                 {activities.length > 0 ? (
                   <div className="space-y-0 divide-y" role="log" aria-live="polite" aria-label="Recent activities">
-                    {activities.slice(0, 5).map((activity) => (
+                    {activities.slice(0, 5).map((activity, index) => (
                       <div
                         key={activity.id}
-                        className="flex items-center justify-between px-6 py-3 hover:bg-muted/50 transition-colors duration-200"
+                        className="flex items-center justify-between px-6 py-3 hover:bg-muted/50 transition-colors duration-200 stagger-item hardware-accelerated"
+                        style={{
+                          transition: createTransition(["background-color"]),
+                          animationDelay: `${index * 50}ms`,
+                        }}
                       >
                         <div className="flex items-center gap-4">
                           <Avatar>
@@ -869,7 +742,8 @@ export default function Dashboard() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95 hardware-accelerated"
+                          style={{ transition: createTransition(["opacity", "background-color", "transform"]) }}
                           onClick={() => handleDeleteRequest("activity", activity.id)}
                         >
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
@@ -891,7 +765,8 @@ export default function Dashboard() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full transition-colors hover:bg-muted active:scale-95"
+                  className="w-full transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                  style={{ transition: createTransition(["background-color", "transform"]) }}
                   onClick={() => setAllActivitiesOpen(true)}
                 >
                   View all activities
@@ -900,7 +775,10 @@ export default function Dashboard() {
             </Card>
 
             {/* Quick Actions Widget */}
-            <Card className="overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              className="overflow-hidden transition-shadow hover:shadow-md hardware-accelerated"
+              style={{ transition: createTransition(["box-shadow"]) }}
+            >
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
                 <CardDescription>Commonly used functions and tools</CardDescription>
@@ -911,14 +789,14 @@ export default function Dashboard() {
                     {
                       id: "new-document",
                       label: "New Document",
-                      icon: <FileText className="h-6 w-6 text-primary" aria-hidden="true" />,
+                      icon: <FileText className="h-6 w-6 text-primary hardware-accelerated" aria-hidden="true" />,
                       onClick: () => setNewDocumentOpen(true),
                       disabled: false,
                     },
                     {
                       id: "send-message",
                       label: "Send Message",
-                      icon: <MessageSquare className="h-6 w-6 text-primary" aria-hidden="true" />,
+                      icon: <MessageSquare className="h-6 w-6 text-primary hardware-accelerated" aria-hidden="true" />,
                       onClick: () => setNewMessageOpen(true),
                       disabled: false,
                     },
@@ -926,9 +804,12 @@ export default function Dashboard() {
                       id: "schedule",
                       label: isLoading.schedule ? "Scheduling..." : "Schedule",
                       icon: isLoading.schedule ? (
-                        <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
+                        <Loader2
+                          className="h-6 w-6 text-primary animate-spin hardware-accelerated"
+                          aria-hidden="true"
+                        />
                       ) : (
-                        <Calendar className="h-6 w-6 text-primary" aria-hidden="true" />
+                        <Calendar className="h-6 w-6 text-primary hardware-accelerated" aria-hidden="true" />
                       ),
                       onClick: handleScheduleMeeting,
                       disabled: isLoading.schedule,
@@ -937,9 +818,12 @@ export default function Dashboard() {
                       id: "team",
                       label: isLoading.team ? "Processing..." : "Team",
                       icon: isLoading.team ? (
-                        <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
+                        <Loader2
+                          className="h-6 w-6 text-primary animate-spin hardware-accelerated"
+                          aria-hidden="true"
+                        />
                       ) : (
-                        <Users className="h-6 w-6 text-primary" aria-hidden="true" />
+                        <Users className="h-6 w-6 text-primary hardware-accelerated" aria-hidden="true" />
                       ),
                       onClick: handleTeamAction,
                       disabled: isLoading.team,
@@ -950,7 +834,10 @@ export default function Dashboard() {
             </Card>
 
             {/* Messages Widget */}
-            <Card className="overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              className="overflow-hidden transition-shadow hover:shadow-md hardware-accelerated"
+              style={{ transition: createTransition(["box-shadow"]) }}
+            >
               <CardHeader>
                 <CardTitle>Messages</CardTitle>
                 <CardDescription>Recent conversations</CardDescription>
@@ -981,14 +868,16 @@ export default function Dashboard() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="transition-colors hover:bg-muted active:scale-95"
+                  className="transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                  style={{ transition: createTransition(["background-color", "transform"]) }}
                   onClick={() => setAllMessagesOpen(true)}
                 >
                   View all
                 </Button>
                 <Button
                   size="sm"
-                  className="transition-transform active:scale-95"
+                  className="transition-transform active:scale-95 hardware-accelerated"
+                  style={{ transition: createTransition(["transform"]) }}
                   onClick={() => setNewMessageOpen(true)}
                 >
                   <Mail className="mr-2 h-4 w-4" />
@@ -998,7 +887,10 @@ export default function Dashboard() {
             </Card>
 
             {/* Stats Widget */}
-            <Card className="overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              className="overflow-hidden transition-shadow hover:shadow-md hardware-accelerated"
+              style={{ transition: createTransition(["box-shadow"]) }}
+            >
               <CardHeader>
                 <CardTitle>Stats Overview</CardTitle>
                 <CardDescription>Your activity metrics</CardDescription>
@@ -1038,7 +930,10 @@ export default function Dashboard() {
             </Card>
 
             {/* Quick Access / Shortcuts */}
-            <Card className="overflow-hidden transition-shadow hover:shadow-md">
+            <Card
+              className="overflow-hidden transition-shadow hover:shadow-md hardware-accelerated"
+              style={{ transition: createTransition(["box-shadow"]) }}
+            >
               <Tabs defaultValue="files">
                 <CardHeader className="pb-0">
                   <div className="flex items-center justify-between">
@@ -1046,13 +941,15 @@ export default function Dashboard() {
                     <TabsList>
                       <TabsTrigger
                         value="files"
-                        className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                        className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hardware-accelerated"
+                        style={{ transition: createTransition(["background-color", "color"]) }}
                       >
                         Files
                       </TabsTrigger>
                       <TabsTrigger
                         value="links"
-                        className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                        className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hardware-accelerated"
+                        style={{ transition: createTransition(["background-color", "color"]) }}
                       >
                         Links
                       </TabsTrigger>
@@ -1065,7 +962,8 @@ export default function Dashboard() {
                       documents.map((file, i) => (
                         <div
                           key={file.id}
-                          className="flex items-center justify-between hover:bg-muted/50 transition-colors duration-200 p-2 rounded-md group"
+                          className="flex items-center justify-between hover:bg-muted/50 transition-colors duration-200 p-2 rounded-md group hardware-accelerated"
+                          style={{ transition: createTransition(["background-color"]) }}
                         >
                           <div className="flex items-center gap-3">
                             <FileText className="h-4 w-4" />
@@ -1080,7 +978,8 @@ export default function Dashboard() {
                               size="icon"
                               aria-label={`Download ${file.title}`}
                               onClick={() => handleDownloadDocument(file)}
-                              className="transition-colors hover:bg-muted active:scale-95"
+                              className="transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                              style={{ transition: createTransition(["background-color", "transform"]) }}
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -1089,7 +988,8 @@ export default function Dashboard() {
                               size="icon"
                               aria-label={`Delete ${file.title}`}
                               onClick={() => handleDeleteRequest("document", file.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95 hardware-accelerated"
+                              style={{ transition: createTransition(["opacity", "background-color", "transform"]) }}
                             >
                               <Trash2 className="h-4 w-4 text-muted-foreground" />
                             </Button>
@@ -1102,29 +1002,49 @@ export default function Dashboard() {
                   </TabsContent>
                   <TabsContent value="links" className="mt-4 space-y-4">
                     {links.length > 0 ? (
-                      links.map((link, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between hover:bg-muted/50 transition-colors duration-200 p-2 rounded-md"
-                        >
-                          <div className="flex items-center gap-3">
-                            {link.icon}
-                            <div>
-                              <p className="text-sm font-medium">{link.name}</p>
-                              <p className="text-xs text-muted-foreground truncate max-w-[12rem]">{link.url}</p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Open ${link.name}`}
-                            onClick={() => handleOpenLink(link)}
-                            className="transition-colors hover:bg-muted active:scale-95"
+                      links.map((link, i) => {
+                        // Map string identifiers to actual React components
+                        let IconComponent
+                        switch (link.iconType) {
+                          case "globe":
+                            IconComponent = <Globe className="h-4 w-4" />
+                            break
+                          case "calendar":
+                            IconComponent = <Calendar className="h-4 w-4" />
+                            break
+                          case "fileText":
+                            IconComponent = <FileText className="h-4 w-4" />
+                            break
+                          default:
+                            IconComponent = <Globe className="h-4 w-4" />
+                        }
+
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between hover:bg-muted/50 transition-colors duration-200 p-2 rounded-md hardware-accelerated"
+                            style={{ transition: createTransition(["background-color"]) }}
                           >
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))
+                            <div className="flex items-center gap-3">
+                              {IconComponent}
+                              <div>
+                                <p className="text-sm font-medium">{link.name}</p>
+                                <p className="text-xs text-muted-foreground truncate max-w-[12rem]">{link.url}</p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Open ${link.name}`}
+                              onClick={() => handleOpenLink(link)}
+                              className="transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+                              style={{ transition: createTransition(["background-color", "transform"]) }}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )
+                      })
                     ) : (
                       <EmptyState icon={Globe} title="No links yet" description="Your links will appear here" />
                     )}
@@ -1195,7 +1115,8 @@ export default function Dashboard() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-auto p-1 transition-colors hover:bg-muted active:scale-95"
+              className="h-auto p-1 transition-colors hover:bg-muted active:scale-95 hardware-accelerated"
+              style={{ transition: createTransition(["background-color", "transform"]) }}
               onClick={handleMarkAllAsRead}
             >
               Mark all as read
@@ -1204,10 +1125,14 @@ export default function Dashboard() {
           <DropdownMenuSeparator />
           <div className="max-h-80 overflow-y-auto">
             {activities.length > 0 ? (
-              activities.slice(0, 5).map((activity) => (
+              activities.slice(0, 5).map((activity, index) => (
                 <DropdownMenuItem
                   key={activity.id}
-                  className="flex flex-col items-start p-3 cursor-default hover:bg-muted focus:bg-muted transition-colors"
+                  className="flex flex-col items-start p-3 cursor-default hover:bg-muted focus:bg-muted transition-colors stagger-item hardware-accelerated"
+                  style={{
+                    transition: createTransition(["background-color"]),
+                    animationDelay: `${index * 50}ms`,
+                  }}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <Avatar className="h-6 w-6">
@@ -1230,7 +1155,8 @@ export default function Dashboard() {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="justify-center cursor-pointer hover:bg-muted focus:bg-muted transition-colors"
+            className="justify-center cursor-pointer hover:bg-muted focus:bg-muted transition-colors hardware-accelerated"
+            style={{ transition: createTransition(["background-color"]) }}
             onClick={() => {
               setNotificationsOpen(false)
               setAllActivitiesOpen(true)
