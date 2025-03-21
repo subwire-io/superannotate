@@ -1,0 +1,170 @@
+Input: Create a cookie consent banner with accept and decline options 
+
+Response: I'll create a cookie consent banner with accept and decline options using Next.js.
+<thinking>
+I'll create a cookie consent banner with accept and decline options using Next.js.
+
+Thought for 6 secondsLet me analyze this task carefully:
+
+1. The user wants a cookie consent banner with accept and decline options
+2. It needs to be built with Next.js
+3. I need to limit it to no more than 5 UI elements according to the definition provided in the workspace
+
+
+According to the definition of UI elements in the workspace, I should count distinct, cohesive interactive components. For a cookie banner, I'll need:
+
+1. The banner container itself (primary content display area)
+2. Text content explaining cookie usage
+3. Accept button (primary action)
+4. Decline button (primary action)
+
+
+That's 4 UI elements, which is within the limit of 5 for a simple UI.
+
+For implementation, I'll need:
+
+- A client component with state management to track if the banner is shown
+- Local storage to remember user's choice
+- Proper styling with Tailwind CSS
+- Accessibility considerations
+
+
+I'll create a cookie-banner.tsx component that can be imported into the layout.tsx file.
+</thinking>
+
+I'll create a cookie consent banner with accept and decline options using Next.js.
+
+Thought for 6 secondsLet me analyze this task carefully:
+
+1. The user wants a cookie consent banner with accept and decline options
+2. It needs to be built with Next.js
+3. I need to limit it to no more than 5 UI elements according to the definition provided in the workspace
+
+
+According to the definition of UI elements in the workspace, I should count distinct, cohesive interactive components. For a cookie banner, I'll need:
+
+1. The banner container itself (primary content display area)
+2. Text content explaining cookie usage
+3. Accept button (primary action)
+4. Decline button (primary action)
+
+
+That's 4 UI elements, which is within the limit of 5 for a simple UI.
+
+For implementation, I'll need:
+
+- A client component with state management to track if the banner is shown
+- Local storage to remember user's choice
+- Proper styling with Tailwind CSS
+- Accessibility considerations
+
+
+I'll create a cookie-banner.tsx component that can be imported into the layout.tsx file.
+
+```typescriptreact
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { X } from 'lucide-react'
+
+export default function CookieBanner() {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    // Check if user has already made a choice
+    const cookieConsent = localStorage.getItem("cookieConsent")
+    if (cookieConsent === null) {
+      setIsVisible(true)
+    }
+  }, [])
+
+  const acceptCookies = () => {
+    localStorage.setItem("cookieConsent", "accepted")
+    setIsVisible(false)
+  }
+
+  const declineCookies = () => {
+    localStorage.setItem("cookieConsent", "declined")
+    setIsVisible(false)
+  }
+
+  if (!isVisible) {
+    return null
+  }
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t shadow-lg dark:bg-gray-800 dark:border-gray-700">
+      <div className="container flex flex-col sm:flex-row items-center justify-between gap-4 mx-auto">
+        <div className="flex-1">
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept", you consent to our use of cookies.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={declineCookies}
+            aria-label="Decline cookies"
+          >
+            Decline
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={acceptCookies}
+            aria-label="Accept cookies"
+          >
+            Accept
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+```typescriptreact
+import { Inter } from 'next/font/google'
+import { ThemeProvider } from "@/components/theme-provider"
+import CookieBanner from "@/components/cookie-banner"
+import "./globals.css"
+
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata = {
+  title: "Cookie Consent Example",
+  description: "A simple cookie consent banner example",
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <CookieBanner />
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+1. Responsive cookie consent banner that appears at the bottom of the screen
+2. Accept and decline buttons with appropriate styling
+3. Persistent user choice stored in localStorage
+4. Accessibility features including proper button labels
+5. Dark mode support with appropriate color adjustments
+
+
+The cookie banner will appear at the bottom of the screen when a user first visits the site. Once they make a choice (accept or decline), their preference is stored in localStorage and the banner won't appear again on subsequent visits. The component is fully responsive and works in both light and dark modes.
