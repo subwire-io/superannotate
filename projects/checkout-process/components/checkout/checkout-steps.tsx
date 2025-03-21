@@ -18,7 +18,7 @@ export function CheckoutSteps({ steps, currentStep }: CheckoutStepsProps) {
           <div key={step.id} className="flex flex-col items-center">
             <div
               className={`
-              flex items-center justify-center w-10 h-10 rounded-full border-2
+              flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
               ${
                 index <= currentStep
                   ? "bg-primary border-primary text-primary-foreground"

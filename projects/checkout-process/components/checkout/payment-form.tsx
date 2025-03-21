@@ -1,98 +1,121 @@
 "use client"
 
-import type React from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 
-interface PaymentFormData {
-  cardName: string
-  cardNumber: string
-  expiryDate: string
-  cvv: string
-}
+// Define validation schema
+const paymentFormSchema = z.object({
+  cardName: z.string().min(2, "Name must be at least 2 characters"),
+  cardNumber: z
+    .string()
+    .min(13, "Card number must be between 13-19 digits")
+    .max(19, "Card number must be between 13-19 digits")
+    .regex(/^[0-9\s]+$/, "Card number must contain only digits and spaces"),
+  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/[0-9]{2}$/, "Expiry date must be in MM/YY format"),
+  cvv: z
+    .string()
+    .min(3, "CVV must be 3-4 digits")
+    .max(4, "CVV must be 3-4 digits")
+    .regex(/^[0-9]+$/, "CVV must contain only digits"),
+})
+
+type PaymentFormValues = z.infer<typeof paymentFormSchema>
 
 interface PaymentFormProps {
-  formData: PaymentFormData
-  updateFormData: (data: Partial<PaymentFormData>) => void
+  formData: PaymentFormValues
+  updateFormData: (data: Partial<PaymentFormValues>) => void
+  onNext: () => void
 }
 
-export function PaymentForm({ formData, updateFormData }: PaymentFormProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    updateFormData({ [name]: value })
+export function PaymentForm({ formData, updateFormData, onNext }: PaymentFormProps) {
+  const form = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentFormSchema),
+    defaultValues: formData,
+    mode: "onChange",
+  })
+
+  function onSubmit(data: PaymentFormValues) {
+    updateFormData(data)
+    onNext()
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label htmlFor="cardName" className="block text-sm font-medium mb-1">
-            Name on Card
-          </label>
-          <input
-            id="cardName"
-            name="cardName"
-            type="text"
-            value={formData.cardName}
-            onChange={handleChange}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          />
-        </div>
+    <Form {...form}>
+      <form id="payment-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="cardName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name on Card</FormLabel>
+              <FormControl>
+                <Input {...field} className="transition-colors focus:border-primary hover:border-input/80" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <label htmlFor="cardNumber" className="block text-sm font-medium mb-1">
-            Card Number
-          </label>
-          <input
-            id="cardNumber"
-            name="cardNumber"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9\s]{13,19}"
-            placeholder="xxxx xxxx xxxx xxxx"
-            value={formData.cardNumber}
-            onChange={handleChange}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="cardNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Card Number</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="xxxx xxxx xxxx xxxx"
+                  className="transition-colors focus:border-primary hover:border-input/80"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="expiryDate" className="block text-sm font-medium mb-1">
-              Expiry Date
-            </label>
-            <input
-              id="expiryDate"
-              name="expiryDate"
-              type="text"
-              placeholder="MM/YY"
-              pattern="(0[1-9]|1[0-2])\/[0-9]{2}"
-              value={formData.expiryDate}
-              onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="cvv" className="block text-sm font-medium mb-1">
-              CVV
-            </label>
-            <input
-              id="cvv"
-              name="cvv"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{3,4}"
-              placeholder="123"
-              value={formData.cvv}
-              onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="expiryDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Expiry Date</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="MM/YY"
+                    className="transition-colors focus:border-primary hover:border-input/80"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="cvv"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CVV</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="123"
+                    className="transition-colors focus:border-primary hover:border-input/80"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-      </div>
-    </div>
+      </form>
+    </Form>
   )
 }
 

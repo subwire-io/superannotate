@@ -1,130 +1,147 @@
 "use client"
 
-import type React from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-interface ShippingFormData {
-  fullName: string
-  address: string
-  city: string
-  state: string
-  zipCode: string
-  country: string
-}
+// Define validation schema
+const shippingFormSchema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  address: z.string().min(5, "Please enter a valid address"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  zipCode: z.string().min(5, "Please enter a valid ZIP code"),
+  country: z.string().min(1, "Please select a country"),
+})
+
+type ShippingFormValues = z.infer<typeof shippingFormSchema>
 
 interface ShippingFormProps {
-  formData: ShippingFormData
-  updateFormData: (data: Partial<ShippingFormData>) => void
+  formData: ShippingFormValues
+  updateFormData: (data: Partial<ShippingFormValues>) => void
+  onNext: () => void
 }
 
-export function ShippingForm({ formData, updateFormData }: ShippingFormProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    updateFormData({ [name]: value })
+export function ShippingForm({ formData, updateFormData, onNext }: ShippingFormProps) {
+  const form = useForm<ShippingFormValues>({
+    resolver: zodResolver(shippingFormSchema),
+    defaultValues: formData,
+    mode: "onChange",
+  })
+
+  function onSubmit(data: ShippingFormValues) {
+    updateFormData(data)
+    onNext()
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label htmlFor="fullName" className="block text-sm font-medium mb-1">
-            Full Name
-          </label>
-          <input
-            id="fullName"
-            name="fullName"
-            type="text"
-            value={formData.fullName}
-            onChange={handleChange}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          />
-        </div>
+    <Form {...form}>
+      <form id="shipping-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input {...field} className="transition-colors focus:border-primary hover:border-input/80" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium mb-1">
-            Street Address
-          </label>
-          <input
-            id="address"
-            name="address"
-            type="text"
-            value={formData.address}
-            onChange={handleChange}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Street Address</FormLabel>
+              <FormControl>
+                <Input {...field} className="transition-colors focus:border-primary hover:border-input/80" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <Input {...field} className="transition-colors focus:border-primary hover:border-input/80" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="state"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>State / Province</FormLabel>
+                <FormControl>
+                  <Input {...field} className="transition-colors focus:border-primary hover:border-input/80" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="city" className="block text-sm font-medium mb-1">
-              City
-            </label>
-            <input
-              id="city"
-              name="city"
-              type="text"
-              value={formData.city}
-              onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="state" className="block text-sm font-medium mb-1">
-              State / Province
-            </label>
-            <input
-              id="state"
-              name="state"
-              type="text"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-          </div>
-        </div>
+          <FormField
+            control={form.control}
+            name="zipCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ZIP / Postal Code</FormLabel>
+                <FormControl>
+                  <Input {...field} className="transition-colors focus:border-primary hover:border-input/80" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="zipCode" className="block text-sm font-medium mb-1">
-              ZIP / Postal Code
-            </label>
-            <input
-              id="zipCode"
-              name="zipCode"
-              type="text"
-              value={formData.zipCode}
-              onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="country" className="block text-sm font-medium mb-1">
-              Country
-            </label>
-            <select
-              id="country"
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="United States">United States</option>
-              <option value="Canada">Canada</option>
-              <option value="United Kingdom">United Kingdom</option>
-              <option value="Australia">Australia</option>
-              <option value="Germany">Germany</option>
-              <option value="France">France</option>
-              <option value="Japan">Japan</option>
-            </select>
-          </div>
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Country</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="transition-colors focus:border-primary hover:border-input/80">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="United States">United States</SelectItem>
+                    <SelectItem value="Canada">Canada</SelectItem>
+                    <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                    <SelectItem value="Australia">Australia</SelectItem>
+                    <SelectItem value="Germany">Germany</SelectItem>
+                    <SelectItem value="France">France</SelectItem>
+                    <SelectItem value="Japan">Japan</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-      </div>
-    </div>
+      </form>
+    </Form>
   )
 }
 
