@@ -45,16 +45,30 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 interface MeetingControlsProps {
   isAudioEnabled: boolean
   isVideoEnabled: boolean
   isScreenSharing: boolean
   isChatOpen: boolean
+  isParticipantsOpen: boolean
+  settings: {
+    backgroundBlur: boolean
+    muteOnEntry: boolean
+    autoRecord: boolean
+  }
+  onSaveSettings: (settings: {
+    backgroundBlur: boolean
+    muteOnEntry: boolean
+    autoRecord: boolean
+  }) => void
   onToggleAudio: () => void
   onToggleVideo: () => void
   onToggleScreenShare: () => void
   onToggleChat: () => void
+  onToggleParticipants: () => void
   onLeaveCall: () => void
   onSearch: (term: string) => void
 }
@@ -64,19 +78,35 @@ export function MeetingControls({
   isVideoEnabled,
   isScreenSharing,
   isChatOpen,
+  isParticipantsOpen,
+  settings,
+  onSaveSettings,
   onToggleAudio,
   onToggleVideo,
   onToggleScreenShare,
   onToggleChat,
+  onToggleParticipants,
   onLeaveCall,
   onSearch,
 }: MeetingControlsProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [tempSettings, setTempSettings] = useState(settings)
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
     onSearch(e.target.value)
+  }
+
+  const handleSettingsChange = (key: keyof typeof settings, value: boolean) => {
+    setTempSettings({
+      ...tempSettings,
+      [key]: value,
+    })
+  }
+
+  const saveSettings = () => {
+    onSaveSettings(tempSettings)
   }
 
   return (
@@ -95,27 +125,10 @@ export function MeetingControls({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <Dialog>
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Participants
-                </DropdownMenuItem>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Participants</DialogTitle>
-                  <DialogDescription>Current participants in the meeting</DialogDescription>
-                </DialogHeader>
-                <div className="mt-4">
-                  <p>You (Host)</p>
-                  <p>Alex Johnson</p>
-                  <p>Maria Garcia</p>
-                  <p>James Smith</p>
-                  <p>Emma Williams</p>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <DropdownMenuItem onClick={onToggleParticipants}>
+              <Users className="h-4 w-4 mr-2" />
+              {isParticipantsOpen ? "Hide participants" : "Show participants"}
+            </DropdownMenuItem>
 
             <DropdownMenuItem onSelect={() => setIsSearchOpen(true)}>
               <Search className="h-4 w-4 mr-2" />
@@ -146,20 +159,34 @@ export function MeetingControls({
                 </DialogHeader>
                 <div className="mt-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span>Enable background blur</span>
-                    <input type="checkbox" />
+                    <Label htmlFor="background-blur">Enable background blur</Label>
+                    <Switch
+                      id="background-blur"
+                      checked={tempSettings.backgroundBlur}
+                      onCheckedChange={(checked) => handleSettingsChange("backgroundBlur", checked)}
+                    />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Mute on entry</span>
-                    <input type="checkbox" defaultChecked />
+                    <Label htmlFor="mute-on-entry">Mute on entry</Label>
+                    <Switch
+                      id="mute-on-entry"
+                      checked={tempSettings.muteOnEntry}
+                      onCheckedChange={(checked) => handleSettingsChange("muteOnEntry", checked)}
+                    />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Auto-record meeting</span>
-                    <input type="checkbox" />
+                    <Label htmlFor="auto-record">Auto-record meeting</Label>
+                    <Switch
+                      id="auto-record"
+                      checked={tempSettings.autoRecord}
+                      onCheckedChange={(checked) => handleSettingsChange("autoRecord", checked)}
+                    />
                   </div>
                 </div>
                 <DialogClose asChild>
-                  <Button className="mt-4">Save Settings</Button>
+                  <Button className="mt-4" onClick={saveSettings}>
+                    Save Settings
+                  </Button>
                 </DialogClose>
               </DialogContent>
             </Dialog>

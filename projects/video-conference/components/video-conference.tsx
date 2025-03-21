@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ParticipantGrid } from "./participant-grid"
 import { ChatSidebar } from "./chat-sidebar"
 import { MeetingControls } from "./meeting-controls"
+import { ParticipantsSidebar } from "./participants-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -23,8 +24,16 @@ const initialMessages = [
   { id: 3, sender: "James Smith", content: "Sorry I'm a bit late. Had some technical issues.", time: "10:05 AM" },
 ]
 
+// Default settings
+const defaultSettings = {
+  backgroundBlur: false,
+  muteOnEntry: true,
+  autoRecord: false,
+}
+
 export default function VideoConference() {
-  const [isChatOpen, setIsChatOpen] = useState(true)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isParticipantsOpen, setIsParticipantsOpen] = useState(false)
   const [participants, setParticipants] = useState(mockParticipants)
   const [messages, setMessages] = useState(initialMessages)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
@@ -32,10 +41,41 @@ export default function VideoConference() {
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [hasLeftCall, setHasLeftCall] = useState(false)
+  const [settings, setSettings] = useState(defaultSettings)
   const { toast } = useToast()
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem("videoCallSettings")
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings))
+    }
+  }, [])
+
+  // Save settings to localStorage when they change
+  const saveSettings = (newSettings: typeof defaultSettings) => {
+    setSettings(newSettings)
+    localStorage.setItem("videoCallSettings", JSON.stringify(newSettings))
+    toast({
+      title: "Settings saved",
+      description: "Your preferences have been updated",
+    })
+  }
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
+    // Close participants sidebar if opening chat
+    if (!isChatOpen) {
+      setIsParticipantsOpen(false)
+    }
+  }
+
+  const toggleParticipants = () => {
+    setIsParticipantsOpen(!isParticipantsOpen)
+    // Close chat sidebar if opening participants
+    if (!isParticipantsOpen) {
+      setIsChatOpen(false)
+    }
   }
 
   const sendMessage = (content: string) => {
@@ -118,14 +158,6 @@ export default function VideoConference() {
     toast({
       title: "Call ended",
       description: "You've left the meeting",
-      action: (
-        <button
-          onClick={rejoinCall}
-          className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs font-medium"
-        >
-          Undo
-        </button>
-      ),
     })
   }
 
@@ -165,7 +197,7 @@ export default function VideoConference() {
     <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
       <main className="flex flex-1 overflow-hidden">
         {/* Main content area with participant grid */}
-        <div className={`relative flex-1 flex flex-col ${isChatOpen ? "md:mr-[320px]" : ""}`}>
+        <div className={`relative flex-1 flex flex-col`}>
           <div className="flex-1 p-4 overflow-auto">
             <ParticipantGrid
               participants={filteredParticipants}
@@ -179,23 +211,36 @@ export default function VideoConference() {
             isVideoEnabled={isVideoEnabled}
             isScreenSharing={isScreenSharing}
             isChatOpen={isChatOpen}
+            isParticipantsOpen={isParticipantsOpen}
+            settings={settings}
+            onSaveSettings={saveSettings}
             onToggleAudio={toggleAudio}
             onToggleVideo={toggleVideo}
             onToggleScreenShare={toggleScreenShare}
             onToggleChat={toggleChat}
+            onToggleParticipants={toggleParticipants}
             onLeaveCall={leaveCall}
             onSearch={searchParticipants}
           />
         </div>
 
         {/* Chat sidebar */}
-        <div
-          className={`fixed right-0 top-0 bottom-0 w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out z-20 ${
-            isChatOpen ? "translate-x-0" : "translate-x-full"
-          } md:translate-x-0 md:static md:w-80 md:flex-none`}
-        >
-          <ChatSidebar messages={messages} onSendMessage={sendMessage} onClose={toggleChat} />
-        </div>
+        {isChatOpen && (
+          <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-none">
+            <ChatSidebar messages={messages} onSendMessage={sendMessage} onClose={toggleChat} />
+          </div>
+        )}
+
+        {/* Participants sidebar */}
+        {isParticipantsOpen && (
+          <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-none">
+            <ParticipantsSidebar
+              participants={participants}
+              onClose={toggleParticipants}
+              onPinParticipant={togglePinParticipant}
+            />
+          </div>
+        )}
       </main>
       <Toaster />
     </div>
