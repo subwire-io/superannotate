@@ -2,11 +2,11 @@ import type { EventCategory } from "@/types/event"
 
 export function CategoryLegend() {
   const categories: { name: string; color: string; category: EventCategory }[] = [
-    { name: "Personal", color: "bg-blue-800", category: "personal" },
-    { name: "Work", color: "bg-green-800", category: "work" },
-    { name: "Meeting", color: "bg-purple-800", category: "meeting" },
-    { name: "Social", color: "bg-amber-800", category: "social" },
-    { name: "Other", color: "bg-gray-700", category: "other" },
+    { name: "Personal", color: "bg-blue-600", category: "personal" },
+    { name: "Work", color: "bg-green-600", category: "work" },
+    { name: "Meeting", color: "bg-purple-600", category: "meeting" },
+    { name: "Social", color: "bg-amber-600", category: "social" },
+    { name: "Other", color: "bg-gray-600", category: "other" },
   ]
 
   return (

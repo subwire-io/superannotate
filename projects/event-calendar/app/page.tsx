@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, isSameDay } from "date-fns"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import type { Event } from "@/types/event"
@@ -8,6 +8,8 @@ import { CalendarHeader } from "@/components/calendar-header"
 import { CalendarDay } from "@/components/calendar-day"
 import { CategoryLegend } from "@/components/category-legend"
 import { AddEventForm } from "@/components/add-event-form"
+import { Toaster } from "@/components/ui/toaster"
+import { generateId, filterEventsByQuery } from "@/lib/utils"
 
 // Sample events with current month dates
 const getCurrentMonthEvents = (): Event[] => {
@@ -44,10 +46,20 @@ const getCurrentMonthEvents = (): Event[] => {
 }
 
 export default function EventCalendarPage() {
+  // State
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
   const [events, setEvents] = useState<Event[]>(getCurrentMonthEvents())
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>(events)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [deletedEvents, setDeletedEvents] = useState<Event[]>([])
+
+  // Filter events when search query changes
+  useEffect(() => {
+    setFilteredEvents(filterEventsByQuery(events, searchQuery))
+  }, [events, searchQuery])
 
   // Calendar navigation
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
@@ -55,14 +67,43 @@ export default function EventCalendarPage() {
 
   // Event handlers
   const handleAddEvent = (newEventData: Omit<Event, "id">) => {
-    const id = Math.random().toString(36).substring(2, 11)
+    const id = generateId()
     const createdEvent = { ...newEventData, id }
     setEvents([...events, createdEvent])
-    setIsModalOpen(false)
+  }
+
+  const handleUpdateEvent = (updatedEvent: Event) => {
+    setEvents(events.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)))
+    setEditingEvent(null)
+  }
+
+  const handleDeleteEvent = (id: string) => {
+    // Store the deleted event for potential undo
+    const eventToDelete = events.find((e) => e.id === id)
+    if (eventToDelete) {
+      setDeletedEvents([...deletedEvents, eventToDelete])
+    }
+
+    // Remove the event from the list
+    setEvents(events.filter((event) => event.id !== id))
+  }
+
+  const handleUndoDelete = (event: Event) => {
+    // Add the event back to the list
+    setEvents([...events, event])
+
+    // Remove from deleted events
+    setDeletedEvents(deletedEvents.filter((e) => e.id !== event.id))
   }
 
   const handleDayClick = (day: Date) => {
     setSelectedDay(day)
+    setEditingEvent(null)
+    setIsModalOpen(true)
+  }
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event)
     setIsModalOpen(true)
   }
 
@@ -73,8 +114,11 @@ export default function EventCalendarPage() {
 
   // Filter events for a specific day
   const getEventsForDay = (day: Date) => {
-    return events.filter((event) => isSameDay(parseISO(event.date), day))
+    return filteredEvents.filter((event) => isSameDay(parseISO(event.date), day))
   }
+
+  // Check if there are any events for the current month view
+  const hasEventsInMonth = days.some((day) => getEventsForDay(day).length > 0)
 
   // Generate day cells for the calendar
   const renderDays = () => {
@@ -98,6 +142,9 @@ export default function EventCalendarPage() {
             currentMonth={currentMonth}
             isSelected={selectedDay ? isSameDay(selectedDay, day) : false}
             onSelect={handleDayClick}
+            onEditEvent={handleEditEvent}
+            onDeleteEvent={handleDeleteEvent}
+            onUndoDelete={handleUndoDelete}
           />
         ))}
       </div>
@@ -112,11 +159,22 @@ export default function EventCalendarPage() {
             currentMonth={currentMonth}
             onPrevMonth={prevMonth}
             onNextMonth={nextMonth}
-            onAddEvent={() => setIsModalOpen(true)}
+            onAddEvent={() => {
+              setEditingEvent(null)
+              setIsModalOpen(true)
+            }}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
         </CardHeader>
         <CardContent>
           {renderDays()}
+
+          {/* No events message */}
+          {!hasEventsInMonth && searchQuery && (
+            <div className="text-center py-4 text-muted-foreground">No events found matching "{searchQuery}"</div>
+          )}
+
           <CategoryLegend />
         </CardContent>
       </Card>
@@ -125,8 +183,12 @@ export default function EventCalendarPage() {
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
         onAddEvent={handleAddEvent}
+        onUpdateEvent={handleUpdateEvent}
         selectedDate={selectedDay}
+        editingEvent={editingEvent}
       />
+
+      <Toaster />
     </div>
   )
 }

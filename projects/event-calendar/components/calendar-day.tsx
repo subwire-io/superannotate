@@ -11,10 +11,21 @@ interface CalendarDayProps {
   currentMonth: Date
   isSelected: boolean
   onSelect: (day: Date) => void
+  onEditEvent: (event: Event) => void
+  onDeleteEvent: (id: string) => void
+  onUndoDelete: (event: Event) => void
 }
 
-// Update the CalendarDay component to ensure proper contrast in dark mode
-export function CalendarDay({ day, events, currentMonth, isSelected, onSelect }: CalendarDayProps) {
+export function CalendarDay({
+  day,
+  events,
+  currentMonth,
+  isSelected,
+  onSelect,
+  onEditEvent,
+  onDeleteEvent,
+  onUndoDelete,
+}: CalendarDayProps) {
   const isCurrentDay = isToday(day)
   const isDifferentMonth = !isSameMonth(day, currentMonth)
 
@@ -39,9 +50,19 @@ export function CalendarDay({ day, events, currentMonth, isSelected, onSelect }:
         )}
       </div>
       <div className="mt-1 space-y-1 max-h-16 text-xs">
-        {events.map((event) => (
-          <EventItem key={event.id} event={event} />
-        ))}
+        {events.length > 0 ? (
+          events.map((event) => (
+            <EventItem
+              key={event.id}
+              event={event}
+              onEdit={onEditEvent}
+              onDelete={onDeleteEvent}
+              onUndoDelete={onUndoDelete}
+            />
+          ))
+        ) : (
+          <div className="text-xs text-center text-muted-foreground py-1">No events</div>
+        )}
       </div>
     </button>
   )
