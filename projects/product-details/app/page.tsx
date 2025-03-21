@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Minus, Plus, ShoppingCart, Star } from "lucide-react"
@@ -17,12 +19,7 @@ const product = {
   reviewCount: 127,
   description:
     "Experience superior sound quality with our premium wireless headphones. Featuring active noise cancellation, 30-hour battery life, and comfortable over-ear design for extended listening sessions.",
-  images: [
-    "/placeholder.svg?height=600&width=600",
-    "/placeholder.svg?height=600&width=600&text=Image+2",
-    "/placeholder.svg?height=600&width=600&text=Image+3",
-    "/placeholder.svg?height=600&width=600&text=Image+4",
-  ],
+  images: ["/headphones-main.svg", "/headphones-side.svg", "/headphones-top.svg", "/headphones-detail.svg"],
   colors: [
     { name: "Black", value: "#000000" },
     { name: "Silver", value: "#C0C0C0" },
@@ -70,6 +67,11 @@ export default function ProductDetailsPage() {
   const [selectedColor, setSelectedColor] = useState(product.colors[0])
   const [quantity, setQuantity] = useState(1)
   const { toast } = useToast()
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [newReview, setNewReview] = useState({
+    rating: 5,
+    comment: "",
+  })
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
@@ -94,6 +96,15 @@ export default function ProductDetailsPage() {
     })
   }
 
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    toast({
+      title: "Review Submitted",
+      description: "Thank you for your feedback!",
+    })
+    setShowReviewForm(false)
+  }
+
   return (
     <main className="container mx-auto py-8 px-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -105,7 +116,7 @@ export default function ProductDetailsPage() {
                 src={product.images[currentImageIndex] || "/placeholder.svg"}
                 alt={`${product.name} - Image ${currentImageIndex + 1}`}
                 fill
-                className="object-cover"
+                className="object-contain p-4"
                 priority
               />
             </div>
@@ -136,7 +147,12 @@ export default function ProductDetailsPage() {
                 onClick={() => setCurrentImageIndex(index)}
                 aria-label={`View image ${index + 1}`}
               >
-                <Image src={image || "/placeholder.svg"} alt={`Thumbnail ${index + 1}`} fill className="object-cover" />
+                <Image
+                  src={image || "/placeholder.svg"}
+                  alt={`Thumbnail ${index + 1}`}
+                  fill
+                  className="object-contain p-1"
+                />
               </button>
             ))}
           </div>
@@ -236,8 +252,48 @@ export default function ProductDetailsPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Customer Reviews</h2>
-                <Button>Write a Review</Button>
+                <Button onClick={() => setShowReviewForm(!showReviewForm)}>
+                  {showReviewForm ? "Cancel" : "Write a Review"}
+                </Button>
               </div>
+
+              {showReviewForm && (
+                <form onSubmit={handleReviewSubmit} className="mb-8 p-4 border rounded-lg">
+                  <h3 className="text-lg font-medium mb-4">Your Review</h3>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-2">Rating</label>
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          onClick={() => setNewReview({ ...newReview, rating })}
+                          className="mr-1"
+                        >
+                          <Star
+                            className={`h-6 w-6 ${rating <= newReview.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="comment" className="block text-sm font-medium mb-2">
+                      Comment
+                    </label>
+                    <textarea
+                      id="comment"
+                      rows={4}
+                      className="w-full p-2 border rounded-md"
+                      value={newReview.comment}
+                      onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit">Submit Review</Button>
+                </form>
+              )}
+
               <div className="space-y-6">
                 {product.reviews.map((review) => (
                   <div key={review.id} className="border-b pb-6 last:border-0">
