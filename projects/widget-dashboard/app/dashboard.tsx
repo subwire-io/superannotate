@@ -23,6 +23,8 @@ import {
   Mail,
   Globe,
   ExternalLink,
+  Loader2,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,8 +41,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { EmptyState } from "@/components/empty-state"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // Import our custom dialogs
 import { NewMessageDialog } from "@/components/new-message-dialog"
@@ -342,6 +355,12 @@ export default function Dashboard() {
   const [links, setLinks] = useState(initialLinks)
   const [profile, setProfile] = useState<UserProfile>(userProfile)
   const [settings, setSettings] = useState<UserSettings>(userSettings)
+  const [deletedItems, setDeletedItems] = useState<
+    {
+      type: "document" | "message" | "activity"
+      item: any
+    }[]
+  >([])
 
   // Dialog states
   const [newMessageOpen, setNewMessageOpen] = useState(false)
@@ -351,6 +370,20 @@ export default function Dashboard() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [newDocumentOpen, setNewDocumentOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+
+  // Alert dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: "document" | "message" | "activity"
+    id: string
+  } | null>(null)
+
+  // Loading states
+  const [isLoading, setIsLoading] = useState<{
+    [key: string]: boolean
+  }>({})
+
+  const { toast } = useToast()
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -363,7 +396,7 @@ export default function Dashboard() {
   }
 
   // Handle sending a new message
-  const handleSendMessage = (message: { recipient: any; subject: string; content: string }) => {
+  const handleSendMessage = (message: any) => {
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
       sender: {
@@ -385,7 +418,7 @@ export default function Dashboard() {
   }
 
   // Handle creating a new document
-  const handleCreateDocument = (document: { title: string; content: string }) => {
+  const handleCreateDocument = (document: any) => {
     const newDocument: Document = {
       id: `doc-${Date.now()}`,
       title: document.title,
@@ -418,51 +451,69 @@ export default function Dashboard() {
   }
 
   // Handle scheduling a meeting
-  const handleScheduleMeeting = () => {
-    // Add a new activity for scheduling a meeting
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      user: {
-        name: profile.name,
-        avatar: profile.avatar,
-        initials: profile.initials,
-      },
-      action: "scheduled",
-      target: "Team Meeting",
-      timestamp: "Just now",
-      status: "pending",
+  const handleScheduleMeeting = async () => {
+    setIsLoading({ ...isLoading, schedule: true })
+
+    try {
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Add a new activity for scheduling a meeting
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        user: {
+          name: profile.name,
+          avatar: profile.avatar,
+          initials: profile.initials,
+        },
+        action: "scheduled",
+        target: "Team Meeting",
+        timestamp: "Just now",
+        status: "pending",
+      }
+
+      setActivities([newActivity, ...activities])
+
+      toast({
+        title: "Meeting Scheduled",
+        description: "Your team meeting has been scheduled.",
+      })
+    } finally {
+      setIsLoading({ ...isLoading, schedule: false })
     }
-
-    setActivities([newActivity, ...activities])
-
-    toast({
-      title: "Meeting Scheduled",
-      description: "Your team meeting has been scheduled.",
-    })
   }
 
   // Handle team action
-  const handleTeamAction = () => {
-    // Add a new activity for team action
-    const newActivity: Activity = {
-      id: `act-${Date.now()}`,
-      user: {
-        name: profile.name,
-        avatar: profile.avatar,
-        initials: profile.initials,
-      },
-      action: "invited",
-      target: "New Team Member",
-      timestamp: "Just now",
-      status: "pending",
+  const handleTeamAction = async () => {
+    setIsLoading({ ...isLoading, team: true })
+
+    try {
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Add a new activity for team action
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        user: {
+          name: profile.name,
+          avatar: profile.avatar,
+          initials: profile.initials,
+        },
+        action: "invited",
+        target: "New Team Member",
+        timestamp: "Just now",
+        status: "pending",
+      }
+
+      setActivities([newActivity, ...activities])
+
+      toast({
+        title: "Team Action",
+        description: "You've invited a new team member.",
+      })
+    } finally {
+      setIsLoading({ ...isLoading, team: false })
     }
-
-    setActivities([newActivity, ...activities])
-
-    toast({
-      title: "Team Action",
-      description: "You've invited a new team member.",
-    })
   }
 
   // Handle updating profile
@@ -503,6 +554,119 @@ export default function Dashboard() {
     })
   }
 
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (!itemToDelete) return
+
+    const { type, id } = itemToDelete
+
+    if (type === "document") {
+      const documentToDelete = documents.find((doc) => doc.id === id)
+      if (documentToDelete) {
+        setDeletedItems([...deletedItems, { type, item: documentToDelete }])
+        setDocuments(documents.filter((doc) => doc.id !== id))
+
+        toast({
+          title: "Document Deleted",
+          description: `"${documentToDelete.title}" has been deleted.`,
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUndo({ type, item: documentToDelete })}
+              className="hover:bg-muted"
+            >
+              Undo
+            </Button>
+          ),
+        })
+      }
+    } else if (type === "message") {
+      const messageToDelete = messages.find((msg) => msg.id === id)
+      if (messageToDelete) {
+        setDeletedItems([...deletedItems, { type, item: messageToDelete }])
+        setMessages(messages.filter((msg) => msg.id !== id))
+
+        toast({
+          title: "Message Deleted",
+          description: "The message has been deleted.",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUndo({ type, item: messageToDelete })}
+              className="hover:bg-muted"
+            >
+              Undo
+            </Button>
+          ),
+        })
+      }
+    } else if (type === "activity") {
+      const activityToDelete = activities.find((act) => act.id === id)
+      if (activityToDelete) {
+        setDeletedItems([...deletedItems, { type, item: activityToDelete }])
+        setActivities(activities.filter((act) => act.id !== id))
+
+        toast({
+          title: "Activity Deleted",
+          description: "The activity has been removed from your history.",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleUndo({ type, item: activityToDelete })}
+              className="hover:bg-muted"
+            >
+              Undo
+            </Button>
+          ),
+        })
+      }
+    }
+
+    setDeleteDialogOpen(false)
+    setItemToDelete(null)
+  }
+
+  // Handle undo delete
+  const handleUndo = ({ type, item }: { type: "document" | "message" | "activity"; item: any }) => {
+    if (type === "document") {
+      setDocuments([item, ...documents])
+    } else if (type === "message") {
+      setMessages([item, ...messages])
+    } else if (type === "activity") {
+      setActivities([item, ...activities])
+    }
+
+    setDeletedItems(
+      deletedItems.filter((deletedItem) => !(deletedItem.type === type && deletedItem.item.id === item.id)),
+    )
+
+    toast({
+      title: "Item Restored",
+      description: "The deleted item has been restored.",
+    })
+  }
+
+  // Handle delete request
+  const handleDeleteRequest = (type: "document" | "message" | "activity", id: string) => {
+    setItemToDelete({ type, id })
+    setDeleteDialogOpen(true)
+  }
+
+  // Mark all notifications as read
+  const handleMarkAllAsRead = () => {
+    setMessages(messages.map((message) => ({ ...message, read: true })))
+
+    toast({
+      title: "Notifications Cleared",
+      description: "All notifications have been marked as read.",
+    })
+
+    setNotificationsOpen(false)
+  }
+
   return (
     <div className={`min-h-screen bg-background ${darkMode ? "dark" : ""}`}>
       <div className="flex flex-col">
@@ -519,6 +683,7 @@ export default function Dashboard() {
                   checked={darkMode}
                   onCheckedChange={toggleDarkMode}
                   aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
                 <Label htmlFor="dark-mode" className="sr-only">
                   Toggle dark mode
@@ -534,12 +699,19 @@ export default function Dashboard() {
                 size="icon"
                 aria-label="Show notifications"
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative transition-colors hover:bg-muted active:scale-95"
               >
                 <Bell className="h-5 w-5 text-muted-foreground" />
+                {messages.some((msg) => !msg.read) && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
+                )}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full transition-colors hover:bg-muted active:scale-95"
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={profile.avatar} alt={profile.name} />
                       <AvatarFallback>{profile.initials}</AvatarFallback>
@@ -549,11 +721,17 @@ export default function Dashboard() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setProfileOpen(true)}
+                    className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted"
+                  >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setSettingsOpen(true)}
+                    className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted"
+                  >
                     <Cog className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
@@ -569,7 +747,7 @@ export default function Dashboard() {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Weather Widget */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden transition-shadow hover:shadow-md">
               <CardHeader className="pb-2">
                 <CardTitle>Weather</CardTitle>
                 <CardDescription>{weatherData.location}</CardDescription>
@@ -602,57 +780,90 @@ export default function Dashboard() {
             </Card>
 
             {/* Recent Activities Widget */}
-            <Card className="overflow-hidden md:col-span-2 lg:col-span-1">
+            <Card className="overflow-hidden transition-shadow hover:shadow-md md:col-span-2 lg:col-span-1">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Recent Activities</CardTitle>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="transition-colors hover:bg-muted active:scale-95">
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Menu</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setAllActivitiesOpen(true)}>View all</DropdownMenuItem>
-                      <DropdownMenuItem>Mark all as read</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setAllActivitiesOpen(true)}
+                        className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted"
+                      >
+                        View all
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer transition-colors hover:bg-muted focus:bg-muted">
+                        Mark all as read
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="space-y-0 divide-y" role="log" aria-live="polite" aria-label="Recent activities">
-                  {activities.slice(0, 5).map((activity) => (
-                    <div key={activity.id} className="flex items-center justify-between px-6 py-3">
-                      <div className="flex items-center gap-4">
-                        <Avatar>
-                          {activity.user.avatar ? (
-                            <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
-                          ) : null}
-                          <AvatarFallback>{activity.user.initials}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {activity.user.name} <span className="text-muted-foreground">{activity.action}</span>{" "}
-                            {activity.target}
-                            <StatusBadge status={activity.status} />
-                          </p>
-                          <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                {activities.length > 0 ? (
+                  <div className="space-y-0 divide-y" role="log" aria-live="polite" aria-label="Recent activities">
+                    {activities.slice(0, 5).map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-center justify-between px-6 py-3 hover:bg-muted/50 transition-colors duration-200"
+                      >
+                        <div className="flex items-center gap-4">
+                          <Avatar>
+                            {activity.user.avatar ? (
+                              <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
+                            ) : null}
+                            <AvatarFallback>{activity.user.initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {activity.user.name} <span className="text-muted-foreground">{activity.action}</span>{" "}
+                              {activity.target}
+                              <StatusBadge status={activity.status} />
+                            </p>
+                            <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                          </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95"
+                          onClick={() => handleDeleteRequest("activity", activity.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          <span className="sr-only">Delete activity</span>
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Calendar}
+                    title="No activities yet"
+                    description="Activities will appear here as you and your team work"
+                    className="py-12"
+                  />
+                )}
               </CardContent>
               <CardFooter className="border-t bg-muted/50 p-3">
-                <Button variant="ghost" size="sm" className="w-full" onClick={() => setAllActivitiesOpen(true)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full transition-colors hover:bg-muted active:scale-95"
+                  onClick={() => setAllActivitiesOpen(true)}
+                >
                   View all activities
                 </Button>
               </CardFooter>
             </Card>
 
             {/* Quick Actions Widget */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden transition-shadow hover:shadow-md">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
                 <CardDescription>Commonly used functions and tools</CardDescription>
@@ -661,7 +872,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <Button
                     variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5"
+                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
                     onClick={() => setNewDocumentOpen(true)}
                   >
                     <FileText className="h-6 w-6 text-primary" aria-hidden="true" />
@@ -669,7 +880,7 @@ export default function Dashboard() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5"
+                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
                     onClick={() => setNewMessageOpen(true)}
                   >
                     <MessageSquare className="h-6 w-6 text-primary" aria-hidden="true" />
@@ -677,56 +888,106 @@ export default function Dashboard() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5"
+                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
                     onClick={handleScheduleMeeting}
+                    disabled={isLoading.schedule}
                   >
-                    <Calendar className="h-6 w-6 text-primary" aria-hidden="true" />
-                    <span className="text-xs font-medium">Schedule</span>
+                    {isLoading.schedule ? (
+                      <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Calendar className="h-6 w-6 text-primary" aria-hidden="true" />
+                    )}
+                    <span className="text-xs font-medium">{isLoading.schedule ? "Scheduling..." : "Schedule"}</span>
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5"
+                    className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-colors active:scale-95"
                     onClick={handleTeamAction}
+                    disabled={isLoading.team}
                   >
-                    <Users className="h-6 w-6 text-primary" aria-hidden="true" />
-                    <span className="text-xs font-medium">Team</span>
+                    {isLoading.team ? (
+                      <Loader2 className="h-6 w-6 text-primary animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Users className="h-6 w-6 text-primary" aria-hidden="true" />
+                    )}
+                    <span className="text-xs font-medium">{isLoading.team ? "Processing..." : "Team"}</span>
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* Messages Widget */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden transition-shadow hover:shadow-md">
               <CardHeader>
                 <CardTitle>Messages</CardTitle>
                 <CardDescription>Recent conversations</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="space-y-0 divide-y" aria-label="Message list">
-                  {messages.slice(0, 3).map((message, i) => (
-                    <div key={message.id} className="flex items-center gap-4 p-4">
-                      <Avatar>
-                        {message.sender.avatar ? (
-                          <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
-                        ) : (
-                          <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${i + 1}`} alt="Avatar" />
-                        )}
-                        <AvatarFallback>{message.sender.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">{message.sender.name}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[15rem]">{message.content}</p>
+                {messages.length > 0 ? (
+                  <div className="space-y-0 divide-y" aria-label="Message list">
+                    {messages.slice(0, 3).map((message, i) => (
+                      <div
+                        key={message.id}
+                        className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors duration-200 group"
+                      >
+                        <Avatar>
+                          {message.sender.avatar ? (
+                            <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+                          ) : (
+                            <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${i + 1}`} alt="Avatar" />
+                          )}
+                          <AvatarFallback>{message.sender.initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center">
+                            <p className="text-sm font-medium leading-none">{message.sender.name}</p>
+                            {!message.read && (
+                              <span
+                                className="ml-2 h-2 w-2 rounded-full bg-blue-500"
+                                aria-label="Unread message"
+                              ></span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate max-w-[15rem]">{message.content}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">{message.timestamp}</div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95"
+                            onClick={() => handleDeleteRequest("message", message.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="sr-only">Delete message</span>
+                          </Button>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground whitespace-nowrap">{message.timestamp}</div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Mail}
+                    title="No messages yet"
+                    description="Messages will appear here as you communicate with your team"
+                    className="py-12"
+                  />
+                )}
               </CardContent>
               <CardFooter className="border-t bg-muted/50 p-3 flex justify-between">
-                <Button variant="ghost" size="sm" onClick={() => setAllMessagesOpen(true)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="transition-colors hover:bg-muted active:scale-95"
+                  onClick={() => setAllMessagesOpen(true)}
+                >
                   View all
                 </Button>
-                <Button size="sm" onClick={() => setNewMessageOpen(true)}>
+                <Button
+                  size="sm"
+                  className="transition-transform active:scale-95"
+                  onClick={() => setNewMessageOpen(true)}
+                >
                   <Mail className="mr-2 h-4 w-4" />
                   New Message
                 </Button>
@@ -734,7 +995,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Stats Widget */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden transition-shadow hover:shadow-md">
               <CardHeader>
                 <CardTitle>Stats Overview</CardTitle>
                 <CardDescription>Your activity metrics</CardDescription>
@@ -774,64 +1035,96 @@ export default function Dashboard() {
             </Card>
 
             {/* Quick Access / Shortcuts */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden transition-shadow hover:shadow-md">
               <Tabs defaultValue="files">
                 <CardHeader className="pb-0">
                   <div className="flex items-center justify-between">
                     <CardTitle>Quick Access</CardTitle>
                     <TabsList>
-                      <TabsTrigger value="files">Files</TabsTrigger>
-                      <TabsTrigger value="links">Links</TabsTrigger>
+                      <TabsTrigger
+                        value="files"
+                        className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                      >
+                        Files
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="links"
+                        className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                      >
+                        Links
+                      </TabsTrigger>
                     </TabsList>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <TabsContent value="files" className="mt-4 space-y-4">
-                    {documents.map((file, i) => (
-                      <div key={file.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-4 w-4" />
-                          <div>
-                            <p className="text-sm font-medium">{file.title}</p>
-                            <p className="text-xs text-muted-foreground">{file.lastModified}</p>
+                    {documents.length > 0 ? (
+                      documents.map((file, i) => (
+                        <div
+                          key={file.id}
+                          className="flex items-center justify-between hover:bg-muted/50 transition-colors duration-200 p-2 rounded-md group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-4 w-4" />
+                            <div>
+                              <p className="text-sm font-medium">{file.title}</p>
+                              <p className="text-xs text-muted-foreground">{file.lastModified}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Download ${file.title}`}
+                              onClick={() => handleDownloadDocument(file)}
+                              className="transition-colors hover:bg-muted active:scale-95"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Delete ${file.title}`}
+                              onClick={() => handleDeleteRequest("document", file.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95"
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                      ))
+                    ) : (
+                      <EmptyState icon={FileText} title="No files yet" description="Your files will appear here" />
+                    )}
+                  </TabsContent>
+                  <TabsContent value="links" className="mt-4 space-y-4">
+                    {links.length > 0 ? (
+                      links.map((link, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between hover:bg-muted/50 transition-colors duration-200 p-2 rounded-md"
+                        >
+                          <div className="flex items-center gap-3">
+                            {link.icon}
+                            <div>
+                              <p className="text-sm font-medium">{link.name}</p>
+                              <p className="text-xs text-muted-foreground truncate max-w-[12rem]">{link.url}</p>
+                            </div>
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={`Download ${file.title}`}
-                            onClick={() => handleDownloadDocument(file)}
+                            aria-label={`Open ${link.name}`}
+                            onClick={() => handleOpenLink(link)}
+                            className="transition-colors hover:bg-muted active:scale-95"
                           >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" aria-label={`More options for ${file.title}`}>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    ))}
-                  </TabsContent>
-                  <TabsContent value="links" className="mt-4 space-y-4">
-                    {links.map((link, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {link.icon}
-                          <div>
-                            <p className="text-sm font-medium">{link.name}</p>
-                            <p className="text-xs text-muted-foreground truncate max-w-[12rem]">{link.url}</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Open ${link.name}`}
-                          onClick={() => handleOpenLink(link)}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <EmptyState icon={Globe} title="No links yet" description="Your links will appear here" />
+                    )}
                   </TabsContent>
                 </CardContent>
               </Tabs>
@@ -877,6 +1170,27 @@ export default function Dashboard() {
         onCreateDocument={handleCreateDocument}
       />
 
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will delete the selected item. You can undo this action afterward if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="transition-colors hover:bg-muted active:scale-95">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 transition-colors active:scale-95"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Notifications */}
       <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
         <DropdownMenuTrigger asChild>
@@ -885,31 +1199,45 @@ export default function Dashboard() {
         <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel className="flex items-center justify-between">
             <span>Notifications</span>
-            <Button variant="ghost" size="sm" className="h-auto p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-1 transition-colors hover:bg-muted active:scale-95"
+              onClick={handleMarkAllAsRead}
+            >
               Mark all as read
             </Button>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <div className="max-h-80 overflow-y-auto">
-            {activities.slice(0, 5).map((activity) => (
-              <DropdownMenuItem key={activity.id} className="flex flex-col items-start p-3 cursor-default">
-                <div className="flex items-center gap-2 mb-1">
-                  <Avatar className="h-6 w-6">
-                    {activity.user.avatar ? <AvatarImage src={activity.user.avatar} alt={activity.user.name} /> : null}
-                    <AvatarFallback className="text-xs">{activity.user.initials}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{activity.user.name}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {activity.action} {activity.target}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
-              </DropdownMenuItem>
-            ))}
+            {activities.length > 0 ? (
+              activities.slice(0, 5).map((activity) => (
+                <DropdownMenuItem
+                  key={activity.id}
+                  className="flex flex-col items-start p-3 cursor-default hover:bg-muted focus:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Avatar className="h-6 w-6">
+                      {activity.user.avatar ? (
+                        <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
+                      ) : null}
+                      <AvatarFallback className="text-xs">{activity.user.initials}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{activity.user.name}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {activity.action} {activity.target}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">No notifications to display</div>
+            )}
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="justify-center"
+            className="justify-center cursor-pointer hover:bg-muted focus:bg-muted transition-colors"
             onClick={() => {
               setNotificationsOpen(false)
               setAllActivitiesOpen(true)

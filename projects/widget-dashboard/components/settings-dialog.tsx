@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
+import { Loader2 } from "lucide-react"
 
 type UserSettings = {
   notifications: {
@@ -50,10 +51,18 @@ export function SettingsDialog({
   onToggleDarkMode: () => void
 }) {
   const [editedSettings, setEditedSettings] = useState<UserSettings>(settings)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSave = () => {
-    onUpdateSettings(editedSettings)
-    onOpenChange(false)
+  const handleSave = async () => {
+    setIsSubmitting(true)
+    try {
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      onUpdateSettings(editedSettings)
+      onOpenChange(false)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -66,9 +75,24 @@ export function SettingsDialog({
 
         <Tabs defaultValue="notifications" className="pt-2">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
+            <TabsTrigger
+              value="notifications"
+              className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger
+              value="appearance"
+              className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Appearance
+            </TabsTrigger>
+            <TabsTrigger
+              value="privacy"
+              className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Privacy
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="notifications" className="space-y-4 pt-4">
@@ -87,6 +111,7 @@ export function SettingsDialog({
                       notifications: { ...editedSettings.notifications, email: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
 
@@ -104,6 +129,7 @@ export function SettingsDialog({
                       notifications: { ...editedSettings.notifications, push: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
 
@@ -123,6 +149,7 @@ export function SettingsDialog({
                       notifications: { ...editedSettings.notifications, sms: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
 
@@ -140,6 +167,7 @@ export function SettingsDialog({
                       notifications: { ...editedSettings.notifications, inApp: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
             </div>
@@ -158,7 +186,10 @@ export function SettingsDialog({
                     })
                   }
                 >
-                  <SelectTrigger id="theme-select">
+                  <SelectTrigger
+                    id="theme-select"
+                    className="transition-colors hover:bg-muted focus:ring-1 focus:ring-ring"
+                  >
                     <SelectValue placeholder="Select theme" />
                   </SelectTrigger>
                   <SelectContent>
@@ -180,7 +211,10 @@ export function SettingsDialog({
                     })
                   }
                 >
-                  <SelectTrigger id="density-select">
+                  <SelectTrigger
+                    id="density-select"
+                    className="transition-colors hover:bg-muted focus:ring-1 focus:ring-ring"
+                  >
                     <SelectValue placeholder="Select density" />
                   </SelectTrigger>
                   <SelectContent>
@@ -205,6 +239,7 @@ export function SettingsDialog({
                       appearance: { ...editedSettings.appearance, animations: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
 
@@ -213,7 +248,12 @@ export function SettingsDialog({
                   <Label htmlFor="dark-mode">Dark Mode</Label>
                   <p className="text-sm text-muted-foreground">Toggle between light and dark mode.</p>
                 </div>
-                <Switch id="dark-mode" checked={darkMode} onCheckedChange={onToggleDarkMode} />
+                <Switch
+                  id="dark-mode"
+                  checked={darkMode}
+                  onCheckedChange={onToggleDarkMode}
+                  className="transition-opacity data-[state=checked]:bg-primary"
+                />
               </div>
             </div>
           </TabsContent>
@@ -231,7 +271,10 @@ export function SettingsDialog({
                     })
                   }
                 >
-                  <SelectTrigger id="profile-visibility">
+                  <SelectTrigger
+                    id="profile-visibility"
+                    className="transition-colors hover:bg-muted focus:ring-1 focus:ring-ring"
+                  >
                     <SelectValue placeholder="Select visibility" />
                   </SelectTrigger>
                   <SelectContent>
@@ -256,6 +299,7 @@ export function SettingsDialog({
                       privacy: { ...editedSettings.privacy, activityStatus: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
 
@@ -273,6 +317,7 @@ export function SettingsDialog({
                       privacy: { ...editedSettings.privacy, readReceipts: checked },
                     })
                   }
+                  className="transition-opacity data-[state=checked]:bg-primary"
                 />
               </div>
             </div>
@@ -280,10 +325,24 @@ export function SettingsDialog({
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="transition-colors hover:bg-muted active:scale-95"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave} disabled={isSubmitting} className="transition-transform active:scale-95">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,5 +1,9 @@
 "use client"
 
+import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import type * as z from "zod"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -10,10 +14,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState } from "react"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Loader2 } from "lucide-react"
+import { profileFormSchema, passwordFormSchema } from "@/lib/schemas"
 
 type UserProfile = {
   name: string
@@ -37,12 +42,55 @@ export function ProfileDialog({
   profile: UserProfile
   onUpdateProfile: (profile: UserProfile) => void
 }) {
-  const [editedProfile, setEditedProfile] = useState<UserProfile>(profile)
   const [activeTab, setActiveTab] = useState("info")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSave = () => {
-    onUpdateProfile(editedProfile)
-    onOpenChange(false)
+  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      name: profile.name,
+      email: profile.email,
+      department: profile.department,
+      location: profile.location,
+      bio: profile.bio,
+    },
+  })
+
+  const passwordForm = useForm<z.infer<typeof passwordFormSchema>>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  })
+
+  const onSubmitProfile = async (data: z.infer<typeof profileFormSchema>) => {
+    setIsSubmitting(true)
+    try {
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      onUpdateProfile({
+        ...profile,
+        ...data,
+      })
+      onOpenChange(false)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const onSubmitPassword = async (data: z.infer<typeof passwordFormSchema>) => {
+    setIsSubmitting(true)
+    try {
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Password update would happen here
+      passwordForm.reset()
+      onOpenChange(false)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -54,7 +102,7 @@ export function ProfileDialog({
         </DialogHeader>
 
         <div className="flex flex-col items-center gap-4 py-4">
-          <Avatar className="h-24 w-24">
+          <Avatar className="h-24 w-24 transition-transform hover:scale-105">
             {profile.avatar ? <AvatarImage src={profile.avatar} alt={profile.name} /> : null}
             <AvatarFallback className="text-2xl">{profile.initials}</AvatarFallback>
           </Avatar>
@@ -66,78 +114,178 @@ export function ProfileDialog({
 
         <Tabs defaultValue="info" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="info">Personal Info</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger
+              value="info"
+              className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Personal Info
+            </TabsTrigger>
+            <TabsTrigger
+              value="security"
+              className="transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Security
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="info" className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={editedProfile.name}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={profileForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={profileForm.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bio</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={editedProfile.email}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="department">Department</Label>
-                <Input
-                  id="department"
-                  value={editedProfile.department}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, department: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={editedProfile.location}
-                  onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="bio">Bio</Label>
-              <Input
-                id="bio"
-                value={editedProfile.bio}
-                onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
-              />
-            </div>
+                <DialogFooter className="mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="transition-colors hover:bg-muted active:scale-95"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting} className="transition-transform active:scale-95">
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </TabsContent>
           <TabsContent value="security" className="space-y-4 pt-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input id="current-password" type="password" />
-              </div>
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type="password" />
-              </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input id="confirm-password" type="password" />
-              </div>
-            </div>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} className="space-y-4">
+                <FormField
+                  control={passwordForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Password</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter className="mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="transition-colors hover:bg-muted active:scale-95"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting} className="transition-transform active:scale-95">
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Password"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </TabsContent>
         </Tabs>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
