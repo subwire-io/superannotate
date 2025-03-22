@@ -91,3 +91,10 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .step-content {
+    padding: 1rem;
+  }
+}
+

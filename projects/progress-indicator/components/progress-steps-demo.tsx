@@ -1,13 +1,9 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import ProgressSteps, { type Step } from "./progress-steps"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-
-// Import the AlertDialog components
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,24 +13,27 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-
 import { useToast } from "@/hooks/use-toast"
+import { Check } from "lucide-react"
 
-// Add toast hook
 export default function ProgressStepsDemo() {
   const [showSuccess, setShowSuccess] = useState(false)
+  const [currentStepId, setCurrentStepId] = useState(1)
+  const [showResetDialog, setShowResetDialog] = useState(false)
   const { toast } = useToast()
 
-  // Update the reset handler to show toast
+  // Reset handler to restart the process
   const handleReset = () => {
+    setShowResetDialog(false)
     setShowSuccess(false)
+    setCurrentStepId(1)
+
     toast({
       title: "Progress reset",
       description: "Your progress has been reset to the beginning.",
       action: (
-        <Button variant="outline" size="sm" onClick={() => setShowSuccess(true)} className="hover:bg-secondary">
+        <Button variant="outline" size="sm" onClick={() => setShowSuccess(true)}>
           Undo
         </Button>
       ),
@@ -68,63 +67,47 @@ export default function ProgressStepsDemo() {
     setShowSuccess(true)
   }
 
-  // Replace the simple button with AlertDialog for confirmation
+  // Success screen with Start Again button
   if (showSuccess) {
     return (
-      <Card className="w-full max-w-3xl mx-auto">
-        <CardContent className="pt-6 flex flex-col items-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckIcon className="h-8 w-8 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Process Completed!</h2>
-          <p className="text-muted-foreground text-center mb-6">You have successfully completed all the steps.</p>
+      <>
+        <Card className="w-full max-w-3xl mx-auto">
+          <CardContent className="pt-6 px-4 sm:px-6 flex flex-col items-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
+              <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Process Completed!</h2>
+            <p className="text-muted-foreground text-center mb-6">You have successfully completed all the steps.</p>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button className="transition-all duration-300 hover:bg-primary/90">Start Again</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Reset Progress?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will reset all your progress. Are you sure you want to start over?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="transition-all duration-300 hover:bg-secondary">Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleReset}
-                  className="transition-all duration-300 hover:bg-destructive/90"
-                >
-                  Reset
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
+            <Button onClick={() => setShowResetDialog(true)}>Start Again</Button>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent className="bg-[#0a0f1a] border-[#1a2030] w-[calc(100%-2rem)] max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl">Reset Progress?</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground text-base">
+                This will reset all your progress. Are you sure you want to start over?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-6">
+              <AlertDialogCancel
+                className="bg-transparent border-[#1a2030] hover:bg-[#1a2030] hover:text-white"
+                onClick={() => setShowResetDialog(false)}
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction className="bg-white text-black hover:bg-gray-200" onClick={handleReset}>
+                Reset
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     )
   }
 
-  return <ProgressSteps steps={steps} onComplete={handleComplete} />
-}
-
-function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
+  return <ProgressSteps steps={steps} initialStep={currentStepId} onComplete={handleComplete} />
 }
 
