@@ -7,16 +7,6 @@ import type { Event } from "@/types/event"
 import { colorMap } from "@/types/event"
 import { Button } from "@/components/ui/button"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -35,29 +25,43 @@ interface EventItemProps {
 }
 
 export function EventItem({ event, onEdit, onDelete, onUndoDelete }: EventItemProps) {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEventDetails, setShowEventDetails] = useState(false)
   const { toast } = useToast()
 
-  const handleDelete = () => {
-    setShowDeleteDialog(false)
+  // Simplified delete handler - no confirmation dialog
+  const handleDelete = (e: React.MouseEvent) => {
+    // Stop propagation to prevent day selection
+    e.stopPropagation()
+
+    // Close the details dialog first
+    setShowEventDetails(false)
 
     // Store the event for potential undo
     const deletedEvent = { ...event }
 
-    // Delete the event
-    onDelete(event.id)
+    // Delete the event after dialog closes
+    setTimeout(() => {
+      onDelete(event.id)
 
-    // Show toast with undo option
-    toast({
-      title: "Event deleted",
-      description: "The event has been removed from your calendar",
-      action: (
-        <Button variant="outline" size="sm" onClick={() => onUndoDelete(deletedEvent)} className="ml-2">
-          Undo
-        </Button>
-      ),
-    })
+      // Show toast with undo option
+      toast({
+        title: "Event deleted",
+        description: "The event has been removed from your calendar",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              onUndoDelete(deletedEvent)
+            }}
+            className="ml-2"
+          >
+            Undo
+          </Button>
+        ),
+      })
+    }, 100)
   }
 
   const handleEventClick = (e: React.MouseEvent) => {
@@ -65,6 +69,16 @@ export function EventItem({ event, onEdit, onDelete, onUndoDelete }: EventItemPr
     e.stopPropagation()
     // Show event details
     setShowEventDetails(true)
+  }
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowEventDetails(false)
+
+    // Use setTimeout to ensure the dialog is fully closed before opening the edit form
+    setTimeout(() => {
+      onEdit(event)
+    }, 100)
   }
 
   return (
@@ -79,8 +93,22 @@ export function EventItem({ event, onEdit, onDelete, onUndoDelete }: EventItemPr
       </div>
 
       {/* Event details dialog */}
-      <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog
+        open={showEventDetails}
+        onOpenChange={(open) => {
+          // Only allow the dialog to be closed by clicking close button or outside
+          if (!open) {
+            setShowEventDetails(false)
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-[425px]"
+          onPointerDownOutside={(e) => {
+            // Prevent clicks outside the dialog from triggering day selection
+            e.preventDefault()
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{event.title}</DialogTitle>
             <DialogDescription>
@@ -100,41 +128,15 @@ export function EventItem({ event, onEdit, onDelete, onUndoDelete }: EventItemPr
             )}
           </div>
           <DialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowEventDetails(false)
-                onEdit(event)
-              }}
-            >
+            <Button variant="outline" onClick={handleEditClick}>
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setShowEventDetails(false)
-                setShowDeleteDialog(true)
-              }}
-            >
+            <Button variant="destructive" onClick={handleDelete}>
               Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>This will remove "{event.title}" from your calendar.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   )
 }

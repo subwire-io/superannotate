@@ -56,7 +56,7 @@ export default function EventCalendarPage() {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [selectedCategories, setSelectedCategories] = useState<EventCategory[]>([])
-  const [deletedEvents, setDeletedEvents] = useState<Event[]>([])
+  const [isDeleting, setIsDeleting] = useState(false) // Track deletion state
 
   // Filter events when category filter changes
   useEffect(() => {
@@ -86,37 +86,39 @@ export default function EventCalendarPage() {
   const handleAddEvent = (newEventData: Omit<Event, "id">) => {
     const id = generateId()
     const createdEvent = { ...newEventData, id }
-    setEvents([...events, createdEvent])
+    setEvents((prev) => [...prev, createdEvent])
   }
 
   const handleUpdateEvent = (updatedEvent: Event) => {
-    setEvents(events.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)))
+    setEvents((prev) => prev.map((event) => (event.id === updatedEvent.id ? updatedEvent : event)))
     setEditingEvent(null)
   }
 
   const handleDeleteEvent = (id: string) => {
-    // Store the deleted event for potential undo
-    const eventToDelete = events.find((e) => e.id === id)
-    if (eventToDelete) {
-      setDeletedEvents([...deletedEvents, eventToDelete])
-    }
+    // Set deleting state to prevent add event modal from opening
+    setIsDeleting(true)
 
-    // Remove the event from the list
-    setEvents(events.filter((event) => event.id !== id))
+    // Simple direct deletion
+    setEvents((prev) => prev.filter((event) => event.id !== id))
+
+    // Reset deleting state after a short delay
+    setTimeout(() => {
+      setIsDeleting(false)
+    }, 300)
   }
 
   const handleUndoDelete = (event: Event) => {
     // Add the event back to the list
-    setEvents([...events, event])
-
-    // Remove from deleted events
-    setDeletedEvents(deletedEvents.filter((e) => e.id !== event.id))
+    setEvents((prev) => [...prev, event])
   }
 
   const handleDayClick = (day: Date) => {
-    setSelectedDay(day)
-    setEditingEvent(null)
-    setIsModalOpen(true)
+    // Only open the add event modal if we're not in the middle of a delete operation
+    if (!isDeleting) {
+      setSelectedDay(day)
+      setEditingEvent(null)
+      setIsModalOpen(true)
+    }
   }
 
   const handleEditEvent = (event: Event) => {
@@ -177,8 +179,10 @@ export default function EventCalendarPage() {
             onPrevMonth={prevMonth}
             onNextMonth={nextMonth}
             onAddEvent={() => {
-              setEditingEvent(null)
-              setIsModalOpen(true)
+              if (!isDeleting) {
+                setEditingEvent(null)
+                setIsModalOpen(true)
+              }
             }}
             selectedCategories={selectedCategories}
             onCategoryToggle={handleCategoryToggle}

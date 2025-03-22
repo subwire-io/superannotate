@@ -15,7 +15,7 @@ export function Toaster() {
             {description && <ToastDescription>{description}</ToastDescription>}
           </div>
           {action}
-          <ToastClose />
+          <ToastClose onClick={(e) => e.stopPropagation()} />
         </Toast>
       ))}
       <ToastViewport />

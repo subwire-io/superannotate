@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { format, isToday, isSameMonth } from "date-fns"
 import { Badge } from "@/components/ui/badge"
 import type { Event } from "@/types/event"
@@ -29,17 +31,27 @@ export function CalendarDay({
   const isCurrentDay = isToday(day)
   const isDifferentMonth = !isSameMonth(day, currentMonth)
 
+  const handleDayClick = (e: React.MouseEvent) => {
+    // Only trigger day selection if the click was directly on the day cell
+    // and not on a child element that might have its own click handler
+    if (e.currentTarget === e.target) {
+      onSelect(day)
+    }
+  }
+
   return (
-    <button
+    <div
       className={`
-        h-16 sm:h-24 p-1 border text-left overflow-y-auto transition-colors
+        h-16 sm:h-24 p-1 border text-left overflow-y-auto transition-colors cursor-pointer
         ${isCurrentDay ? "bg-muted/50 border-primary" : "hover:bg-muted/30"}
         ${isSelected ? "ring-2 ring-primary" : ""}
         ${isDifferentMonth ? "text-muted-foreground opacity-50" : ""}
       `}
-      onClick={() => onSelect(day)}
+      onClick={handleDayClick}
       aria-selected={isSelected}
       aria-label={`${format(day, "PPPP")}, ${events.length} events`}
+      role="button"
+      tabIndex={0}
     >
       <div className="flex justify-between items-start">
         <span className={`text-sm font-medium ${isCurrentDay ? "text-primary" : ""}`}>{format(day, "d")}</span>
@@ -64,7 +76,7 @@ export function CalendarDay({
           <div className="text-xs text-center text-muted-foreground py-1 hidden sm:block">No events</div>
         )}
       </div>
-    </button>
+    </div>
   )
 }
 
