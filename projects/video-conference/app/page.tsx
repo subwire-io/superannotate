@@ -1,12 +1,7 @@
 "use client"
 
-import VideoConference from "@/components/video-conference"
+import VideoConference from "../components/video-conference"
 
-export default function Home() {
-  return (
-    <div className="h-screen">
-      <VideoConference />
-    </div>
-  )
+export default function SyntheticV0PageForDeployment() {
+  return <VideoConference />
 }
-

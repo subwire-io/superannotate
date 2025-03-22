@@ -47,6 +47,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface MeetingControlsProps {
   isAudioEnabled: boolean
@@ -92,12 +93,15 @@ export function MeetingControls({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [tempSettings, setTempSettings] = useState(settings)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
+  // Handle search input changes
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
     onSearch(e.target.value)
   }
 
+  // Handle settings changes
   const handleSettingsChange = (key: keyof typeof settings, value: boolean) => {
     setTempSettings({
       ...tempSettings,
@@ -105,12 +109,14 @@ export function MeetingControls({
     })
   }
 
+  // Save settings
   const saveSettings = () => {
     onSaveSettings(tempSettings)
   }
 
   return (
-    <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+    <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between fixed bottom-0 left-0 right-0 md:relative">
+      {/* Left side controls */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium mr-2 hidden sm:inline-block">Meeting Controls</span>
         <DropdownMenu>
@@ -125,26 +131,33 @@ export function MeetingControls({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={onToggleParticipants}>
-              <Users className="h-4 w-4 mr-2" />
-              {isParticipantsOpen ? "Hide participants" : "Show participants"}
-            </DropdownMenuItem>
+            {/* Only show participants and chat options on mobile */}
+            {isMobile && (
+              <>
+                <DropdownMenuItem onClick={onToggleParticipants}>
+                  <Users className="h-4 w-4 mr-2" />
+                  {isParticipantsOpen ? "Hide participants" : "Show participants"}
+                </DropdownMenuItem>
 
-            <DropdownMenuItem onSelect={() => setIsSearchOpen(true)}>
-              <Search className="h-4 w-4 mr-2" />
-              Search participants
-            </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsSearchOpen(true)}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Search participants
+                </DropdownMenuItem>
 
+                <DropdownMenuItem onClick={onToggleChat}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  {isChatOpen ? "Hide chat" : "Show chat"}
+                </DropdownMenuItem>
+              </>
+            )}
+
+            {/* Always show screen sharing option */}
             <DropdownMenuItem onClick={onToggleScreenShare}>
               <MonitorUp className="h-4 w-4 mr-2" />
               {isScreenSharing ? "Stop sharing" : "Share screen"}
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={onToggleChat}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              {isChatOpen ? "Hide chat" : "Show chat"}
-            </DropdownMenuItem>
-
+            {/* Settings dialog */}
             <Dialog>
               <DialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -158,6 +171,7 @@ export function MeetingControls({
                   <DialogDescription>Configure your meeting preferences</DialogDescription>
                 </DialogHeader>
                 <div className="mt-4 space-y-4">
+                  {/* Settings options */}
                   <div className="flex items-center justify-between">
                     <Label htmlFor="background-blur">Enable background blur</Label>
                     <Switch
@@ -193,6 +207,7 @@ export function MeetingControls({
 
             <DropdownMenuSeparator />
 
+            {/* Leave call dialog */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem className="text-red-500" onSelect={(e) => e.preventDefault()}>
@@ -201,6 +216,7 @@ export function MeetingControls({
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent>
+                {/* Leave call confirmation */}
                 <AlertDialogHeader>
                   <AlertDialogTitle>Leave Meeting?</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -217,6 +233,7 @@ export function MeetingControls({
         </DropdownMenu>
       </div>
 
+      {/* Search overlay */}
       {isSearchOpen && (
         <div className="absolute left-0 right-0 top-0 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 z-10">
           <Input
@@ -240,7 +257,9 @@ export function MeetingControls({
         </div>
       )}
 
+      {/* Main controls */}
       <div className="flex items-center gap-3">
+        {/* Audio toggle */}
         <Button
           variant={isAudioEnabled ? "outline" : "destructive"}
           size="icon"
@@ -252,6 +271,7 @@ export function MeetingControls({
           {isAudioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
         </Button>
 
+        {/* Video toggle */}
         <Button
           variant={isVideoEnabled ? "outline" : "destructive"}
           size="icon"
@@ -263,6 +283,7 @@ export function MeetingControls({
           {isVideoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
         </Button>
 
+        {/* Leave call button (desktop) */}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="hidden sm:flex transition-all hover:bg-red-600 active:scale-95">
@@ -283,6 +304,7 @@ export function MeetingControls({
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Leave call button (mobile) */}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button

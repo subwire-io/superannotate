@@ -7,6 +7,7 @@ import { MeetingControls } from "./meeting-controls"
 import { ParticipantsSidebar } from "./participants-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/components/ui/use-toast"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 // Mock participants data
 const mockParticipants = [
@@ -43,6 +44,7 @@ export default function VideoConference() {
   const [hasLeftCall, setHasLeftCall] = useState(false)
   const [settings, setSettings] = useState(defaultSettings)
   const { toast } = useToast()
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -64,16 +66,16 @@ export default function VideoConference() {
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen)
-    // Close participants sidebar if opening chat
-    if (!isChatOpen) {
+    // Close participants sidebar if opening chat on mobile
+    if (!isChatOpen && isMobile) {
       setIsParticipantsOpen(false)
     }
   }
 
   const toggleParticipants = () => {
     setIsParticipantsOpen(!isParticipantsOpen)
-    // Close chat sidebar if opening participants
-    if (!isParticipantsOpen) {
+    // Close chat sidebar if opening participants on mobile
+    if (!isParticipantsOpen && isMobile) {
       setIsChatOpen(false)
     }
   }
@@ -197,8 +199,8 @@ export default function VideoConference() {
     <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
       <main className="flex flex-1 overflow-hidden">
         {/* Main content area with participant grid */}
-        <div className={`relative flex-1 flex flex-col`}>
-          <div className="flex-1 p-4 overflow-auto">
+        <div className={`relative flex-1 flex flex-col ${!isMobile ? "w-3/4" : "w-full"}`}>
+          <div className="flex-1 p-4 overflow-auto pb-16 md:pb-0">
             <ParticipantGrid
               participants={filteredParticipants}
               isScreenSharing={isScreenSharing}
@@ -224,21 +226,64 @@ export default function VideoConference() {
           />
         </div>
 
-        {/* Chat sidebar */}
-        {isChatOpen && (
-          <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-none">
-            <ChatSidebar messages={messages} onSendMessage={sendMessage} onClose={toggleChat} />
-          </div>
-        )}
+        {/* On mobile: conditionally render chat or participants based on which is open */}
+        {isMobile ? (
+          <>
+            {/* Mobile Chat Sidebar */}
+            <ChatSidebar messages={messages} onSendMessage={sendMessage} onClose={toggleChat} isOpen={isChatOpen} />
 
-        {/* Participants sidebar */}
-        {isParticipantsOpen && (
-          <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-none">
+            {/* Mobile Participants Sidebar */}
             <ParticipantsSidebar
               participants={participants}
               onClose={toggleParticipants}
               onPinParticipant={togglePinParticipant}
+              isOpen={isParticipantsOpen}
             />
+          </>
+        ) : (
+          /* On desktop: always show the right sidebar with tabs for chat and participants */
+          <div className="w-1/4 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex-none flex flex-col">
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+              <button
+                className={`flex-1 py-3 px-4 text-center font-medium ${
+                  isChatOpen ? "border-b-2 border-primary text-primary" : "text-gray-500"
+                }`}
+                onClick={toggleChat}
+              >
+                Chat
+              </button>
+              <button
+                className={`flex-1 py-3 px-4 text-center font-medium ${
+                  !isChatOpen ? "border-b-2 border-primary text-primary" : "text-gray-500"
+                }`}
+                onClick={toggleParticipants}
+              >
+                Participants
+              </button>
+            </div>
+
+            {/* Show either chat or participants based on which tab is active */}
+            <div className="flex-1 overflow-hidden">
+              {isChatOpen ? (
+                <div className="h-full">
+                  <ChatSidebar
+                    messages={messages}
+                    onSendMessage={sendMessage}
+                    onClose={() => {}} // No-op since we're using tabs
+                    isOpen={true}
+                  />
+                </div>
+              ) : (
+                <div className="h-full">
+                  <ParticipantsSidebar
+                    participants={participants}
+                    onClose={() => {}} // No-op since we're using tabs
+                    onPinParticipant={togglePinParticipant}
+                    isOpen={true}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>

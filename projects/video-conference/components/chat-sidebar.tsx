@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface Message {
   id: number
@@ -21,14 +23,16 @@ interface ChatSidebarProps {
   messages: Message[]
   onSendMessage: (content: string) => void
   onClose: () => void
+  isOpen: boolean
 }
 
 const formSchema = z.object({
   message: z.string().min(1, "Message cannot be empty"),
 })
 
-export function ChatSidebar({ messages, onSendMessage, onClose }: ChatSidebarProps) {
+export function ChatSidebar({ messages, onSendMessage, onClose, isOpen }: ChatSidebarProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,8 +51,9 @@ export function ChatSidebar({ messages, onSendMessage, onClose }: ChatSidebarPro
     form.reset()
   }
 
-  return (
+  const ChatContent = () => (
     <div className="flex flex-col h-full">
+      {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center">
           <MessageSquare className="h-5 w-5 mr-2" />
@@ -58,13 +63,14 @@ export function ChatSidebar({ messages, onSendMessage, onClose }: ChatSidebarPro
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="md:hidden transition-all hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
+          className="transition-all hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95"
           aria-label="Close chat"
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
+      {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length > 0 ? (
           messages.map((message) => (
@@ -90,6 +96,7 @@ export function ChatSidebar({ messages, onSendMessage, onClose }: ChatSidebarPro
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Message input form */}
       <div className="p-4 border-t">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-2">
@@ -123,5 +130,17 @@ export function ChatSidebar({ messages, onSendMessage, onClose }: ChatSidebarPro
       </div>
     </div>
   )
+
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <SheetContent side="bottom" className="h-[80vh] p-0" hideCloseButton>
+          <ChatContent />
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
+  return <ChatContent />
 }
 
