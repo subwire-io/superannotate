@@ -28,19 +28,19 @@ function StatusBadge({ status }: { status?: Activity["status"] }) {
   switch (status) {
     case "completed":
       return (
-        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
+        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200 text-xs">
           Completed
         </Badge>
       )
     case "pending":
       return (
-        <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200">
+        <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
           Pending
         </Badge>
       )
     case "failed":
       return (
-        <Badge variant="outline" className="ml-2 bg-red-50 text-red-700 border-red-200">
+        <Badge variant="outline" className="ml-2 bg-red-50 text-red-700 border-red-200 text-xs">
           Failed
         </Badge>
       )
@@ -101,22 +101,25 @@ export function AllActivitiesDialog({
               {filteredActivities.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors duration-200"
+                  className="flex items-start p-3 border rounded-lg hover:bg-muted/50 transition-colors duration-200"
                 >
-                  <div className="flex items-center gap-4">
-                    <Avatar>
+                  <div className="flex flex-1 min-w-0">
+                    <Avatar className="mt-0.5 h-8 w-8 shrink-0">
                       {activity.user.avatar ? (
                         <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
                       ) : null}
                       <AvatarFallback>{activity.user.initials}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {activity.user.name} <span className="text-muted-foreground">{activity.action}</span>{" "}
-                        {activity.target}
-                        <StatusBadge status={activity.status} />
-                      </p>
-                      <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                    <div className="ml-3 min-w-0 flex-1">
+                      <div className="text-sm font-medium">
+                        <span className="mr-1 truncate">{activity.user.name}</span>
+                        <span className="text-muted-foreground">{activity.action}</span>{" "}
+                        <span className="truncate">{activity.target}</span>
+                      </div>
+                      <div className="flex items-center mt-0.5">
+                        <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
+                        {activity.status && <StatusBadge status={activity.status} />}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -25,6 +25,7 @@ import {
   ExternalLink,
   Loader2,
   Trash2,
+  Keyboard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -99,19 +100,19 @@ function StatusBadge({ status }: { status?: Activity["status"] }) {
   switch (status) {
     case "completed":
       return (
-        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200 hardware-accelerated">
+        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200 text-xs">
           Completed
         </Badge>
       )
     case "pending":
       return (
-        <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 hardware-accelerated">
+        <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
           Pending
         </Badge>
       )
     case "failed":
       return (
-        <Badge variant="outline" className="ml-2 bg-red-50 text-red-700 border-red-200 hardware-accelerated">
+        <Badge variant="outline" className="ml-2 bg-red-50 text-red-700 border-red-200 text-xs">
           Failed
         </Badge>
       )
@@ -559,13 +560,15 @@ export default function Dashboard() {
     >
       <div className="flex flex-col">
         <header className="sticky top-0 z-10 border-b bg-background hardware-accelerated">
-          <div className="flex h-16 items-center px-4 sm:px-6">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-2 font-semibold">
               <Home className="h-5 w-5" />
               <span>Dashboard</span>
             </div>
-            <div className="ml-auto flex items-center gap-4">
-              <KeyboardShortcutsDialog />
+            <div className="ml-auto flex items-center gap-2 sm:gap-4">
+              <div className="hidden sm:block">
+                <KeyboardShortcutsDialog />
+              </div>
               <div className="flex items-center gap-2">
                 <Switch
                   id="dark-mode"
@@ -625,6 +628,17 @@ export default function Dashboard() {
                   >
                     <Cog className="mr-2 h-4 w-4" />
                     <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="sm:hidden cursor-pointer transition-colors hover:bg-muted focus:bg-muted hardware-accelerated"
+                    style={{ transition: createTransition(["background-color"]) }}
+                    onClick={() => {
+                      // This would open the keyboard shortcuts dialog
+                    }}
+                  >
+                    <Keyboard className="mr-2 h-4 w-4" />
+                    <span>Keyboard Shortcuts</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -717,32 +731,35 @@ export default function Dashboard() {
                     {activities.slice(0, 5).map((activity, index) => (
                       <div
                         key={activity.id}
-                        className="flex items-center justify-between px-6 py-3 hover:bg-muted/50 transition-colors duration-200 stagger-item hardware-accelerated"
+                        className="flex items-start justify-between px-4 sm:px-6 py-3 hover:bg-muted/50 transition-colors duration-200 stagger-item hardware-accelerated group"
                         style={{
                           transition: createTransition(["background-color"]),
                           animationDelay: `${index * 50}ms`,
                         }}
                       >
-                        <div className="flex items-center gap-4">
-                          <Avatar>
+                        <div className="flex flex-1 min-w-0">
+                          <Avatar className="mt-0.5 h-8 w-8 shrink-0">
                             {activity.user.avatar ? (
                               <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
                             ) : null}
                             <AvatarFallback>{activity.user.initials}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {activity.user.name} <span className="text-muted-foreground">{activity.action}</span>{" "}
-                              {activity.target}
-                              <StatusBadge status={activity.status} />
-                            </p>
-                            <p className="text-xs text-muted-foreground">{activity.timestamp}</p>
+                          <div className="ml-3 min-w-0 flex-1">
+                            <div className="text-sm font-medium">
+                              <span className="mr-1 truncate">{activity.user.name}</span>
+                              <span className="text-muted-foreground">{activity.action}</span>{" "}
+                              <span className="truncate">{activity.target}</span>
+                            </div>
+                            <div className="flex items-center mt-0.5">
+                              <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
+                              {activity.status && <StatusBadge status={activity.status} />}
+                            </div>
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95 hardware-accelerated"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted active:scale-95 ml-2 hardware-accelerated"
                           style={{ transition: createTransition(["opacity", "background-color", "transform"]) }}
                           onClick={() => handleDeleteRequest("activity", activity.id)}
                         >
@@ -1134,19 +1151,27 @@ export default function Dashboard() {
                     animationDelay: `${index * 50}ms`,
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Avatar className="h-6 w-6">
+                  <div className="flex items-start gap-2 mb-1 w-full">
+                    <Avatar className="h-6 w-6 shrink-0 mt-0.5">
                       {activity.user.avatar ? (
                         <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
                       ) : null}
                       <AvatarFallback className="text-xs">{activity.user.initials}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">{activity.user.name}</span>
+                    <div className="min-w-0 w-full">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span className="text-sm font-medium truncate">{activity.user.name}</span>
+                        <span className="text-xs text-muted-foreground">{activity.action}</span>
+                        <span className="text-xs truncate">{activity.target}</span>
+                        {activity.status && (
+                          <Badge variant="outline" className="ml-auto text-xs" size="sm">
+                            {activity.status}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {activity.action} {activity.target}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
                 </DropdownMenuItem>
               ))
             ) : (

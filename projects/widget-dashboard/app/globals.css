@@ -53,6 +53,11 @@
   * {
     @apply border-border;
   }
+  html,
+  body {
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    max-width: 100%; /* Prevent elements from exceeding viewport width */
+  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -98,31 +103,31 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
   }
-  
+
   .animate-scale {
     transition-property: transform;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
   }
-  
+
   .animate-colors {
     transition-property: background-color, border-color, color, fill, stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
   }
-  
+
   /* Staggered animations for lists */
   .stagger-item {
     opacity: 0;
     animation: fadeIn 0.3s ease forwards;
   }
-  
+
   @for $i from 1 through 10 {
     .stagger-item:nth-child(#{$i}) {
       animation-delay: calc(#{$i} * 30ms);
     }
   }
-  
+
   @keyframes fadeIn {
     from {
       opacity: 0;
