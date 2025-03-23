@@ -14,14 +14,14 @@ interface PlaylistViewProps {
 
 export default function PlaylistView({ playlist, onPlaySong, currentSongId, isPlaying }: PlaylistViewProps) {
   return (
-    <div className="p-6">
-      <div className="flex items-end space-x-6 mb-6">
-        <div className="relative h-40 w-40 shadow-lg rounded-md overflow-hidden">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-end md:space-x-6 mb-6">
+        <div className="relative h-40 w-40 mx-auto md:mx-0 shadow-lg rounded-md overflow-hidden mb-4 md:mb-0">
           <Image src={playlist.coverArt || "/placeholder.svg"} alt={playlist.name} fill className="object-cover" />
         </div>
-        <div>
+        <div className="text-center md:text-left">
           <p className="text-sm font-medium uppercase text-muted-foreground">Playlist</p>
-          <h1 className="text-3xl font-bold mt-1 mb-2">{playlist.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mt-1 mb-2">{playlist.name}</h1>
           <p className="text-sm text-muted-foreground">{playlist.songs.length} songs</p>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default function PlaylistView({ playlist, onPlaySong, currentSongId, isPl
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[16px_4fr_3fr_1fr] gap-4 px-4 py-2 text-xs font-medium text-muted-foreground border-b">
+            <div className="hidden md:grid md:grid-cols-[16px_4fr_3fr_1fr] gap-4 px-4 py-2 text-xs font-medium text-muted-foreground border-b">
               <div className="text-center">#</div>
               <div>Title</div>
               <div>Album</div>
@@ -48,12 +48,12 @@ export default function PlaylistView({ playlist, onPlaySong, currentSongId, isPl
               return (
                 <div
                   key={song.id}
-                  className={`grid grid-cols-[16px_4fr_3fr_1fr] gap-4 px-4 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors ${
+                  className={`grid grid-cols-[1fr] md:grid-cols-[16px_4fr_3fr_1fr] gap-4 px-4 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors ${
                     isCurrentSong ? "bg-accent/50" : ""
                   }`}
                   onClick={() => onPlaySong(song)}
                 >
-                  <div className="flex items-center justify-center">
+                  <div className="hidden md:flex items-center justify-center">
                     {isCurrentSong && isPlaying ? (
                       <Pause className="h-4 w-4 text-primary" />
                     ) : (
@@ -73,9 +73,10 @@ export default function PlaylistView({ playlist, onPlaySong, currentSongId, isPl
                       <p className={`font-medium ${isCurrentSong ? "text-primary" : ""}`}>{song.title}</p>
                       <p className="text-xs text-muted-foreground">{song.artist}</p>
                     </div>
+                    {isCurrentSong && isPlaying && <Pause className="h-4 w-4 text-primary ml-auto md:hidden" />}
                   </div>
-                  <div className="flex items-center text-muted-foreground">{song.album}</div>
-                  <div className="flex items-center justify-end text-muted-foreground">{song.duration}</div>
+                  <div className="hidden md:flex items-center text-muted-foreground">{song.album}</div>
+                  <div className="hidden md:flex items-center justify-end text-muted-foreground">{song.duration}</div>
                 </div>
               )
             })}

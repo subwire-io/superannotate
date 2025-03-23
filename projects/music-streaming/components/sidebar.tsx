@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Home, Search, Library, PlusCircle } from "lucide-react"
+import { Library, PlusCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -14,6 +14,7 @@ interface SidebarProps {
   currentView: "playlists" | "recommendations"
   onChangeView: (view: "playlists" | "recommendations") => void
   onSelectPlaylist: (playlist: Playlist) => void
+  onAddPlaylist: (name: string) => void
   selectedPlaylistId?: string
 }
 
@@ -22,34 +23,17 @@ export default function Sidebar({
   currentView,
   onChangeView,
   onSelectPlaylist,
+  onAddPlaylist,
   selectedPlaylistId,
 }: SidebarProps) {
   const [showAddPlaylistDialog, setShowAddPlaylistDialog] = useState(false)
   const { toast } = useToast()
 
   return (
-    <div className="w-64 border-r bg-card flex flex-col h-full">
+    <aside className="w-64 border-r bg-card flex flex-col h-full md:block hidden">
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Musicify</h1>
         <nav className="space-y-2">
-          <Button variant="ghost" className="w-full justify-start" onClick={() => onChangeView("playlists")}>
-            <Home className="mr-2 h-4 w-4" />
-            Home
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={() => {
-              // Show a toast notification for now
-              toast({
-                title: "Search functionality",
-                description: "Search feature will be implemented in the next update.",
-              })
-            }}
-          >
-            <Search className="mr-2 h-4 w-4" />
-            Search
-          </Button>
           <Button
             variant="ghost"
             className={cn("w-full justify-start", currentView === "recommendations" && "bg-accent")}
@@ -67,39 +51,39 @@ export default function Sidebar({
           variant="ghost"
           size="icon"
           className="h-8 w-8 transition-colors hover:bg-accent hover:text-accent-foreground"
-          onClick={() => {
-            // Show dialog for adding new playlist
-            setShowAddPlaylistDialog(true)
-          }}
+          onClick={() => setShowAddPlaylistDialog(true)}
         >
           <PlusCircle className="h-4 w-4" />
           <span className="sr-only">Add playlist</span>
         </Button>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="px-6 py-2">
-          {playlists.map((playlist) => (
-            <Button
-              key={playlist.id}
-              variant="ghost"
-              className={cn(
-                "w-full justify-start font-normal mb-1 text-sm",
-                selectedPlaylistId === playlist.id && "bg-accent",
-              )}
-              onClick={() => onSelectPlaylist(playlist)}
-            >
-              {playlist.name}
-            </Button>
-          ))}
-        </div>
-      </ScrollArea>
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="px-6 py-2">
+            {playlists.map((playlist) => (
+              <Button
+                key={playlist.id}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start font-normal mb-1 text-sm",
+                  selectedPlaylistId === playlist.id && "bg-accent",
+                )}
+                onClick={() => onSelectPlaylist(playlist)}
+              >
+                {playlist.name}
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
       {showAddPlaylistDialog && (
         <AddPlaylistDialog
           open={showAddPlaylistDialog}
           onOpenChange={setShowAddPlaylistDialog}
           onAddPlaylist={(name) => {
-            // This would be handled by the parent component
+            onAddPlaylist(name)
             toast({
               title: "Playlist created",
               description: `"${name}" has been added to your playlists.`,
@@ -107,7 +91,7 @@ export default function Sidebar({
           }}
         />
       )}
-    </div>
+    </aside>
   )
 }
 
