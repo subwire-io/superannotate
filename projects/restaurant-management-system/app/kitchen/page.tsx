@@ -70,18 +70,18 @@ export default function KitchenPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Kitchen Display</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kitchen Display</h1>
           <p className="text-muted-foreground">View and manage active orders</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="transition-all hover:shadow-md"
+            className="transition-all hover:shadow-md w-full sm:w-auto"
           >
             {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
@@ -99,13 +99,13 @@ export default function KitchenPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {activeOrders.map((order) => (
             <Card key={order.id} className="overflow-hidden transition-all hover:shadow-md">
               <CardHeader className="pb-2 bg-muted/40">
                 <div className="flex justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
                       Table {order.tableNumber}
                       <Badge variant="outline">#{order.id}</Badge>
                     </CardTitle>
@@ -127,7 +127,7 @@ export default function KitchenPage() {
               <CardContent className="divide-y">
                 {order.items.map((item) => (
                   <div key={item.id} className={`py-3 pl-2 border-l-4 ${getItemStatusClass(item.status)}`}>
-                    <div className="flex justify-between">
+                    <div className="flex flex-col sm:flex-row justify-between gap-2">
                       <div className="font-medium">
                         {item.quantity}× {item.menuItemName}
                       </div>
@@ -135,7 +135,7 @@ export default function KitchenPage() {
                         value={item.status}
                         onValueChange={(status) => updateItemStatus(order.id, item.id, status as OrderItem["status"])}
                       >
-                        <SelectTrigger className="h-7 w-[130px]">
+                        <SelectTrigger className="h-7 w-full sm:w-[130px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

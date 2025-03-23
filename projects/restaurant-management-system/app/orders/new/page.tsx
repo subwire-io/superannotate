@@ -109,13 +109,13 @@ export default function NewOrderPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={() => router.back()}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">New Order</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">New Order</h1>
           <p className="text-muted-foreground">Create a new order for your customers</p>
         </div>
       </div>

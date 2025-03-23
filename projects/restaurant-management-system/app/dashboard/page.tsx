@@ -5,6 +5,7 @@ import { CalendarDays, DollarSign, ShoppingBag, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 import { formatCurrency } from "@/lib/utils"
 import { dashboardStats, orders, reservations } from "@/data/mock-data"
@@ -25,15 +26,15 @@ export default function DashboardPage() {
   const upcomingReservations = reservations.filter((reservation) => reservation.status === "confirmed").slice(0, 5)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">{today}</p>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -76,7 +77,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card className="col-span-1 transition-all hover:shadow-md">
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
@@ -84,31 +85,35 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {recentOrders.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentOrders.map((order) => (
-                    <TableRow key={order.id} className="transition-colors hover:bg-muted/50">
-                      <TableCell className="font-medium">#{order.id}</TableCell>
-                      <TableCell>Table {order.tableNumber}</TableCell>
-                      <TableCell>
-                        {new Date(order.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <ScrollArea className="w-full overflow-auto">
+                <div className="min-w-[400px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recentOrders.map((order) => (
+                        <TableRow key={order.id} className="transition-colors hover:bg-muted/50">
+                          <TableCell className="font-medium">#{order.id}</TableCell>
+                          <TableCell>Table {order.tableNumber}</TableCell>
+                          <TableCell>
+                            {new Date(order.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <p className="text-muted-foreground">No recent orders found</p>
@@ -134,26 +139,30 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {upcomingReservations.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Size</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {upcomingReservations.map((reservation) => (
-                    <TableRow key={reservation.id} className="transition-colors hover:bg-muted/50">
-                      <TableCell className="font-medium">{reservation.customerName}</TableCell>
-                      <TableCell>{new Date(reservation.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{reservation.time}</TableCell>
-                      <TableCell className="text-right">{reservation.partySize} guests</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <ScrollArea className="w-full overflow-auto">
+                <div className="min-w-[400px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-right">Size</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {upcomingReservations.map((reservation) => (
+                        <TableRow key={reservation.id} className="transition-colors hover:bg-muted/50">
+                          <TableCell className="font-medium">{reservation.customerName}</TableCell>
+                          <TableCell>{new Date(reservation.date).toLocaleDateString()}</TableCell>
+                          <TableCell>{reservation.time}</TableCell>
+                          <TableCell className="text-right">{reservation.partySize} guests</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <p className="text-muted-foreground">No upcoming reservations found</p>

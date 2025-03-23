@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Plus, Search } from "lucide-react"
 
 import { formatCurrency } from "@/lib/utils"
@@ -27,14 +28,14 @@ export default function OrdersPage() {
   })
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Orders</h1>
           <p className="text-muted-foreground">View and manage all orders</p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button asChild className="w-full sm:w-auto">
             <Link href="/orders/new">
               <Plus className="h-4 w-4 mr-2" /> New Order
             </Link>
@@ -43,8 +44,8 @@ export default function OrdersPage() {
       </div>
 
       <Tabs defaultValue="active" className="space-y-4">
-        <div className="flex flex-col md:flex-row justify-between gap-2">
-          <TabsList>
+        <div className="flex flex-col sm:flex-row justify-between gap-2">
+          <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="active" onClick={() => setStatusFilter("active")}>
               Active Orders
             </TabsTrigger>
@@ -55,8 +56,8 @@ export default function OrdersPage() {
               All Orders
             </TabsTrigger>
           </TabsList>
-          <div className="flex gap-2">
-            <div className="relative w-full md:w-[300px]">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <div className="relative w-full">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search orders..."
@@ -71,49 +72,53 @@ export default function OrdersPage() {
         <TabsContent value="active" className="space-y-4">
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Server</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4">
-                        No active orders found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">#{order.id}</TableCell>
-                        <TableCell>Table {order.tableNumber}</TableCell>
-                        <TableCell>{order.serverName}</TableCell>
-                        <TableCell>{order.items.length} items</TableCell>
-                        <TableCell>{formatCurrency(order.total)}</TableCell>
-                        <TableCell>
-                          {new Date(order.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/orders/${order.id}`}>View Details</Link>
-                          </Button>
-                        </TableCell>
+              <ScrollArea className="w-full overflow-auto">
+                <div className="min-w-[800px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Server</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-4">
+                            No active orders found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredOrders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium">#{order.id}</TableCell>
+                            <TableCell>Table {order.tableNumber}</TableCell>
+                            <TableCell>{order.serverName}</TableCell>
+                            <TableCell>{order.items.length} items</TableCell>
+                            <TableCell>{formatCurrency(order.total)}</TableCell>
+                            <TableCell>
+                              {new Date(order.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/orders/${order.id}`}>View Details</Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
@@ -121,26 +126,30 @@ export default function OrdersPage() {
         <TabsContent value="completed" className="space-y-4">
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Server</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      No completed orders found
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <ScrollArea className="w-full overflow-auto">
+                <div className="min-w-[800px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Server</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-4">
+                          No completed orders found
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
@@ -148,49 +157,53 @@ export default function OrdersPage() {
         <TabsContent value="all" className="space-y-4">
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Table</TableHead>
-                    <TableHead>Server</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4">
-                        No orders found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">#{order.id}</TableCell>
-                        <TableCell>Table {order.tableNumber}</TableCell>
-                        <TableCell>{order.serverName}</TableCell>
-                        <TableCell>{order.items.length} items</TableCell>
-                        <TableCell>{formatCurrency(order.total)}</TableCell>
-                        <TableCell>
-                          {new Date(order.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/orders/${order.id}`}>View Details</Link>
-                          </Button>
-                        </TableCell>
+              <ScrollArea className="w-full overflow-auto">
+                <div className="min-w-[800px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Server</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-4">
+                            No orders found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredOrders.map((order) => (
+                          <TableRow key={order.id}>
+                            <TableCell className="font-medium">#{order.id}</TableCell>
+                            <TableCell>Table {order.tableNumber}</TableCell>
+                            <TableCell>{order.serverName}</TableCell>
+                            <TableCell>{order.items.length} items</TableCell>
+                            <TableCell>{formatCurrency(order.total)}</TableCell>
+                            <TableCell>
+                              {new Date(order.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/orders/${order.id}`}>View Details</Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>

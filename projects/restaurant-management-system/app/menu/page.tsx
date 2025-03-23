@@ -103,16 +103,16 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Menu Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Menu Management</h1>
           <p className="text-muted-foreground">Create and edit your restaurant menu</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="transition-all hover:shadow-md">
+              <Button className="transition-all hover:shadow-md w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" /> Add Item
               </Button>
             </DialogTrigger>
@@ -209,8 +209,8 @@ export default function MenuPage() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between gap-2 mb-4">
-        <div className="relative w-full md:w-[300px]">
+      <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
+        <div className="relative w-full sm:w-[300px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search menu items..."
@@ -220,7 +220,7 @@ export default function MenuPage() {
           />
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full md:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
@@ -279,7 +279,7 @@ export default function MenuPage() {
                   ))}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
+              <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor={`available-${item.id}`}>Available:</Label>
                   <Switch
