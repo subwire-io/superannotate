@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatCurrency } from "@/lib/utils"
 import { dashboardStats, orders, reservations } from "@/data/mock-data"
 
-export default function DashboardPage() {
+export function DashboardPage() {
   // Calculate current day stats
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -26,7 +26,7 @@ export default function DashboardPage() {
   const upcomingReservations = reservations.filter((reservation) => reservation.status === "confirmed").slice(0, 5)
 
   return (
-    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -34,8 +34,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="transition-all hover:shadow-md">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="transition-all hover:border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -45,7 +45,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
-        <Card className="transition-all hover:shadow-md">
+        <Card className="transition-all hover:border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Orders Today</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
@@ -55,7 +55,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">+12.3% from yesterday</p>
           </CardContent>
         </Card>
-        <Card className="transition-all hover:shadow-md">
+        <Card className="transition-all hover:border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -65,7 +65,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">+5.2% from last week</p>
           </CardContent>
         </Card>
-        <Card className="transition-all hover:shadow-md">
+        <Card className="transition-all hover:border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Reservations Today</CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -77,15 +77,15 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <Card className="col-span-1 transition-all hover:shadow-md">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        <Card className="col-span-1 transition-all hover:border-primary/20">
           <CardHeader>
             <CardTitle>Recent Orders</CardTitle>
             <CardDescription>Showing the most recent 5 orders</CardDescription>
           </CardHeader>
           <CardContent>
             {recentOrders.length > 0 ? (
-              <ScrollArea className="w-full overflow-auto">
+              <ScrollArea className="w-full h-[250px]">
                 <div className="min-w-[400px]">
                   <Table>
                     <TableHeader>
@@ -121,25 +121,24 @@ export default function DashboardPage() {
             )}
           </CardContent>
           <CardFooter>
-            <Link href="/orders" className="w-full">
-              <Button
-                variant="outline"
-                className="w-full transition-all hover:bg-primary hover:text-primary-foreground"
-              >
-                View All Orders
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              className="w-full transition-all hover:bg-primary/90 hover:text-primary-foreground"
+              asChild
+            >
+              <Link href="/orders">View All Orders</Link>
+            </Button>
           </CardFooter>
         </Card>
 
-        <Card className="col-span-1 transition-all hover:shadow-md">
+        <Card className="col-span-1 transition-all hover:border-primary/20">
           <CardHeader>
             <CardTitle>Upcoming Reservations</CardTitle>
             <CardDescription>Next 5 confirmed reservations</CardDescription>
           </CardHeader>
           <CardContent>
             {upcomingReservations.length > 0 ? (
-              <ScrollArea className="w-full overflow-auto">
+              <ScrollArea className="w-full h-[250px]">
                 <div className="min-w-[400px]">
                   <Table>
                     <TableHeader>
@@ -170,18 +169,19 @@ export default function DashboardPage() {
             )}
           </CardContent>
           <CardFooter>
-            <Link href="/tables" className="w-full">
-              <Button
-                variant="outline"
-                className="w-full transition-all hover:bg-primary hover:text-primary-foreground"
-              >
-                View All Reservations
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              className="w-full transition-all hover:bg-primary/90 hover:text-primary-foreground"
+              asChild
+            >
+              <Link href="/tables">View All Reservations</Link>
+            </Button>
           </CardFooter>
         </Card>
       </div>
     </div>
   )
 }
+
+export default DashboardPage
 

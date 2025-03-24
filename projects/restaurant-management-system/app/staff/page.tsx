@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -29,7 +30,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
 import { Edit, Plus, Trash, Users } from "lucide-react"
 
 import { users } from "@/data/mock-data"
@@ -40,7 +40,6 @@ export default function StaffPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [staffList, setStaffList] = useState<User[]>(users)
   const [deletedStaff, setDeletedStaff] = useState<User | null>(null)
-  const { toast } = useToast()
 
   // Filter staff based on role and search text
   const filteredStaff = staffList.filter((user) => {
@@ -60,18 +59,13 @@ export default function StaffPage() {
       setDeletedStaff(staffToDelete)
       setStaffList(staffList.filter((staff) => staff.id !== staffId))
 
-      toast({
-        title: "Staff member deleted",
-        description: `${staffToDelete.name} has been removed`,
-        action: (
-          <Button
-            variant="outline"
-            onClick={handleUndoDelete}
-            className="transition-all hover:bg-primary hover:text-primary-foreground"
-          >
-            Undo
-          </Button>
-        ),
+      toast(`${staffToDelete.name} has been removed`, {
+        dismissible: true,
+        description: "Staff member deleted",
+        action: {
+          label: "Undo",
+          onClick: handleUndoDelete,
+        },
       })
     }
   }
@@ -82,9 +76,9 @@ export default function StaffPage() {
       setStaffList([...staffList, deletedStaff])
       setDeletedStaff(null)
 
-      toast({
-        title: "Deletion undone",
-        description: `${deletedStaff.name} has been restored`,
+      toast(`${deletedStaff.name} has been restored`, {
+        dismissible: true,
+        description: "Deletion undone",
       })
     }
   }
@@ -106,10 +100,10 @@ export default function StaffPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Staff Management</h1>
           <p className="text-muted-foreground">Manage your restaurant staff</p>
         </div>
         <div className="flex gap-2">
@@ -136,9 +130,9 @@ export default function StaffPage() {
                     avatar: "/placeholder.svg?height=40&width=40",
                   }
                   setStaffList([...staffList, newStaff])
-                  toast({
-                    title: "Staff member added",
-                    description: `${newStaff.name} has been added to the staff list`,
+                  toast(`${newStaff.name} has been added to the staff list`, {
+                    dismissible: true,
+                    description: "Staff member added",
                   })
                   ;(e.target as HTMLFormElement).reset()
                 }}
@@ -191,7 +185,7 @@ export default function StaffPage() {
         </div>
       </div>
 
-      <Card className="transition-all hover:shadow-md">
+      <Card className="transition-all hover:border-primary/20">
         <CardHeader className="flex flex-col sm:flex-row">
           <div>
             <CardTitle>Staff Directory</CardTitle>
@@ -230,19 +224,21 @@ export default function StaffPage() {
             </TabsList>
             <TabsContent value="grid" className="space-y-4">
               {filteredStaff.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="rounded-full bg-muted p-3 mb-4">
-                    <Users className="h-6 w-6 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center w-full">
+                  <div className="mx-auto max-w-md">
+                    <div className="rounded-full bg-muted p-3 mb-4 mx-auto w-fit">
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold">No staff members found</h3>
+                    <p className="text-muted-foreground mt-1">
+                      Try adjusting your search or filters to find what you're looking for.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-semibold">No staff members found</h3>
-                  <p className="text-muted-foreground mt-1">
-                    Try adjusting your search or filters to find what you're looking for.
-                  </p>
                 </div>
               ) : (
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredStaff.map((staff) => (
-                    <Card key={staff.id} className="transition-all hover:shadow-md">
+                    <Card key={staff.id} className="transition-all hover:border-primary/20">
                       <CardHeader className="text-center pb-2">
                         <div className="flex justify-center mb-2">
                           <div className="w-20 h-20 rounded-full overflow-hidden relative">
@@ -281,9 +277,9 @@ export default function StaffPage() {
                                   role: formData.get("edit-role") as UserRole,
                                 }
                                 setStaffList(staffList.map((s) => (s.id === staff.id ? updatedStaff : s)))
-                                toast({
-                                  title: "Staff member updated",
-                                  description: `${updatedStaff.name}'s information has been updated`,
+                                toast(`${updatedStaff.name}'s information has been updated`, {
+                                  dismissible: true,
+                                  description: "Staff member updated",
                                 })
                               }}
                             >
@@ -382,8 +378,16 @@ export default function StaffPage() {
                   <TableBody>
                     {filteredStaff.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-4">
-                          No staff members found
+                        <TableCell colSpan={4} className="text-center py-12 px-6">
+                          <div className="mx-auto max-w-md">
+                            <div className="rounded-full bg-muted p-3 mb-4 mx-auto w-fit">
+                              <Users className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <h3 className="text-lg font-semibold">No staff members found</h3>
+                            <p className="text-muted-foreground mt-1">
+                              Try adjusting your search or filters to find what you're looking for.
+                            </p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -427,9 +431,9 @@ export default function StaffPage() {
                                         role: formData.get("edit-role-table") as UserRole,
                                       }
                                       setStaffList(staffList.map((s) => (s.id === staff.id ? updatedStaff : s)))
-                                      toast({
-                                        title: "Staff member updated",
-                                        description: `${updatedStaff.name}'s information has been updated`,
+                                      toast(`${updatedStaff.name}'s information has been updated`, {
+                                        dismissible: true,
+                                        description: "Staff member updated",
                                       })
                                     }}
                                   >

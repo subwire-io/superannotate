@@ -16,11 +16,14 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Sidebar({ className, isCollapsed = false, isMobile = false }: SidebarProps) {
   const pathname = usePathname()
 
+  //  isCollapsed = false, isMobile = false }: SidebarProps)
+  // const pathname = usePathname()
+
   // Reduced navigation items to essential pages only
   const navItems = [
     {
       name: "Dashboard",
-      href: "/dashboard",
+      href: "/", // Updated to point to root path instead of /dashboard
       icon: Home,
     },
     {
@@ -71,7 +74,8 @@ export function Sidebar({ className, isCollapsed = false, isMobile = false }: Si
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                pathname === item.href && "bg-accent text-accent-foreground",
+                (pathname === item.href || (item.href === "/" && pathname === "/dashboard")) &&
+                  "bg-accent text-accent-foreground",
                 isCollapsed && "flex-col gap-1 py-3",
               )}
             >

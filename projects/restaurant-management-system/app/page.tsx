@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation"
+import { DashboardPage } from "@/app/dashboard/page"
 
 export default function Home() {
-  // Redirect to dashboard on main page
-  redirect("/dashboard")
+  // Show dashboard on main page instead of redirecting
+  return <DashboardPage />
 }
 

@@ -2,6 +2,10 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -28,19 +32,59 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Edit, Plus, Search, Trash } from "lucide-react"
 
 import { formatCurrency } from "@/lib/utils"
 import { menuCategories, menuItems } from "@/data/mock-data"
 import type { MenuItem } from "@/types"
 
+// Form schema for adding a menu item
+const menuItemSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  description: z.string().min(5, "Description must be at least 5 characters"),
+  price: z.coerce.number().positive("Price must be positive"),
+  categoryId: z.string().min(1, "Please select a category"),
+})
+
+// Form schema for editing a menu item
+const editMenuItemSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  description: z.string().min(5, "Description must be at least 5 characters"),
+  price: z.coerce.number().positive("Price must be positive"),
+  categoryId: z.string().min(1, "Please select a category"),
+})
+
 export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [searchText, setSearchText] = useState<string>("")
   const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>(menuItems)
   const [deletedItem, setDeletedItem] = useState<MenuItem | null>(null)
-  const { toast } = useToast()
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  // Setup form with react-hook-form for adding items
+  const addForm = useForm<z.infer<typeof menuItemSchema>>({
+    resolver: zodResolver(menuItemSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: undefined,
+      categoryId: "",
+    },
+  })
+
+  // Setup form with react-hook-form for editing items
+  const editForm = useForm<z.infer<typeof editMenuItemSchema>>({
+    resolver: zodResolver(editMenuItemSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: undefined,
+      categoryId: "",
+    },
+  })
 
   // Filter menu items based on category and search text
   const filteredItems = menuItemsList.filter((item) => {
@@ -59,9 +103,8 @@ export default function MenuPage() {
 
     const item = menuItemsList.find((item) => item.id === itemId)
     if (item) {
-      toast({
-        title: `${item.name} ${available ? "available" : "unavailable"}`,
-        description: `The item is now ${available ? "available" : "unavailable"} for ordering`,
+      toast.success(`${item.name} ${available ? "available" : "unavailable"}`, {
+        dismissible: true,
       })
     }
   }
@@ -72,19 +115,12 @@ export default function MenuPage() {
     if (itemToDelete) {
       setDeletedItem(itemToDelete)
       setMenuItemsList(menuItemsList.filter((item) => item.id !== itemId))
-
-      toast({
-        title: "Menu item deleted",
-        description: `${itemToDelete.name} has been removed from the menu`,
-        action: (
-          <Button
-            variant="outline"
-            onClick={handleUndoDelete}
-            className="transition-all hover:bg-primary hover:text-primary-foreground"
-          >
-            Undo
-          </Button>
-        ),
+      toast.success(`${itemToDelete.name} has been removed from the menu`, {
+        dismissible: true,
+        action: {
+          label: "Undo",
+          onClick: handleUndoDelete,
+        },
       })
     }
   }
@@ -94,116 +130,167 @@ export default function MenuPage() {
     if (deletedItem) {
       setMenuItemsList([...menuItemsList, deletedItem])
       setDeletedItem(null)
-
-      toast({
-        title: "Deletion undone",
-        description: `${deletedItem.name} has been restored to the menu`,
+      toast.success(`${deletedItem.name} has been restored to the menu`, {
+        dismissible: true,
       })
     }
   }
 
+  // Handle form submission for adding items
+  const onAddSubmit = (data: z.infer<typeof menuItemSchema>) => {
+    const newItem: MenuItem = {
+      id: `new-${Date.now()}`, // Ensure unique ID with timestamp to prevent collisions
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      categoryId: data.categoryId,
+      image: "/placeholder.svg?height=200&width=200",
+      available: true,
+      popular: false,
+      allergens: [],
+    }
+
+    setMenuItemsList([...menuItemsList, newItem])
+    toast.success(`${data.name} has been added to the menu`, {
+      dismissible: true,
+    })
+    addForm.reset()
+    setIsAddItemOpen(false)
+  }
+
+  // Handle edit dialog open
+  const handleEditDialogOpen = (item: MenuItem) => {
+    setEditingItem(item)
+    editForm.reset({
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      categoryId: item.categoryId,
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  // Handle edit dialog close
+  const handleEditDialogClose = () => {
+    setIsEditDialogOpen(false)
+    // Clear editing item after dialog is closed
+    setTimeout(() => {
+      setEditingItem(null)
+    }, 300)
+  }
+
+  // Handle form submission for editing items
+  const onEditSubmit = (data: z.infer<typeof editMenuItemSchema>) => {
+    if (!editingItem) return
+
+    const updatedItem = {
+      ...editingItem,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      categoryId: data.categoryId,
+    }
+
+    setMenuItemsList(menuItemsList.map((item) => (item.id === editingItem.id ? updatedItem : item)))
+    toast.success(`${data.name} has been updated`, {
+      dismissible: true,
+    })
+    setIsEditDialogOpen(false)
+  }
+
   return (
-    <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
+    <div className="flex flex-col gap-6 max-w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Menu Management</h1>
           <p className="text-muted-foreground">Create and edit your restaurant menu</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Dialog>
+          <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
             <DialogTrigger asChild>
-              <Button className="transition-all hover:shadow-md w-full sm:w-auto">
+              <Button className="transition-all hover:border-primary/50 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" /> Add Item
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-auto">
               <DialogHeader>
                 <DialogTitle>Add Menu Item</DialogTitle>
                 <DialogDescription>Create a new item for your restaurant menu</DialogDescription>
               </DialogHeader>
-              <form
-                className="space-y-4"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  const formData = new FormData(e.currentTarget)
-                  const newItem: MenuItem = {
-                    id: (menuItemsList.length + 1).toString(),
-                    name: formData.get("name") as string,
-                    description: formData.get("description") as string,
-                    price: Number.parseFloat(formData.get("price") as string),
-                    categoryId: formData.get("categoryId") as string,
-                    image: "/placeholder.svg?height=200&width=200",
-                    available: true,
-                    popular: false,
-                    allergens: [],
-                  }
-
-                  setMenuItemsList([...menuItemsList, newItem])
-
-                  toast({
-                    title: "Menu item added",
-                    description: `${newItem.name} has been added to the menu`,
-                  })
-                  ;(e.target as HTMLFormElement).reset()
-                }}
-              >
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Name
-                    </Label>
-                    <Input id="name" name="name" className="col-span-3" placeholder="Item name" required />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="description" className="text-right">
-                      Description
-                    </Label>
-                    <Input
-                      id="description"
-                      name="description"
-                      className="col-span-3"
-                      placeholder="Item description"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="price" className="text-right">
-                      Price
-                    </Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      className="col-span-3"
-                      placeholder="Item price"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="categoryId" className="text-right">
-                      Category
-                    </Label>
-                    <Select name="categoryId">
-                      <SelectTrigger id="categoryId" className="col-span-3">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {menuCategories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" className="transition-all hover:shadow-md">
-                    Add to Menu
-                  </Button>
-                </DialogFooter>
-              </form>
+              <Form {...addForm}>
+                <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
+                  <FormField
+                    control={addForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Item name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Item description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addForm.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="Item price" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addForm.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {menuCategories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="submit" className="transition-all hover:border-primary/50">
+                      Add to Menu
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
@@ -235,7 +322,7 @@ export default function MenuPage() {
       </div>
 
       {filteredItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
           <div className="rounded-full bg-muted p-3 mb-4">
             <Search className="h-6 w-6 text-muted-foreground" />
           </div>
@@ -245,9 +332,9 @@ export default function MenuPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 pb-4">
           {filteredItems.map((item) => (
-            <Card key={item.id} className="overflow-hidden transition-all hover:shadow-md">
+            <Card key={item.id} className="overflow-hidden transition-all hover:border-primary/20 flex flex-col h-full">
               <div className="relative h-48">
                 <Image
                   src={item.image || "/placeholder.svg?height=200&width=200"}
@@ -262,15 +349,13 @@ export default function MenuPage() {
                 )}
               </div>
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">{item.name}</CardTitle>
-                  <div className="font-bold">{formatCurrency(item.price)}</div>
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-lg break-words">{item.name}</CardTitle>
+                  <div className="font-bold whitespace-nowrap">{formatCurrency(item.price)}</div>
                 </div>
-                <CardDescription>
-                  {item.description.length > 100 ? item.description.substring(0, 100) + "..." : item.description}
-                </CardDescription>
+                <CardDescription className="break-words">{item.description}</CardDescription>
               </CardHeader>
-              <CardContent className="pb-2">
+              <CardContent className="pb-2 flex-grow">
                 <div className="flex flex-wrap gap-1">
                   {item.allergens?.map((allergen) => (
                     <span key={allergen} className="text-xs bg-muted px-2 py-1 rounded-full">
@@ -279,117 +364,29 @@ export default function MenuPage() {
                   ))}
                 </div>
               </CardContent>
-              <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor={`available-${item.id}`}>Available:</Label>
+              <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 mt-auto pt-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Label htmlFor={`available-${item.id}`} className="whitespace-nowrap">
+                    Available:
+                  </Label>
                   <Switch
                     id={`available-${item.id}`}
                     checked={item.available}
                     onCheckedChange={(checked) => handleAvailabilityChange(item.id, checked)}
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="transition-all hover:bg-accent">
-                        <Edit className="h-4 w-4 mr-2" /> Edit
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[550px]">
-                      <DialogHeader>
-                        <DialogTitle>Edit Menu Item</DialogTitle>
-                        <DialogDescription>Update this menu item</DialogDescription>
-                      </DialogHeader>
-                      <form
-                        className="space-y-4"
-                        onSubmit={(e) => {
-                          e.preventDefault()
-                          const formData = new FormData(e.currentTarget)
-
-                          const updatedItem = {
-                            ...item,
-                            name: formData.get("edit-name") as string,
-                            description: formData.get("edit-desc") as string,
-                            price: Number.parseFloat(formData.get("edit-price") as string),
-                            categoryId: formData.get("edit-category") as string,
-                          }
-
-                          setMenuItemsList(menuItemsList.map((i) => (i.id === item.id ? updatedItem : i)))
-
-                          toast({
-                            title: "Menu item updated",
-                            description: `${updatedItem.name} has been updated`,
-                          })
-                        }}
-                      >
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor={`edit-name-${item.id}`} className="text-right">
-                              Name
-                            </Label>
-                            <Input
-                              id={`edit-name-${item.id}`}
-                              name="edit-name"
-                              className="col-span-3"
-                              defaultValue={item.name}
-                              required
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor={`edit-desc-${item.id}`} className="text-right">
-                              Description
-                            </Label>
-                            <Input
-                              id={`edit-desc-${item.id}`}
-                              name="edit-desc"
-                              className="col-span-3"
-                              defaultValue={item.description}
-                              required
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor={`edit-price-${item.id}`} className="text-right">
-                              Price
-                            </Label>
-                            <Input
-                              id={`edit-price-${item.id}`}
-                              name="edit-price"
-                              type="number"
-                              step="0.01"
-                              className="col-span-3"
-                              defaultValue={item.price}
-                              required
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor={`edit-cat-${item.id}`} className="text-right">
-                              Category
-                            </Label>
-                            <Select name="edit-category" defaultValue={item.categoryId}>
-                              <SelectTrigger id={`edit-cat-${item.id}`} className="col-span-3">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {menuCategories.map((category) => (
-                                  <SelectItem key={category.id} value={category.id}>
-                                    {category.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button type="submit" className="transition-all hover:shadow-md">
-                            Save Changes
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="transition-all hover:border-primary/50 flex-1 sm:flex-auto"
+                    onClick={() => handleEditDialogOpen(item)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" /> Edit
+                  </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="transition-all hover:bg-destructive/90">
+                      <Button variant="destructive" size="sm" className="transition-all hover:border-destructive/50">
                         <Trash className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
@@ -401,10 +398,10 @@ export default function MenuPage() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel className="transition-all hover:bg-accent">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="transition-all hover:border-primary/50">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteItem(item.id)}
-                          className="transition-all hover:bg-destructive/90"
+                          className="transition-all hover:border-destructive/50"
                         >
                           Delete
                         </AlertDialogAction>
@@ -417,6 +414,94 @@ export default function MenuPage() {
           ))}
         </div>
       )}
+
+      {/* Edit Dialog - Improved to avoid reconciliation issues */}
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogClose}>
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-auto">
+          {editingItem && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Edit Menu Item</DialogTitle>
+                <DialogDescription>Update this menu item</DialogDescription>
+              </DialogHeader>
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                  <FormField
+                    control={editForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Item name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Item description" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="Item price" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {menuCategories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="submit" className="transition-all hover:border-primary/50">
+                      Save Changes
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

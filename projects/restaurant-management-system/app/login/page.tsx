@@ -47,7 +47,7 @@ export default function LoginPage() {
 
       if (user && data.password === "password") {
         // In a real app, you'd use proper auth
-        router.push("/dashboard")
+        router.push("/") // Redirect to home page instead of dashboard
       } else {
         setError("Invalid email or password")
       }

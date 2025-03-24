@@ -11,7 +11,7 @@ export function MobileNav() {
   const navItems = [
     {
       name: "Dashboard",
-      href: "/dashboard",
+      href: "/", // Updated to point to root path instead of /dashboard
       icon: Home,
     },
     {
@@ -44,8 +44,10 @@ export function MobileNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 p-2 text-xs font-medium",
-              pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground",
+              "flex flex-1 flex-col items-center gap-1 p-3 text-xs font-medium",
+              pathname === item.href || (item.href === "/" && pathname === "/dashboard")
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <item.icon className="h-5 w-5" />
