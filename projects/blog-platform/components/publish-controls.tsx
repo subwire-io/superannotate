@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Save, Trash } from "lucide-react"
 import type { UseFormReturn } from "react-hook-form"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -25,14 +26,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { SimpleInput } from "./ui/simple-input"
+import type { Post } from "@/types"
 
 const publishSchema = z.object({
   slug: z.string().min(1, "Slug is required"),
@@ -44,18 +46,23 @@ type PublishFormValues = z.infer<typeof publishSchema>
 
 interface PublishControlsProps {
   form: UseFormReturn<any>
+  isEdit: boolean
+  postId?: string
+  onClose?: () => void
+  onSave?: (post: Post) => void
 }
 
-export function PublishControls({ form: postForm }: PublishControlsProps) {
+export function PublishControls({ form: postForm, isEdit, postId, onClose, onSave }: PublishControlsProps) {
   const [isPublishing, setIsPublishing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [openDialog, setOpenDialog] = useState(false)
   const { toast } = useToast()
+  const router = useRouter()
 
   const publishForm = useForm<PublishFormValues>({
     resolver: zodResolver(publishSchema),
     defaultValues: {
-      slug: "",
+      slug: isEdit && postId ? `post-${postId}` : `post-${Date.now()}`,
       excerpt: "",
       featured: false,
     },
@@ -66,14 +73,61 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
     if (!isValid) return
 
     setIsSaving(true)
+
+    // Get the current form values
+    const formValues = postForm.getValues()
+
+    // Create a draft post
+    const draftPost: Post = {
+      id: postId || String(Date.now()),
+      title: formValues.title || "Untitled Post",
+      content: formValues.content || "",
+      category: formValues.category || "",
+      excerpt: "Draft post",
+      slug: `post-${Date.now()}`,
+      published: false,
+      featured: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    // Save to localStorage for persistence
+    const existingDrafts = JSON.parse(localStorage.getItem("draftPosts") || "[]")
+
+    // Check if we're updating an existing draft
+    const draftIndex = existingDrafts.findIndex((draft: Post) => draft.id === draftPost.id)
+
+    if (draftIndex >= 0) {
+      // Update existing draft
+      existingDrafts[draftIndex] = draftPost
+    } else {
+      // Add new draft
+      existingDrafts.push(draftPost)
+    }
+
+    localStorage.setItem("draftPosts", JSON.stringify(existingDrafts))
+
     setIsSaving(false)
 
     toast({
       title: "Draft saved",
       description: "Your post has been saved as a draft.",
     })
+
+    // Call onSave to update the parent component state
+    if (onSave) {
+      onSave(draftPost)
+    }
+
+    if (onClose) {
+      onClose()
+    }
+
+    // Force a refresh to show the new draft
+    router.refresh()
   }
 
   const handlePublish = async (data: PublishFormValues) => {
@@ -81,15 +135,68 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
     if (!isValid) return
 
     setIsPublishing(true)
+
+    // Get the current form values
+    const formValues = postForm.getValues()
+
+    // Create a published post
+    const publishedPost: Post = {
+      id: postId || String(Date.now()),
+      title: formValues.title || "Untitled Post",
+      content: formValues.content || "",
+      category: formValues.category || "",
+      excerpt: data.excerpt,
+      slug: data.slug,
+      published: true,
+      featured: data.featured,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      publishedAt: new Date(),
+    }
+
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    // Save to localStorage for persistence
+    const existingPublished = JSON.parse(localStorage.getItem("publishedPosts") || "[]")
+
+    // Check if we're updating an existing published post
+    const publishedIndex = existingPublished.findIndex((post: Post) => post.id === publishedPost.id)
+
+    if (publishedIndex >= 0) {
+      // Update existing published post
+      existingPublished[publishedIndex] = publishedPost
+    } else {
+      // Add new published post
+      existingPublished.push(publishedPost)
+
+      // If this was a draft being published, remove it from drafts
+      const existingDrafts = JSON.parse(localStorage.getItem("draftPosts") || "[]")
+      const updatedDrafts = existingDrafts.filter((draft: Post) => draft.id !== publishedPost.id)
+      localStorage.setItem("draftPosts", JSON.stringify(updatedDrafts))
+    }
+
+    localStorage.setItem("publishedPosts", JSON.stringify(existingPublished))
+
     setIsPublishing(false)
     setOpenDialog(false)
 
     toast({
-      title: "Post published",
-      description: "Your post has been published successfully.",
+      title: isEdit ? "Post updated" : "Post published",
+      description: isEdit ? "Your post has been updated successfully." : "Your post has been published successfully.",
     })
+
+    // Call onSave to update the parent component state
+    if (onSave) {
+      onSave(publishedPost)
+    }
+
+    if (onClose) {
+      onClose()
+    }
+
+    // Force a refresh to show the new published post
+    router.refresh()
   }
 
   const handleDelete = async () => {
@@ -97,9 +204,18 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const deletedPost = {
-      id: "123",
+      id: postId || "123",
       title: postForm.getValues().title || "Untitled Post",
     }
+
+    // Remove from localStorage
+    const existingDrafts = JSON.parse(localStorage.getItem("draftPosts") || "[]")
+    const updatedDrafts = existingDrafts.filter((draft: Post) => draft.id !== deletedPost.id)
+    localStorage.setItem("draftPosts", JSON.stringify(updatedDrafts))
+
+    const existingPublished = JSON.parse(localStorage.getItem("publishedPosts") || "[]")
+    const updatedPublished = existingPublished.filter((post: Post) => post.id !== deletedPost.id)
+    localStorage.setItem("publishedPosts", JSON.stringify(updatedPublished))
 
     toast({
       title: "Post deleted",
@@ -119,6 +235,13 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
         </Button>
       ),
     })
+
+    if (onClose) {
+      onClose()
+    }
+
+    // Force a refresh to update the UI
+    router.refresh()
   }
 
   return (
@@ -142,13 +265,15 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogTrigger asChild>
           <Button size="sm" className="hover:bg-primary/90 transition-colors">
-            Publish
+            {isEdit ? "Update" : "Publish"}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Publish Post</DialogTitle>
-            <DialogDescription>Configure your post settings before publishing.</DialogDescription>
+            <DialogTitle>{isEdit ? "Update Post" : "Publish Post"}</DialogTitle>
+            <DialogDescription>
+              Configure your post settings before {isEdit ? "updating" : "publishing"}.
+            </DialogDescription>
           </DialogHeader>
           <Form {...publishForm}>
             <form onSubmit={publishForm.handleSubmit(handlePublish)} className="space-y-4 py-4">
@@ -158,9 +283,9 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
                 render={({ field }) => (
                   <FormItem className="grid grid-cols-4 items-center gap-4">
                     <FormLabel className="text-right">Slug</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="how-to-build-a-blog" className="col-span-3" />
-                    </FormControl>
+                    <div className="col-span-3">
+                      <SimpleInput placeholder="how-to-build-a-blog" {...field} />
+                    </div>
                     <FormMessage className="col-span-3 col-start-2" />
                   </FormItem>
                 )}
@@ -171,9 +296,9 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
                 render={({ field }) => (
                   <FormItem className="grid grid-cols-4 items-center gap-4">
                     <FormLabel className="text-right">Excerpt</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="A short description of your post" className="col-span-3" />
-                    </FormControl>
+                    <div className="col-span-3">
+                      <SimpleInput placeholder="A short description of your post" {...field} />
+                    </div>
                     <FormMessage className="col-span-3 col-start-2" />
                   </FormItem>
                 )}
@@ -185,9 +310,7 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
                   <FormItem className="grid grid-cols-4 items-center gap-4">
                     <FormLabel className="text-right">Featured</FormLabel>
                     <div className="col-span-3 flex items-center space-x-2">
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                       <Label>Show on homepage</Label>
                     </div>
                   </FormItem>
@@ -195,7 +318,7 @@ export function PublishControls({ form: postForm }: PublishControlsProps) {
               />
               <DialogFooter className="mt-6">
                 <Button type="submit" disabled={isPublishing} className="hover:bg-primary/90 transition-colors">
-                  {isPublishing ? "Publishing..." : "Publish Now"}
+                  {isPublishing ? (isEdit ? "Updating..." : "Publishing...") : isEdit ? "Update Now" : "Publish Now"}
                 </Button>
               </DialogFooter>
             </form>

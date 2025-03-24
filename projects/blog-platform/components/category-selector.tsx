@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Search } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { SimpleInput } from "./ui/simple-input"
 
 const categories = [
   { value: "tutorial", label: "Tutorial" },
@@ -23,6 +23,11 @@ interface CategorySelectorProps {
 
 export function CategorySelector({ value, onValueChange }: CategorySelectorProps) {
   const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredCategories = categories.filter((category) =>
+    category.label.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -38,28 +43,41 @@ export function CategorySelector({ value, onValueChange }: CategorySelectorProps
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0 sm:w-[200px]">
-        <Command>
-          <CommandInput placeholder="Search category..." />
-          <CommandList>
-            <CommandEmpty>No category found.</CommandEmpty>
-            <CommandGroup>
-              {categories.map((category) => (
-                <CommandItem
-                  key={category.value}
-                  value={category.value}
-                  onSelect={(currentValue) => {
-                    onValueChange(currentValue === value ? "" : currentValue)
-                    setOpen(false)
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check className={cn("mr-2 h-4 w-4", value === category.value ? "opacity-100" : "opacity-0")} />
-                  {category.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+        <div className="w-full">
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <SimpleInput
+              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Search category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="max-h-[300px] overflow-y-auto">
+            {filteredCategories.length === 0 ? (
+              <div className="py-6 text-center text-sm">No category found.</div>
+            ) : (
+              <div className="p-1">
+                {filteredCategories.map((category) => (
+                  <div
+                    key={category.value}
+                    className={cn(
+                      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                      value === category.value && "bg-accent text-accent-foreground",
+                    )}
+                    onClick={() => {
+                      onValueChange(category.value === value ? "" : category.value)
+                      setOpen(false)
+                    }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === category.value ? "opacity-100" : "opacity-0")} />
+                    {category.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   )

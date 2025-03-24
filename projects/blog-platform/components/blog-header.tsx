@@ -4,24 +4,18 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { Bell, Search, User, X } from "lucide-react"
+import { Search, X } from "lucide-react"
+import { SimpleInput } from "./ui/simple-input"
+import type { Post } from "@/types"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { EmptyState } from "./empty-state"
+interface BlogHeaderProps {
+  onEditPost?: (post: Post) => void
+}
 
-export function BlogHeader() {
+export function BlogHeader({ onEditPost }: BlogHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<Post[]>([])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,8 +26,30 @@ export function BlogHeader() {
       // For demo purposes, only return results if query is "next"
       if (searchQuery.toLowerCase().includes("next")) {
         setSearchResults([
-          { id: "1", title: "How to Build a Blog with Next.js", category: "Tutorial" },
-          { id: "3", title: "Server Components in Next.js", category: "Guide" },
+          {
+            id: "1",
+            title: "How to Build a Blog with Next.js",
+            content: "",
+            excerpt: "",
+            slug: "",
+            category: "Tutorial",
+            published: true,
+            featured: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: "3",
+            title: "Server Components in Next.js",
+            content: "",
+            excerpt: "",
+            slug: "",
+            category: "Guide",
+            published: true,
+            featured: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         ])
       } else {
         setSearchResults([])
@@ -47,6 +63,13 @@ export function BlogHeader() {
     setSearchResults([])
   }
 
+  const handleResultClick = (post: Post) => {
+    if (onEditPost) {
+      onEditPost(post)
+      clearSearch()
+    }
+  }
+
   return (
     <header className="sticky top-0 z-10 w-full border-b bg-background">
       <div className="flex h-16 items-center px-4 md:px-6">
@@ -56,7 +79,7 @@ export function BlogHeader() {
         <div className="ml-auto flex items-center gap-2">
           <form onSubmit={handleSearch} className="relative hidden md:flex">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
+            <SimpleInput
               type="search"
               placeholder="Search posts..."
               className="w-64 rounded-lg bg-background pl-8 pr-10"
@@ -84,10 +107,13 @@ export function BlogHeader() {
                   <ul>
                     {searchResults.map((result) => (
                       <li key={result.id}>
-                        <Link href={`/editor/${result.id}`} className="block rounded-md p-2 text-sm hover:bg-muted">
+                        <button
+                          onClick={() => handleResultClick(result)}
+                          className="block w-full text-left rounded-md p-2 text-sm hover:bg-muted"
+                        >
                           <span className="font-medium">{result.title}</span>
                           <span className="ml-2 text-xs text-muted-foreground">{result.category}</span>
-                        </Link>
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -97,42 +123,6 @@ export function BlogHeader() {
               </div>
             )}
           </form>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted">
-                <Bell className="h-5 w-5" />
-                <span className="sr-only">Notifications</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="py-6">
-                <EmptyState
-                  title="No notifications"
-                  description="You're all caught up! No new notifications."
-                  icon={<Bell className="h-8 w-8 text-muted-foreground" />}
-                />
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Account</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Help</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </header>
