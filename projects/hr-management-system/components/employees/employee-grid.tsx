@@ -238,7 +238,7 @@ export function EmployeeGrid() {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {employees.map((employee) => (
         <Card
           key={employee.id}
@@ -252,26 +252,26 @@ export function EmployeeGrid() {
               </Avatar>
             </div>
           </CardHeader>
-          <CardContent className="p-6 text-center">
+          <CardContent className="p-4 md:p-6 text-center">
             <div className="space-y-1.5">
-              <h3 className="font-semibold text-lg">{employee.name}</h3>
-              <p className="text-sm text-muted-foreground">{employee.position}</p>
+              <h3 className="font-semibold text-base md:text-lg truncate">{employee.name}</h3>
+              <p className="text-sm text-muted-foreground truncate">{employee.position}</p>
               <Badge variant="outline" className="mt-2">
                 {employee.department}
               </Badge>
             </div>
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{employee.email}</span>
+              <div className="flex items-center justify-center gap-2 text-xs md:text-sm">
+                <Mail className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground truncate">{employee.email}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{employee.phone}</span>
+              <div className="flex items-center justify-center gap-2 text-xs md:text-sm">
+                <Phone className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground truncate">{employee.phone}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{employee.location}</span>
+              <div className="flex items-center justify-center gap-2 text-xs md:text-sm">
+                <MapPin className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground truncate">{employee.location}</span>
               </div>
             </div>
           </CardContent>

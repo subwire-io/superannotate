@@ -216,7 +216,7 @@ export function RecruitmentPipeline() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {stages.map((stage) => (
             <div key={stage} className="space-y-4">
               <div className="flex items-center justify-between">
@@ -239,7 +239,9 @@ export function RecruitmentPipeline() {
                               <AvatarFallback>{candidate.initials}</AvatarFallback>
                             </Avatar>
                             <div>
-                              <CardTitle className="text-sm font-medium">{candidate.name}</CardTitle>
+                              <CardTitle className="text-sm font-medium truncate max-w-[150px]">
+                                {candidate.name}
+                              </CardTitle>
                             </div>
                           </div>
                           <DropdownMenu>
@@ -297,16 +299,16 @@ export function RecruitmentPipeline() {
                       <CardContent className="p-3 pt-2">
                         <div className="space-y-1 text-xs">
                           <div className="flex items-center gap-1 text-muted-foreground">
-                            <Briefcase className="h-3 w-3" />
-                            <span>{candidate.position}</span>
+                            <Briefcase className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{candidate.position}</span>
                           </div>
                           <div className="flex items-center gap-1 text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            <span>{candidate.location}</span>
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{candidate.location}</span>
                           </div>
                           <div className="flex items-center gap-1 text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            <span>Applied: {candidate.appliedDate}</span>
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">Applied: {candidate.appliedDate}</span>
                           </div>
                         </div>
                       </CardContent>

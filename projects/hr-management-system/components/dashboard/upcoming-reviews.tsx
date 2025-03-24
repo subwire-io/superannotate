@@ -1,7 +1,10 @@
+"use client"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CalendarDays } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 const reviews = [
   {
@@ -51,6 +54,8 @@ const reviews = [
 ]
 
 export function UpcomingReviews() {
+  const { toast } = useToast()
+
   return (
     <div className="space-y-4">
       {reviews.map((review) => (
@@ -77,13 +82,29 @@ export function UpcomingReviews() {
             >
               {review.status}
             </Badge>
-            <Button size="sm" variant="outline">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                toast({
+                  title: "Review Started",
+                  description: `Starting review for ${review.employee.name}`,
+                })
+              }}
+            >
               Review
             </Button>
           </div>
         </div>
       ))}
-      <Button className="w-full" variant="outline">
+      <Button
+        className="w-full"
+        variant="outline"
+        onClick={() => {
+          // In a real app, this would navigate to the reviews page
+          window.location.href = "/performance"
+        }}
+      >
         View All Reviews
       </Button>
     </div>

@@ -1,9 +1,12 @@
+"use client"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CalendarDays, CheckCircle2, Target } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 const goals = [
   {
@@ -93,6 +96,8 @@ const goals = [
 ]
 
 export function GoalTracking() {
+  const { toast } = useToast()
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -109,7 +114,15 @@ export function GoalTracking() {
               <SelectItem value="overdue">Overdue</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              toast({
+                title: "Add Goal",
+                description: "Opening goal creation form",
+              })
+            }}
+          >
             <Target className="mr-2 h-4 w-4" />
             Add Goal
           </Button>
@@ -160,7 +173,16 @@ export function GoalTracking() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant={goal.status === "Completed" ? "outline" : "default"} className="w-full">
+              <Button
+                variant={goal.status === "Completed" ? "outline" : "default"}
+                className="w-full"
+                onClick={() => {
+                  toast({
+                    title: goal.status === "Completed" ? "View Details" : "Update Progress",
+                    description: `${goal.status === "Completed" ? "Viewing details for" : "Updating progress for"} ${goal.title}`,
+                  })
+                }}
+              >
                 {goal.status === "Completed" ? "View Details" : "Update Progress"}
               </Button>
             </CardFooter>

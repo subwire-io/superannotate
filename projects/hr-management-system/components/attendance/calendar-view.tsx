@@ -4,7 +4,9 @@ import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { ChevronLeft, ChevronRight, Info } from "lucide-react"
+import { ChevronLeft, ChevronRight, Info, CalendarIcon } from "lucide-react"
+import { useMobile } from "@/hooks/use-mobile"
+import { Card } from "@/components/ui/card"
 
 // Mock data for the calendar
 const daysInMonth = 31 // August has 31 days
@@ -33,26 +35,10 @@ const attendanceData = {
   // Future dates have no data
 }
 
-// Sample employees for the hover card
-const sampleEmployees = {
-  late: [
-    { name: "Alex Morgan", avatar: "/placeholder.svg?height=40&width=40", initials: "AM", time: "9:15 AM" },
-    { name: "Taylor Swift", avatar: "/placeholder.svg?height=40&width=40", initials: "TS", time: "9:22 AM" },
-    { name: "Jordan Lee", avatar: "/placeholder.svg?height=40&width=40", initials: "JL", time: "9:08 AM" },
-  ],
-  absent: [
-    { name: "Casey Zhang", avatar: "/placeholder.svg?height=40&width=40", initials: "CZ" },
-    { name: "Jamie Rodriguez", avatar: "/placeholder.svg?height=40&width=40", initials: "JR" },
-  ],
-  leave: [
-    { name: "Morgan Freeman", avatar: "/placeholder.svg?height=40&width=40", initials: "MF", reason: "Vacation" },
-    { name: "Riley Johnson", avatar: "/placeholder.svg?height=40&width=40", initials: "RJ", reason: "Sick Leave" },
-  ],
-}
-
 export function CalendarView() {
   const [month, setMonth] = useState("August")
   const [year, setYear] = useState(2023)
+  const isMobile = useMobile()
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -67,23 +53,148 @@ export function CalendarView() {
     calendarDays.push(i)
   }
 
+  // Function to handle month navigation
+  const navigateMonth = (direction: "prev" | "next") => {
+    // This is a mock function since we're using static data
+    // In a real app, this would update the month and fetch new data
+    console.log(`Navigate ${direction} month`)
+  }
+
+  if (isMobile) {
+    // Mobile view - vertical list of days with attendance data
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Prev
+          </Button>
+          <div className="font-medium flex items-center">
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            {month} {year}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => navigateMonth("next")}>
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {calendarDays.map((day, index) => {
+            if (day === null) return null
+
+            const isWeekend = index % 7 === 0 || index % 7 === 6
+            const isToday = day === currentDay
+            const hasData = attendanceData[day]
+            const dayOfWeek = dayNames[index % 7]
+
+            if (isWeekend && !hasData) return null
+
+            return (
+              <Card
+                key={`day-${day}`}
+                className={`p-3 ${isToday ? "border-primary" : ""} ${isWeekend ? "bg-muted/30" : ""}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <div
+                      className={`flex items-center justify-center rounded-full w-7 h-7 mr-2 ${
+                        isToday ? "bg-primary text-primary-foreground" : "bg-muted"
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{day}</span>
+                    </div>
+                    <span className="text-sm font-medium">{dayOfWeek}</span>
+                  </div>
+
+                  {hasData && (
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 px-2">
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-80">
+                        <div className="space-y-2">
+                          <h4 className="font-medium">August {day}, 2023</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">Present</div>
+                              <div className="text-sm">{hasData.present} employees</div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">Absent</div>
+                              <div className="text-sm">{hasData.absent} employees</div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">Late</div>
+                              <div className="text-sm">{hasData.late} employees</div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">On Leave</div>
+                              <div className="text-sm">{hasData.leave} employees</div>
+                            </div>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                  )}
+                </div>
+
+                {hasData && (
+                  <div className="flex flex-wrap gap-2">
+                    {hasData.late > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-900"
+                      >
+                        {hasData.late} Late
+                      </Badge>
+                    )}
+                    {hasData.absent > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-900"
+                      >
+                        {hasData.absent} Absent
+                      </Badge>
+                    )}
+                    {hasData.leave > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-900"
+                      >
+                        {hasData.leave} Leave
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </Card>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop view - traditional calendar grid
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={() => navigateMonth("prev")}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="font-medium">
             {month} {year}
           </div>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={() => navigateMonth("next")}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 text-center">
         {dayNames.map((day) => (
           <div key={day} className="h-10 flex items-center justify-center font-medium text-sm">
             {day}
@@ -149,26 +260,30 @@ export function CalendarView() {
                 )}
               </div>
               {hasData && !isWeekend && (
-                <div className="mt-2 space-y-1">
+                <div className="mt-2 flex flex-col gap-1">
                   {hasData.late > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Badge
-                        variant="outline"
-                        className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-900"
-                      >
-                        {hasData.late} Late
-                      </Badge>
-                    </div>
+                    <Badge
+                      variant="outline"
+                      className="w-fit text-xs py-0 h-5 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-900"
+                    >
+                      {hasData.late} Late
+                    </Badge>
                   )}
                   {hasData.absent > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Badge
-                        variant="outline"
-                        className="bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-900"
-                      >
-                        {hasData.absent} Absent
-                      </Badge>
-                    </div>
+                    <Badge
+                      variant="outline"
+                      className="w-fit text-xs py-0 h-5 mt-1 bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-900"
+                    >
+                      {hasData.absent} Absent
+                    </Badge>
+                  )}
+                  {hasData.leave > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="w-fit text-xs py-0 h-5 mt-1 bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-900"
+                    >
+                      {hasData.leave} Leave
+                    </Badge>
                   )}
                 </div>
               )}

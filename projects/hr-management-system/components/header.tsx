@@ -7,9 +7,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input"
 import { useTheme } from "next-themes"
 import { Badge } from "@/components/ui/badge"
+import { useMobile } from "@/hooks/use-mobile"
 
 export default function Header() {
   const { setTheme } = useTheme()
+  const isMobile = useMobile()
   const [notifications] = useState([
     { id: 1, message: "New employee onboarding", time: "10 min ago" },
     { id: 2, message: "Performance review due", time: "1 hour ago" },
@@ -17,16 +19,17 @@ export default function Header() {
   ])
 
   return (
-    <header className="border-b bg-background p-4">
+    <header className="border-b bg-background p-2 md:p-4">
       <div className="flex items-center justify-between">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search employees, tasks..."
-            className="w-full pl-9 md:w-[300px] lg:w-[400px]"
-          />
+        {/* Add left spacer on mobile to balance the header */}
+        {isMobile && <div className="w-9"></div>}
+
+        {/* Center the search bar */}
+        <div className={`relative ${isMobile ? "w-[60%] mx-auto" : "w-full max-w-md"}`}>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input type="search" placeholder="Search..." className="w-full pl-9 text-sm md:text-base" />
         </div>
+
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

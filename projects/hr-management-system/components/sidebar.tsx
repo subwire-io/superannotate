@@ -5,16 +5,16 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Users, Calendar, BarChart2, Briefcase, Home, Settings, Menu, X } from "lucide-react"
+import { Users, Calendar, BarChart2, Briefcase, Home, Menu, X } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
 
+// Remove Settings from the navItems array
 const navItems = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Employees", href: "/employees", icon: Users },
   { name: "Attendance", href: "/attendance", icon: Calendar },
   { name: "Performance", href: "/performance", icon: BarChart2 },
   { name: "Recruitment", href: "/recruitment", icon: Briefcase },
-  { name: "Settings", href: "/settings", icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -26,9 +26,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {isMobile && (
-        <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50" onClick={toggleSidebar}>
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+      {/* Only show the hamburger menu when sidebar is closed on mobile */}
+      {isMobile && !isOpen && (
+        <Button variant="ghost" size="icon" className="fixed top-2.5 left-2 z-50 h-9 w-9" onClick={toggleSidebar}>
+          <Menu size={18} />
         </Button>
       )}
 
@@ -39,8 +40,14 @@ export default function Sidebar() {
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6">
-            <h1 className="text-xl font-bold">HR Management</h1>
+          <div className="p-6 flex items-center">
+            {/* Close button inside the sidebar */}
+            {isMobile && isOpen && (
+              <Button variant="ghost" size="icon" className="mr-2 h-9 w-9" onClick={toggleSidebar}>
+                <X size={18} />
+              </Button>
+            )}
+            <h1 className="text-xl font-bold truncate">HR Management</h1>
           </div>
           <nav className="flex-1 px-4 space-y-1">
             {navItems.map((item) => {
@@ -67,9 +74,9 @@ export default function Sidebar() {
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                 <span className="text-sm font-medium">JD</span>
               </div>
-              <div>
-                <p className="text-sm font-medium">John Doe</p>
-                <p className="text-xs text-muted-foreground">HR Manager</p>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">John Doe</p>
+                <p className="text-xs text-muted-foreground truncate">HR Manager</p>
               </div>
             </div>
           </div>

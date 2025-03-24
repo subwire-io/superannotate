@@ -130,18 +130,20 @@ export function AttendanceTable() {
             {attendanceRecords.map((record) => (
               <TableRow key={record.id}>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <Avatar className="h-7 w-7 md:h-9 md:w-9">
                       <AvatarImage src={record.employee.avatar} alt={record.employee.name} />
                       <AvatarFallback>{record.employee.initials}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="font-medium">{record.employee.name}</div>
-                      <div className="text-sm text-muted-foreground">{record.employee.department}</div>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate text-sm md:text-base">{record.employee.name}</div>
+                      <div className="text-xs md:text-sm text-muted-foreground truncate">
+                        {record.employee.department}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{record.date}</TableCell>
+                <TableCell className="text-xs md:text-sm">{record.date}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -153,13 +155,14 @@ export function AttendanceTable() {
                             ? "destructive"
                             : "secondary"
                     }
+                    className="text-xs whitespace-nowrap"
                   >
                     {record.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{record.checkIn}</TableCell>
-                <TableCell>{record.checkOut}</TableCell>
-                <TableCell>{record.workHours}</TableCell>
+                <TableCell className="text-xs md:text-sm">{record.checkIn}</TableCell>
+                <TableCell className="text-xs md:text-sm">{record.checkOut}</TableCell>
+                <TableCell className="text-xs md:text-sm">{record.workHours}</TableCell>
               </TableRow>
             ))}
           </TableBody>
