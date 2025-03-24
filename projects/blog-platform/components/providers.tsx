@@ -1,14 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { Toaster } from "@/components/ui/toaster"
+import { SonnerProvider } from "./sonner-provider"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <Toaster />
+      <SonnerProvider />
     </>
   )
 }
