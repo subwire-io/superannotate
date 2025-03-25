@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Play, Pause } from "lucide-react"
+import { Play, Pause, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Song } from "./music-interface"
 
@@ -10,6 +10,7 @@ interface RecommendationsViewProps {
   onPlaySong: (song: Song) => void
   currentSongId?: string
   isPlaying: boolean
+  onAddToPlaylist: (song: Song) => void
 }
 
 export default function RecommendationsView({
@@ -17,6 +18,7 @@ export default function RecommendationsView({
   onPlaySong,
   currentSongId,
   isPlaying,
+  onAddToPlaylist,
 }: RecommendationsViewProps) {
   return (
     <div className="p-6">
@@ -49,34 +51,52 @@ export default function RecommendationsView({
                       isCurrentSong ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     } transition-opacity duration-300`}
                   >
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="rounded-full shadow-lg transform scale-90 opacity-90 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onPlaySong(song)
-                      }}
-                    >
-                      {isCurrentSong && isPlaying ? (
-                        <Pause className="h-5 w-5 fill-current" />
-                      ) : (
-                        <Play className="h-5 w-5 fill-current" />
-                      )}
-                      <span className="sr-only">
-                        {isCurrentSong && isPlaying ? `Pause ${song.title}` : `Play ${song.title}`}
-                      </span>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="rounded-full shadow-lg transform scale-90 opacity-90 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onPlaySong(song)
+                        }}
+                      >
+                        {isCurrentSong && isPlaying ? (
+                          <Pause className="h-5 w-5 fill-current" />
+                        ) : (
+                          <Play className="h-5 w-5 fill-current" />
+                        )}
+                        <span className="sr-only">
+                          {isCurrentSong && isPlaying ? `Pause ${song.title}` : `Play ${song.title}`}
+                        </span>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="rounded-full shadow-lg transform scale-90 opacity-90 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onAddToPlaylist(song)
+                        }}
+                      >
+                        <Heart className="h-5 w-5" />
+                        <span className="sr-only">Add to playlist</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <h3
-                  className={`mt-2 font-medium line-clamp-1 group-hover:text-primary transition-colors duration-300 ${
-                    isCurrentSong ? "text-primary" : ""
-                  }`}
-                >
-                  {song.title}
-                </h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">{song.artist}</p>
+                <div className="mt-2 flex justify-between items-start">
+                  <div>
+                    <h3
+                      className={`font-medium line-clamp-1 group-hover:text-primary transition-colors duration-300 ${
+                        isCurrentSong ? "text-primary" : ""
+                      }`}
+                    >
+                      {song.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-1">{song.artist}</p>
+                  </div>
+                </div>
               </div>
             )
           })}
