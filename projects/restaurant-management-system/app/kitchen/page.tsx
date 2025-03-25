@@ -4,7 +4,6 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { CheckCircle, Clock } from "lucide-react"
 
@@ -66,15 +65,15 @@ export default function KitchenPage() {
     } else if (minutes < 1440) {
       // Less than a day
       const hours = Math.floor(minutes / 60)
-      const remainingMinutes = minutes % 60
-      return `${hours}h ${remainingMinutes}m ago`
+      return `${hours}h ${minutes % 60}m ago`
     } else {
       // If more than a day, show the date in a readable format
       return orderTime.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
-        hour: "2-digit",
+        hour: "numeric",
         minute: "2-digit",
+        hour12: true,
       })
     }
   }
@@ -106,18 +105,13 @@ export default function KitchenPage() {
             {activeOrders.map((order) => (
               <Card key={order.id} className="overflow-hidden border-none bg-background/50 shadow-md">
                 <CardHeader className="pb-0 pt-5 px-5">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-center">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold">Table {order.tableNumber}</h3>
-                        <Badge variant="outline" className="ml-1 text-xs">
-                          #{order.id.substring(0, 4)}
-                        </Badge>
-                      </div>
+                      <h3 className="text-lg font-semibold">Table {order.tableNumber}</h3>
                       <p className="text-muted-foreground text-sm truncate max-w-[150px]">{order.serverName}</p>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                      <Clock className="h-3 w-3" />
+                    <div className="flex items-center text-muted-foreground text-xs">
+                      <Clock className="h-3 w-3 mr-1" />
                       <span>{getOrderTime(order.createdAt)}</span>
                     </div>
                   </div>
