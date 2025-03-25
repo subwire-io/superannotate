@@ -184,6 +184,22 @@ export default function NewOrderForm() {
     router.push("/orders")
   }
 
+  // Function to get a unique food image for each menu item
+  const getMenuItemImage = (item: MenuItem) => {
+    const categoryImages: Record<string, string> = {
+      "1": `/placeholder.svg?text=Appetizer&height=96&width=96&bg=FF6B6B`, // Appetizers
+      "2": `/placeholder.svg?text=Main&height=96&width=96&bg=4ECDC4`, // Main Courses
+      "3": `/placeholder.svg?text=Dessert&height=96&width=96&bg=FFD166`, // Desserts
+      "4": `/placeholder.svg?text=Drink&height=96&width=96&bg=6B5CA5`, // Beverages
+      "5": `/placeholder.svg?text=Side&height=96&width=96&bg=72B01D`, // Sides
+    }
+
+    return (
+      categoryImages[item.categoryId] ||
+      `/placeholder.svg?text=${item.name.substring(0, 1)}&height=96&width=96&bg=718096`
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4 px-2 sm:px-4 md:px-0">
       <div className="flex items-center gap-2">
@@ -231,13 +247,17 @@ export default function NewOrderForm() {
                     {filteredItems.map((item) => (
                       <div
                         key={item.id}
-                        className="border rounded-lg hover:border-primary/20 transition-all overflow-hidden cursor-pointer"
+                        className={`border rounded-lg hover:border-primary/20 transition-all overflow-hidden cursor-pointer ${
+                          orderItems.some((orderItem) => orderItem.menuItem.id === item.id)
+                            ? "border-primary/50 bg-primary/5"
+                            : ""
+                        }`}
                         onClick={() => addToOrder(item)}
                       >
                         <div className="flex h-24">
                           <div className="w-24 h-24 relative">
                             <Image
-                              src={item.image || "/placeholder.svg?height=96&width=96"}
+                              src={getMenuItemImage(item) || "/placeholder.svg"}
                               alt={item.name}
                               fill
                               className="object-cover"
@@ -247,11 +267,6 @@ export default function NewOrderForm() {
                             <div className="font-medium">{item.name}</div>
                             <div className="mt-1 font-bold">{formatCurrency(item.price)}</div>
                           </div>
-                          {orderItems.some((orderItem) => orderItem.menuItem.id === item.id) && (
-                            <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs absolute top-2 right-2">
-                              ✓
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}

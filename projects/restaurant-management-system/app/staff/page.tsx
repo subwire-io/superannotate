@@ -70,7 +70,7 @@ export default function StaffPage() {
     }
   }
 
-  // Function to undo staff deletion
+  // Function to undo staff deletion\
   const handleUndoDelete = () => {
     if (deletedStaff) {
       setStaffList([...staffList, deletedStaff])
@@ -127,7 +127,7 @@ export default function StaffPage() {
                     name: formData.get("name") as string,
                     email: formData.get("email") as string,
                     role: formData.get("role") as UserRole,
-                    avatar: "/placeholder.svg?height=40&width=40",
+                    avatar: `/placeholder.svg?text=${(formData.get("name") as string).substring(0, 2)}&height=40&width=40&bg=7048E8`,
                   }
                   setStaffList([...staffList, newStaff])
                   toast(`${newStaff.name} has been added to the staff list`, {
@@ -243,7 +243,10 @@ export default function StaffPage() {
                         <div className="flex justify-center mb-2">
                           <div className="w-20 h-20 rounded-full overflow-hidden relative">
                             <Image
-                              src={staff.avatar || "/placeholder.svg?height=80&width=80"}
+                              src={
+                                staff.avatar ||
+                                `/placeholder.svg?text=${staff.name.substring(0, 2)}&height=80&width=80&bg=7048E8`
+                              }
                               alt={staff.name}
                               fill
                               className="object-cover"
@@ -397,7 +400,10 @@ export default function StaffPage() {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full overflow-hidden relative">
                                 <Image
-                                  src={staff.avatar || "/placeholder.svg?height=40&width=40"}
+                                  src={
+                                    staff.avatar ||
+                                    `/placeholder.svg?text=${staff.name.substring(0, 2)}&height=40&width=40&bg=7048E8`
+                                  }
                                   alt={staff.name}
                                   fill
                                   className="object-cover"
