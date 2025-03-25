@@ -23,7 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react"
 
-import { generateTimeSlots } from "@/lib/utils"
+import { generateTimeSlots, formatDate } from "@/lib/utils"
 import { reservations, tables } from "@/data/mock-data"
 import type { Table as TableType, Reservation } from "@/types"
 
@@ -241,9 +241,9 @@ export default function TablesPage() {
 
   return (
     <div className="flex flex-col gap-4 max-w-full">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Tables & Reservations</h1>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-6">
+        <div className="py-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Tables & Reservations</h1>
           <p className="text-muted-foreground">Manage restaurant tables and reservations</p>
         </div>
       </div>
@@ -346,7 +346,7 @@ export default function TablesPage() {
               filteredTables.map((table) => (
                 <Card
                   key={table.id}
-                  className={`${getTableColor(table.status)} border-l-4 hover:border-primary/20 transition-all h-full`}
+                  className={`${getTableColor(table.status)} border-l-4 hover:shadow-md hover:brightness-105 hover:border-primary/50 transition-all h-full`}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -621,66 +621,64 @@ export default function TablesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full overflow-x-auto">
-                    <div className="min-w-[650px]">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Time</TableHead>
-                            <TableHead>Table</TableHead>
-                            <TableHead>Party Size</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                  <div className="overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[25%]">Customer</TableHead>
+                          <TableHead className="w-[15%]">Date</TableHead>
+                          <TableHead className="w-[10%]">Time</TableHead>
+                          <TableHead className="w-[10%]">Party</TableHead>
+                          <TableHead className="w-[20%]">Status</TableHead>
+                          <TableHead className="text-right w-[20%]">Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredReservations.map((reservation) => (
+                          <TableRow key={reservation.id}>
+                            <TableCell className="font-medium">
+                              <div className="truncate max-w-[150px]">{reservation.customerName}</div>
+                              <div className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                {reservation.customerEmail}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm">{formatDate(reservation.date).split(",")[0]}</TableCell>
+                            <TableCell>{reservation.time}</TableCell>
+                            <TableCell>{reservation.partySize}</TableCell>
+                            <TableCell>
+                              <Select
+                                defaultValue={reservation.status}
+                                onValueChange={(value) => {
+                                  setReservationData((prev) =>
+                                    prev.map((res) =>
+                                      res.id === reservation.id
+                                        ? { ...res, status: value as Reservation["status"] }
+                                        : res,
+                                    ),
+                                  )
+                                  showToast.success(`Reservation status updated to ${value}`)
+                                }}
+                              >
+                                <SelectTrigger className="w-[120px] text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                  <SelectItem value="completed">Completed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className="text-xs text-muted-foreground">
+                                {reservation.notes ? "Has notes" : "No notes"}
+                              </span>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredReservations.map((reservation) => (
-                            <TableRow key={reservation.id}>
-                              <TableCell className="max-w-[150px]">
-                                <div className="font-medium truncate">{reservation.customerName}</div>
-                                <div className="text-sm text-muted-foreground truncate">
-                                  {reservation.customerEmail}
-                                </div>
-                              </TableCell>
-                              <TableCell>{reservation.time}</TableCell>
-                              <TableCell>Table {tableData.find((t) => t.id === reservation.tableId)?.number}</TableCell>
-                              <TableCell>{reservation.partySize} guests</TableCell>
-                              <TableCell>
-                                <Select
-                                  defaultValue={reservation.status}
-                                  onValueChange={(value) => {
-                                    setReservationData((prev) =>
-                                      prev.map((res) =>
-                                        res.id === reservation.id
-                                          ? { ...res, status: value as Reservation["status"] }
-                                          : res,
-                                      ),
-                                    )
-                                    showToast.success(`Reservation status updated to ${value}`)
-                                  }}
-                                >
-                                  <SelectTrigger className="w-[130px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button variant="outline" size="sm">
-                                  Details
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </div>

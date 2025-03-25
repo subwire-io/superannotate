@@ -10,6 +10,23 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Add these to the existing utilities section */
+  .table-fixed-layout {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .time-cell {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer base {

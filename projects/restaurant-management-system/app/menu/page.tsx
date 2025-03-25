@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -200,9 +201,9 @@ export default function MenuPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Menu Management</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="py-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Menu Management</h1>
           <p className="text-muted-foreground">Create and edit your restaurant menu</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -239,7 +240,7 @@ export default function MenuPage() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input placeholder="Item description" {...field} />
+                          <Textarea placeholder="Item description" className="min-h-[100px] resize-y" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -348,7 +349,7 @@ export default function MenuPage() {
                   </div>
                 )}
               </div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-2 px-5 pt-5">
                 <div className="flex justify-between items-start gap-2">
                   <CardTitle className="text-lg break-words">{item.name}</CardTitle>
                   <div className="font-bold whitespace-nowrap">{formatCurrency(item.price)}</div>
@@ -446,7 +447,7 @@ export default function MenuPage() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input placeholder="Item description" {...field} />
+                          <Textarea placeholder="Item description" className="min-h-[100px] resize-y" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

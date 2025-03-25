@@ -51,7 +51,7 @@ export function Sidebar({ className, isCollapsed = false, isMobile = false }: Si
   return (
     <aside
       className={cn(
-        "h-screen flex flex-col border-r bg-background",
+        "min-h-screen flex flex-col border-r bg-background",
         isCollapsed ? "w-[80px]" : "w-[240px]",
         isMobile ? "fixed inset-y-0 left-0 z-50" : "",
         className,

@@ -54,22 +54,36 @@ export default function KitchenPage() {
   const getOrderTime = (createdAt: string) => {
     const orderTime = new Date(createdAt)
     const now = new Date()
-    const minutes = Math.floor((now.getTime() - orderTime.getTime()) / 60000)
+    const diffMs = now.getTime() - orderTime.getTime()
 
-    if (minutes < 60) {
+    // Convert to minutes for better readability
+    const minutes = Math.floor(diffMs / 60000)
+
+    if (minutes < 1) {
+      return "Just now"
+    } else if (minutes < 60) {
       return `${minutes}m ago`
-    } else {
+    } else if (minutes < 1440) {
+      // Less than a day
       const hours = Math.floor(minutes / 60)
       const remainingMinutes = minutes % 60
       return `${hours}h ${remainingMinutes}m ago`
+    } else {
+      // If more than a day, show the date in a readable format
+      return orderTime.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     }
   }
 
   return (
     <div className="flex flex-col gap-4 max-w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Kitchen Display</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="py-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Kitchen Display</h1>
           <p className="text-muted-foreground">View and manage active orders</p>
         </div>
       </div>
@@ -91,19 +105,19 @@ export default function KitchenPage() {
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-4">
             {activeOrders.map((order) => (
               <Card key={order.id} className="overflow-hidden border-none bg-background/50 shadow-md">
-                <CardHeader className="pb-0 pt-4 px-4">
+                <CardHeader className="pb-0 pt-5 px-5">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-semibold">Table {order.tableNumber}</h3>
-                        <Badge variant="outline" className="ml-1">
-                          #{order.id}
+                        <Badge variant="outline" className="ml-1 text-xs">
+                          #{order.id.substring(0, 4)}
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground text-sm">{order.serverName}</p>
+                      <p className="text-muted-foreground text-sm truncate max-w-[150px]">{order.serverName}</p>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                      <Clock className="h-4 w-4" />
+                    <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                      <Clock className="h-3 w-3" />
                       <span>{getOrderTime(order.createdAt)}</span>
                     </div>
                   </div>
@@ -111,24 +125,26 @@ export default function KitchenPage() {
                 <CardContent className="p-0 mt-2">
                   <div className="divide-y divide-border/30">
                     {order.items.map((item) => (
-                      <div key={item.id} className={`py-4 px-4 border-l-4 ${getItemStatusClass(item.status)}`}>
-                        <div className="flex justify-between items-start gap-4">
-                          <div>
-                            <p className="font-medium text-base">
+                      <div key={item.id} className={`py-3 px-4 border-l-4 ${getItemStatusClass(item.status)}`}>
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
                               {item.quantity}× {item.menuItemName}
                             </p>
                             {item.specialInstructions && (
-                              <p className="text-sm text-muted-foreground mt-1">Note: {item.specialInstructions}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                Note: {item.specialInstructions}
+                              </p>
                             )}
                           </div>
-                          <div className="min-w-[120px]">
+                          <div className="min-w-[100px] flex-shrink-0">
                             <Select
                               value={item.status}
                               onValueChange={(status) =>
                                 updateItemStatus(order.id, item.id, status as OrderItem["status"])
                               }
                             >
-                              <SelectTrigger className="h-9 bg-background/50 border-none shadow-sm">
+                              <SelectTrigger className="h-8 text-xs bg-background/50 border-none shadow-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent align="end" sideOffset={5}>

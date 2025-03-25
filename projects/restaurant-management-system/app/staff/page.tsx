@@ -101,9 +101,9 @@ export default function StaffPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Staff Management</h1>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-6">
+        <div className="py-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Staff Management</h1>
           <p className="text-muted-foreground">Manage your restaurant staff</p>
         </div>
         <div className="flex gap-2">

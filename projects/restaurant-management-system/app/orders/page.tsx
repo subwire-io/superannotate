@@ -82,11 +82,38 @@ export default function OrdersPage() {
     }
   }
 
+  // Handle completing an order
+  const handleCompleteOrder = (orderId: string) => {
+    setOrderData((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: "completed", updatedAt: new Date().toISOString() } : order,
+      ),
+    )
+    toast.success("Order marked as completed", {
+      dismissible: true,
+    })
+
+    // Close the dialog if it's the selected order
+    if (selectedOrder?.id === orderId) {
+      setIsDetailsOpen(false)
+    }
+  }
+
+  // Format order ID to be shorter and more readable
+  const formatOrderId = (id: string) => {
+    // If it's a numeric ID or already short, just return it with a hash
+    if (id.length <= 5 || !isNaN(Number(id))) {
+      return `#${id}`
+    }
+    // For longer IDs, truncate and format
+    return `#${id.substring(0, 4)}`
+  }
+
   return (
     <div className="flex flex-col gap-4 max-w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Orders</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="py-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1">Orders</h1>
           <p className="text-muted-foreground">View and manage all orders</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -132,44 +159,61 @@ export default function OrdersPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full overflow-x-auto">
-                  <div className="min-w-[650px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Order ID</TableHead>
-                          <TableHead>Table</TableHead>
-                          <TableHead>Server</TableHead>
-                          <TableHead>Items</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredOrders.map((order) => (
-                          <TableRow key={order.id} className="transition-colors hover:bg-muted/30">
-                            <TableCell className="font-medium">#{order.id}</TableCell>
-                            <TableCell>Table {order.tableNumber}</TableCell>
-                            <TableCell className="max-w-[100px] truncate">{order.serverName}</TableCell>
-                            <TableCell>{order.items.length} items</TableCell>
-                            <TableCell>{formatCurrency(order.total)}</TableCell>
-                            <TableCell>
-                              {new Date(order.createdAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => openOrderDetails(order)}>
-                                View Details
+                <div className="overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Server</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => (
+                        <TableRow key={order.id} className="transition-colors hover:bg-muted/30">
+                          <TableCell className="font-medium">{formatOrderId(order.id)}</TableCell>
+                          <TableCell>Table {order.tableNumber}</TableCell>
+                          <TableCell>
+                            <div className="truncate max-w-[120px]">{order.serverName}</div>
+                          </TableCell>
+                          <TableCell>{order.items.length}</TableCell>
+                          <TableCell>{formatCurrency(order.total)}</TableCell>
+                          <TableCell>
+                            {new Date(order.createdAt).toLocaleTimeString([], {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </TableCell>
+                          <TableCell className="text-center p-2">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 justify-center items-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openOrderDetails(order)}
+                                className="w-full sm:w-auto h-8 px-3"
+                              >
+                                Details
                               </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                              {order.status === "active" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCompleteOrder(order.id)}
+                                  className="w-full sm:w-auto h-8 px-3 mt-1 sm:mt-0"
+                                >
+                                  Complete
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
@@ -190,44 +234,52 @@ export default function OrdersPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full overflow-x-auto">
-                  <div className="min-w-[650px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Order ID</TableHead>
-                          <TableHead>Table</TableHead>
-                          <TableHead>Server</TableHead>
-                          <TableHead>Items</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredOrders.map((order) => (
-                          <TableRow key={order.id} className="transition-colors hover:bg-muted/30">
-                            <TableCell className="font-medium">#{order.id}</TableCell>
-                            <TableCell>Table {order.tableNumber}</TableCell>
-                            <TableCell className="max-w-[100px] truncate">{order.serverName}</TableCell>
-                            <TableCell>{order.items.length} items</TableCell>
-                            <TableCell>{formatCurrency(order.total)}</TableCell>
-                            <TableCell>
-                              {new Date(order.createdAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => openOrderDetails(order)}>
-                                View Details
+                <div className="overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Server</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => (
+                        <TableRow key={order.id} className="transition-colors hover:bg-muted/30">
+                          <TableCell className="font-medium">{formatOrderId(order.id)}</TableCell>
+                          <TableCell>Table {order.tableNumber}</TableCell>
+                          <TableCell>
+                            <div className="truncate max-w-[120px]">{order.serverName}</div>
+                          </TableCell>
+                          <TableCell>{order.items.length}</TableCell>
+                          <TableCell>{formatCurrency(order.total)}</TableCell>
+                          <TableCell>
+                            {new Date(order.createdAt).toLocaleTimeString([], {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </TableCell>
+                          <TableCell className="text-center p-2">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 justify-center items-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openOrderDetails(order)}
+                                className="w-full sm:w-auto h-8 px-3"
+                              >
+                                Details
                               </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
@@ -248,44 +300,61 @@ export default function OrdersPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full overflow-x-auto">
-                  <div className="min-w-[650px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Order ID</TableHead>
-                          <TableHead>Table</TableHead>
-                          <TableHead>Server</TableHead>
-                          <TableHead>Items</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredOrders.map((order) => (
-                          <TableRow key={order.id} className="transition-colors hover:bg-muted/30">
-                            <TableCell className="font-medium">#{order.id}</TableCell>
-                            <TableCell>Table {order.tableNumber}</TableCell>
-                            <TableCell className="max-w-[100px] truncate">{order.serverName}</TableCell>
-                            <TableCell>{order.items.length} items</TableCell>
-                            <TableCell>{formatCurrency(order.total)}</TableCell>
-                            <TableCell>
-                              {new Date(order.createdAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => openOrderDetails(order)}>
-                                View Details
+                <div className="overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Table</TableHead>
+                        <TableHead>Server</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredOrders.map((order) => (
+                        <TableRow key={order.id} className="transition-colors hover:bg-muted/30">
+                          <TableCell className="font-medium">{formatOrderId(order.id)}</TableCell>
+                          <TableCell>Table {order.tableNumber}</TableCell>
+                          <TableCell>
+                            <div className="truncate max-w-[120px]">{order.serverName}</div>
+                          </TableCell>
+                          <TableCell>{order.items.length}</TableCell>
+                          <TableCell>{formatCurrency(order.total)}</TableCell>
+                          <TableCell>
+                            {new Date(order.createdAt).toLocaleTimeString([], {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </TableCell>
+                          <TableCell className="text-center p-2">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 justify-center items-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openOrderDetails(order)}
+                                className="w-full sm:w-auto h-8 px-3"
+                              >
+                                Details
                               </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                              {order.status === "active" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCompleteOrder(order.id)}
+                                  className="w-full sm:w-auto h-8 px-3 mt-1 sm:mt-0"
+                                >
+                                  Complete
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>
@@ -299,7 +368,7 @@ export default function OrdersPage() {
           {selectedOrder && (
             <>
               <DialogHeader>
-                <DialogTitle>Order #{selectedOrder.id} Details</DialogTitle>
+                <DialogTitle>Order {formatOrderId(selectedOrder.id)} Details</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -313,7 +382,7 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Created</p>
-                    <p>{new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                    <p className="text-sm">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Status</p>
@@ -328,17 +397,17 @@ export default function OrdersPage() {
                       <div key={item.id} className={`p-3 pl-2 border-l-4 ${getItemStatusClass(item.status)}`}>
                         <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
                           <div>
-                            <p className="font-medium break-words">
+                            <p className="font-medium text-sm">
                               {item.quantity}× {item.menuItemName}
                             </p>
                             {item.specialInstructions && (
-                              <p className="text-sm text-muted-foreground break-words">
+                              <p className="text-xs text-muted-foreground line-clamp-2">
                                 Note: {item.specialInstructions}
                               </p>
                             )}
                           </div>
-                          <div className="text-left sm:text-right">
-                            <p>{formatCurrency(item.price * item.quantity)}</p>
+                          <div className="text-left sm:text-right whitespace-nowrap">
+                            <p className="text-sm">{formatCurrency(item.price * item.quantity)}</p>
                             <p className="text-xs text-muted-foreground capitalize">{item.status}</p>
                           </div>
                         </div>
@@ -351,6 +420,12 @@ export default function OrdersPage() {
                   <p>Total</p>
                   <p>{formatCurrency(selectedOrder.total)}</p>
                 </div>
+
+                {selectedOrder.status === "active" && (
+                  <div className="flex justify-end pt-2">
+                    <Button onClick={() => handleCompleteOrder(selectedOrder.id)}>Complete Order</Button>
+                  </div>
+                )}
               </div>
             </>
           )}

@@ -25,11 +25,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="flex min-h-screen flex-col md:flex-row">
-            <div className="hidden md:block">
-              <Sidebar className="hidden md:block" />
+            <div className="hidden md:block sticky top-0 h-screen">
+              <Sidebar className="hidden md:block h-full" />
             </div>
             <div className="flex flex-col flex-1 w-full overflow-hidden">
-              <main className="flex-1 p-3 sm:p-4 pb-20 md:pb-0 md:p-6 overflow-x-hidden">{children}</main>
+              <main className="flex-1 p-4 sm:p-5 pb-20 md:pb-0 md:p-8 overflow-x-hidden">{children}</main>
               <MobileNav />
             </div>
           </div>
