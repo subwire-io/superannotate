@@ -1,7 +1,8 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
-import { DragDropContext, type DropResult } from "react-beautiful-dnd"
 import { Plus, LayoutGrid, LayoutList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,7 @@ export default function TaskBoard() {
     { id: "done", title: "Done", tasks: [] },
   ])
   const [deletedTasks, setDeletedTasks] = useState<{ task: Task; columnId: string }[]>([])
+  const [draggedTask, setDraggedTask] = useState<{ task: Task; columnId: string } | null>(null)
 
   // Set view mode based on screen size
   useEffect(() => {
@@ -50,55 +52,68 @@ export default function TaskBoard() {
     localStorage.setItem("taskBoard", JSON.stringify(columns))
   }, [columns])
 
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination } = result
+  const handleDragStart = (task: Task, columnId: string) => {
+    setDraggedTask({ task, columnId })
+    // Add a class to the body to prevent scrolling during drag on mobile
+    if (isMobile) {
+      document.body.classList.add("touch-none")
+    }
+  }
 
-    // Dropped outside the list
-    if (!destination) return
+  const handleDragEnd = () => {
+    setDraggedTask(null)
+    document.body.classList.remove("touch-none")
+  }
 
-    // Same position
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return
+  const handleDragOver = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault()
+  }
 
-    // Find source and destination columns
-    const sourceColumn = columns.find((col) => col.id === source.droppableId)
-    const destColumn = columns.find((col) => col.id === destination.droppableId)
+  const handleDrop = (e: React.DragEvent, columnId: string, index = -1) => {
+    e.preventDefault()
 
-    if (!sourceColumn || !destColumn) return
+    if (!draggedTask) return
+
+    const { task, columnId: sourceColumnId } = draggedTask
+
+    // If dropping in the same column and no specific index, do nothing
+    if (sourceColumnId === columnId && index === -1) {
+      return
+    }
 
     // Create new arrays to avoid mutating state directly
     const newColumns = [...columns]
-    const sourceColIndex = newColumns.findIndex((col) => col.id === source.droppableId)
-    const destColIndex = newColumns.findIndex((col) => col.id === destination.droppableId)
+    const sourceColIndex = newColumns.findIndex((col) => col.id === sourceColumnId)
+    const destColIndex = newColumns.findIndex((col) => col.id === columnId)
 
-    // Same column
-    if (source.droppableId === destination.droppableId) {
-      const newTasks = Array.from(sourceColumn.tasks)
-      const [movedTask] = newTasks.splice(source.index, 1)
-      newTasks.splice(destination.index, 0, movedTask)
+    if (sourceColIndex === -1 || destColIndex === -1) return
 
-      newColumns[sourceColIndex] = {
-        ...sourceColumn,
-        tasks: newTasks,
-      }
+    // Remove task from source column
+    const sourceTasks = Array.from(newColumns[sourceColIndex].tasks)
+    const taskIndex = sourceTasks.findIndex((t) => t.id === task.id)
+    if (taskIndex === -1) return
+
+    sourceTasks.splice(taskIndex, 1)
+    newColumns[sourceColIndex] = {
+      ...newColumns[sourceColIndex],
+      tasks: sourceTasks,
+    }
+
+    // Add task to destination column
+    const destTasks = Array.from(newColumns[destColIndex].tasks)
+    const updatedTask = { ...task, status: columnId }
+
+    if (index === -1 || index >= destTasks.length) {
+      // Add to the end if no specific index or index is out of bounds
+      destTasks.push(updatedTask)
     } else {
-      // Different columns
-      const sourceTasks = Array.from(sourceColumn.tasks)
-      const destTasks = Array.from(destColumn.tasks)
-      const [movedTask] = sourceTasks.splice(source.index, 1)
+      // Insert at the specified index
+      destTasks.splice(index, 0, updatedTask)
+    }
 
-      // Update the status of the task to match the new column
-      const updatedTask = { ...movedTask, status: destColumn.id }
-      destTasks.splice(destination.index, 0, updatedTask)
-
-      newColumns[sourceColIndex] = {
-        ...sourceColumn,
-        tasks: sourceTasks,
-      }
-
-      newColumns[destColIndex] = {
-        ...destColumn,
-        tasks: destTasks,
-      }
+    newColumns[destColIndex] = {
+      ...newColumns[destColIndex],
+      tasks: destTasks,
     }
 
     setColumns(newColumns)
@@ -106,6 +121,8 @@ export default function TaskBoard() {
       title: "Task moved",
       description: "Task has been moved successfully",
     })
+
+    handleDragEnd()
   }
 
   const addTask = (task: Task) => {
@@ -239,41 +256,54 @@ export default function TaskBoard() {
           />
         </div>
 
-        <DragDropContext onDragEnd={handleDragEnd}>
-          {searchQuery && !hasSearchResults && (
-            <div className="w-full p-8 text-center border rounded-md border-dashed border-muted-foreground/50 text-muted-foreground">
-              No results found for "{searchQuery}"
-            </div>
-          )}
+        {searchQuery && !hasSearchResults && (
+          <div className="w-full p-8 text-center border rounded-md border-dashed border-muted-foreground/50 text-muted-foreground">
+            No results found for "{searchQuery}"
+          </div>
+        )}
 
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {filteredColumns.map((column) => (
-                <TaskColumn key={column.id} column={column} deleteTask={deleteTask} updateTask={updateTask} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {filteredColumns.map((column) => (
-                <div key={column.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">{column.title}</h2>
-                    <div className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
-                      {column.tasks.length}
-                    </div>
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {filteredColumns.map((column) => (
+              <TaskColumn
+                key={column.id}
+                column={column}
+                deleteTask={deleteTask}
+                updateTask={updateTask}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                draggedTask={draggedTask}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {filteredColumns.map((column) => (
+              <div key={column.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">{column.title}</h2>
+                  <div className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                    {column.tasks.length}
                   </div>
-                  <TaskColumn
-                    key={column.id}
-                    column={column}
-                    deleteTask={deleteTask}
-                    updateTask={updateTask}
-                    isMobileView={true}
-                  />
                 </div>
-              ))}
-            </div>
-          )}
-        </DragDropContext>
+                <TaskColumn
+                  key={column.id}
+                  column={column}
+                  deleteTask={deleteTask}
+                  updateTask={updateTask}
+                  isMobileView={true}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  draggedTask={draggedTask}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <AddTaskDialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen} onAddTask={addTask} />

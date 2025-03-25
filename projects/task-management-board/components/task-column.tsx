@@ -1,6 +1,7 @@
 "use client"
 
-import { Droppable } from "react-beautiful-dnd"
+import type React from "react"
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import TaskCard from "./task-card"
 import type { Column, Task } from "@/types/task"
@@ -10,9 +11,24 @@ interface TaskColumnProps {
   deleteTask: (taskId: string, columnId: string) => void
   updateTask: (task: Task) => void
   isMobileView?: boolean
+  onDragStart: (task: Task, columnId: string) => void
+  onDragEnd: () => void
+  onDragOver: (e: React.DragEvent, columnId: string) => void
+  onDrop: (e: React.DragEvent, columnId: string, index?: number) => void
+  draggedTask: { task: Task; columnId: string } | null
 }
 
-export default function TaskColumn({ column, deleteTask, updateTask, isMobileView = false }: TaskColumnProps) {
+export default function TaskColumn({
+  column,
+  deleteTask,
+  updateTask,
+  isMobileView = false,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+  draggedTask,
+}: TaskColumnProps) {
   return (
     <Card className={`${isMobileView ? "shadow-sm" : "h-full"}`}>
       {!isMobileView && (
@@ -25,41 +41,73 @@ export default function TaskColumn({ column, deleteTask, updateTask, isMobileVie
           </div>
         </CardHeader>
       )}
-      <CardContent className={isMobileView ? "p-2" : undefined}>
-        <Droppable droppableId={column.id}>
-          {(provided, snapshot) => (
+      <CardContent className={isMobileView ? "p-2" : "p-4"}>
+        <div
+          className={`task-list ${
+            isMobileView ? "min-h-[80px]" : "min-h-[500px]"
+          } rounded-md transition-colors hover:bg-secondary/50 ${
+            draggedTask && draggedTask.columnId !== column.id ? "bg-primary/5" : ""
+          }`}
+          onDragOver={(e) => onDragOver(e, column.id)}
+          onDrop={(e) => onDrop(e, column.id)}
+        >
+          {column.tasks.length === 0 ? (
             <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className={`${isMobileView ? "min-h-[100px]" : "min-h-[500px]"} rounded-md transition-colors ${
-                snapshot.isDraggingOver ? "bg-primary/10" : "hover:bg-secondary/50"
-              }`}
+              className={`flex items-center justify-center ${isMobileView ? "h-12 text-xs" : "h-24"} border border-dashed rounded-md border-muted-foreground/50 text-muted-foreground`}
+              onDragOver={(e) => onDragOver(e, column.id)}
+              onDrop={(e) => onDrop(e, column.id)}
             >
-              {column.tasks.length === 0 ? (
+              No tasks
+            </div>
+          ) : (
+            <div className={`task-items ${isMobileView ? "space-y-1" : "space-y-2"}`}>
+              {column.tasks.map((task, index) => (
                 <div
-                  className={`flex items-center justify-center ${isMobileView ? "h-16" : "h-24"} border border-dashed rounded-md border-muted-foreground/50 text-muted-foreground`}
+                  key={task.id}
+                  className="task-drop-zone"
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    e.currentTarget.classList.add("task-drop-zone-active")
+                  }}
+                  onDragLeave={(e) => {
+                    e.currentTarget.classList.remove("task-drop-zone-active")
+                  }}
+                  onDrop={(e) => {
+                    e.currentTarget.classList.remove("task-drop-zone-active")
+                    onDrop(e, column.id, index)
+                  }}
                 >
-                  No tasks
+                  <TaskCard
+                    task={task}
+                    index={index}
+                    deleteTask={deleteTask}
+                    updateTask={updateTask}
+                    columnId={column.id}
+                    isMobileView={isMobileView}
+                    onDragStart={onDragStart}
+                    onDragEnd={onDragEnd}
+                    isDragging={draggedTask?.task.id === task.id}
+                  />
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {column.tasks.map((task, index) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      index={index}
-                      deleteTask={deleteTask}
-                      updateTask={updateTask}
-                      columnId={column.id}
-                      isMobileView={isMobileView}
-                    />
-                  ))}
-                </div>
-              )}
-              {provided.placeholder}
+              ))}
+              {/* Add a drop zone at the end of the list */}
+              <div
+                className="task-drop-zone-end"
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.currentTarget.classList.add("task-drop-zone-active")
+                }}
+                onDragLeave={(e) => {
+                  e.currentTarget.classList.remove("task-drop-zone-active")
+                }}
+                onDrop={(e) => {
+                  e.currentTarget.classList.remove("task-drop-zone-active")
+                  onDrop(e, column.id)
+                }}
+              />
             </div>
           )}
-        </Droppable>
+        </div>
       </CardContent>
     </Card>
   )

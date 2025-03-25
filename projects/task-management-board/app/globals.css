@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -33,20 +29,7 @@ body {
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -68,19 +51,6 @@ body {
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -92,3 +62,76 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Drag and drop improvements */
+.touch-none {
+  touch-action: none;
+}
+
+/* Prevent text selection during drag */
+[draggable="true"] {
+  user-select: none;
+  -webkit-user-drag: element;
+}
+
+/* Task list container */
+.task-list {
+  padding: 8px;
+  min-height: 100px;
+  position: relative;
+}
+
+/* Task card wrapper */
+.task-card-wrapper {
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 0;
+}
+
+/* Drop zone styling */
+.task-drop-zone {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.task-drop-zone-active {
+  position: relative;
+}
+
+.task-drop-zone-active::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: hsl(var(--primary));
+  z-index: 10;
+  border-radius: 1px;
+}
+
+.task-drop-zone-end {
+  min-height: 8px;
+}
+
+.task-drop-zone-end.task-drop-zone-active {
+  min-height: 16px;
+  background-color: hsl(var(--primary) / 0.1);
+  border-radius: 4px;
+}
+
+/* Improve mobile card appearance */
+@media (max-width: 640px) {
+  .task-card-wrapper {
+    margin-bottom: 4px;
+  }
+
+  .task-list {
+    min-height: 80px;
+  }
+
+  .task-drop-zone {
+    margin-bottom: 4px;
+  }
+}
+
