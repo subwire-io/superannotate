@@ -7,12 +7,6 @@ import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: "Task Management Board",
-  description: "A simple task management board with drag and drop functionality",
-    generator: 'v0.dev'
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
