@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Pause, Clock, Trash2, MoreHorizontal, Pencil } from "lucide-react"
 import type { Playlist, Song } from "./music-interface"
@@ -16,7 +16,7 @@ interface PlaylistViewProps {
   onPlaySong: (song: Song) => void
   currentSongId?: string
   isPlaying: boolean
-  onRemoveFromPlaylist: (songId: string, enableUndo?: boolean) => void
+  onRemoveFromPlaylist: (songId: string) => void
   onUpdatePlaylist: (id: string, name: string, coverArt?: string) => void
   onDeletePlaylist: (id: string) => void
 }
@@ -34,6 +34,21 @@ export default function PlaylistView({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showDeletePlaylistDialog, setShowDeletePlaylistDialog] = useState(false)
   const [showEditPlaylistDialog, setShowEditPlaylistDialog] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile devices
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+
+    return () => {
+      window.removeEventListener("resize", checkMobile)
+    }
+  }, [])
 
   const handleDeleteClick = (e: React.MouseEvent, song: Song) => {
     e.stopPropagation()
@@ -43,7 +58,7 @@ export default function PlaylistView({
 
   const handleConfirmDelete = () => {
     if (songToDelete) {
-      onRemoveFromPlaylist(songToDelete.id, true)
+      onRemoveFromPlaylist(songToDelete.id)
       setSongToDelete(null)
     }
     setShowConfirmDialog(false)
@@ -68,27 +83,50 @@ export default function PlaylistView({
               <p className="text-sm text-muted-foreground">{playlist.songs.length} songs</p>
             </div>
             <div className="mt-4 md:mt-0 flex justify-center md:justify-end">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal className="h-5 w-5" />
-                    <span className="sr-only">More options</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowEditPlaylistDialog(true)}>
+              {isMobile ? (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center"
+                    onClick={() => setShowEditPlaylistDialog(true)}
+                  >
                     <Pencil className="mr-2 h-4 w-4" />
-                    Edit playlist
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center text-destructive border-destructive hover:bg-destructive/10"
                     onClick={() => setShowDeletePlaylistDialog(true)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete playlist
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    Delete
+                  </Button>
+                </div>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="h-5 w-5" />
+                      <span className="sr-only">More options</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowEditPlaylistDialog(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit playlist
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setShowDeletePlaylistDialog(true)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete playlist
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </div>

@@ -48,6 +48,8 @@ export default function MusicInterface() {
 
   // Keep track of recently deleted songs for undo functionality
   const lastDeletedSongRef = useRef<DeletedSong | null>(null)
+  // Keep track of songs that have been restored to prevent duplicates
+  // const restoredSongsRef = useRef<Set<string>>(new Set())
 
   const handlePlaySong = (song: Song) => {
     if (currentSong?.id === song.id) {
@@ -84,6 +86,9 @@ export default function MusicInterface() {
     setSelectedPlaylist(playlist)
     setCurrentView("playlists")
     setIsSidebarOpen(false)
+
+    // Clear the restored songs set when changing playlists
+    // restoredSongsRef.current.clear()
   }
 
   const handleAddPlaylist = (name: string, coverArt?: string) => {
@@ -241,22 +246,13 @@ export default function MusicInterface() {
     })
   }
 
-  const handleRemoveFromPlaylist = (songId: string, enableUndo = false) => {
+  const handleRemoveFromPlaylist = (songId: string) => {
     if (!selectedPlaylist) return
 
     const songIndex = selectedPlaylist.songs.findIndex((s) => s.id === songId)
     if (songIndex === -1) return
 
     const songToRemove = selectedPlaylist.songs[songIndex]
-
-    // Store the deleted song for potential undo
-    if (enableUndo) {
-      lastDeletedSongRef.current = {
-        song: songToRemove,
-        playlistId: selectedPlaylist.id,
-        index: songIndex,
-      }
-    }
 
     // Remove song from the selected playlist
     const updatedPlaylists = playlists.map((playlist) => {
@@ -275,19 +271,9 @@ export default function MusicInterface() {
       songs: selectedPlaylist.songs.filter((song) => song.id !== songId),
     })
 
-    if (enableUndo) {
-      toast.success("Removed from playlist", {
-        description: `"${songToRemove.title}" has been removed from "${selectedPlaylist.name}".`,
-        action: {
-          label: "Undo",
-          onClick: handleUndoRemove,
-        },
-      })
-    } else {
-      toast.success("Removed from playlist", {
-        description: `"${songToRemove.title}" has been removed from "${selectedPlaylist.name}".`,
-      })
-    }
+    toast.success("Removed from playlist", {
+      description: `"${songToRemove.title}" has been removed from "${selectedPlaylist.name}".`,
+    })
   }
 
   const handleUndoRemove = () => {
@@ -298,31 +284,39 @@ export default function MusicInterface() {
     const targetPlaylist = playlists.find((p) => p.id === deletedSong.playlistId)
     if (!targetPlaylist) return
 
-    // Create a copy of the songs array
-    const updatedSongs = [...targetPlaylist.songs]
+    // Check if the song already exists in the playlist to prevent duplicates
+    if (targetPlaylist.songs.some((s) => s.id === deletedSong.song.id)) {
+      lastDeletedSongRef.current = null
+      return
+    }
 
-    // Insert the song back at its original position
-    updatedSongs.splice(deletedSong.index, 0, deletedSong.song)
-
-    // Update the playlists
+    // Create updated playlists with the song restored
     const updatedPlaylists = playlists.map((playlist) => {
       if (playlist.id === deletedSong.playlistId) {
+        // Create a new songs array
+        const newSongs = [...playlist.songs]
+
+        // Insert at the original position if possible, otherwise at the end
+        const insertPosition = Math.min(deletedSong.index, newSongs.length)
+        newSongs.splice(insertPosition, 0, deletedSong.song)
+
         return {
           ...playlist,
-          songs: updatedSongs,
+          songs: newSongs,
         }
       }
       return playlist
     })
 
+    // Update state
     setPlaylists(updatedPlaylists)
 
     // If this is the currently selected playlist, update it too
     if (selectedPlaylist && selectedPlaylist.id === deletedSong.playlistId) {
-      setSelectedPlaylist({
-        ...selectedPlaylist,
-        songs: updatedSongs,
-      })
+      const updatedPlaylist = updatedPlaylists.find((p) => p.id === deletedSong.playlistId)
+      if (updatedPlaylist) {
+        setSelectedPlaylist(updatedPlaylist)
+      }
     }
 
     toast.success("Song restored", {
