@@ -5,11 +5,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Update the formatCurrency function to handle decimal places consistently
 export function formatCurrency(amount: number): string {
+  // First round to 2 decimal places to avoid floating point issues
+  const roundedAmount = Math.round((amount + Number.EPSILON) * 100) / 100
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(amount)
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(roundedAmount)
 }
 
 export function formatDate(dateString: string): string {

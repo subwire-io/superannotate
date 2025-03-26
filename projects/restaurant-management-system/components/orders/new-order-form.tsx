@@ -127,7 +127,11 @@ export default function NewOrderForm() {
   }
 
   const calculateTotal = () => {
-    return orderItems.reduce((total, item) => total + item.menuItem.price * item.quantity, 0)
+    return orderItems.reduce((total, item) => {
+      // Calculate with proper rounding to avoid floating point issues
+      const itemTotal = Math.round((item.menuItem.price * item.quantity + Number.EPSILON) * 100) / 100
+      return total + itemTotal
+    }, 0)
   }
 
   const onSubmit = (data: z.infer<typeof orderFormSchema>) => {
@@ -247,11 +251,10 @@ export default function NewOrderForm() {
                     {filteredItems.map((item) => (
                       <div
                         key={item.id}
-                        className={`border rounded-lg hover:border-primary/20 transition-all overflow-hidden cursor-pointer ${
-                          orderItems.some((orderItem) => orderItem.menuItem.id === item.id)
-                            ? "border-primary/50 bg-primary/5"
-                            : ""
-                        }`}
+                        className={`border rounded-lg hover:border-primary/20 transition-all overflow-hidden cursor-pointer ${orderItems.some((orderItem) => orderItem.menuItem.id === item.id)
+                          ? "border-primary/50 bg-primary/5"
+                          : ""
+                          }`}
                         onClick={() => addToOrder(item)}
                       >
                         <div className="flex h-24">

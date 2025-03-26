@@ -253,7 +253,18 @@ export default function MenuPage() {
                       <FormItem>
                         <FormLabel>Price</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" placeholder="Item price" {...field} />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="Item price"
+                            {...field}
+                            onChange={(e) => {
+                              // Limit to 2 decimal places
+                              const value = Number.parseFloat(Number.parseFloat(e.target.value).toFixed(2))
+                              field.onChange(isNaN(value) ? "" : value)
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -460,7 +471,18 @@ export default function MenuPage() {
                       <FormItem>
                         <FormLabel>Price</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" placeholder="Item price" {...field} />
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="Item price"
+                            {...field}
+                            onChange={(e) => {
+                              // Limit to 2 decimal places
+                              const value = Number.parseFloat(Number.parseFloat(e.target.value).toFixed(2))
+                              field.onChange(isNaN(value) ? "" : value)
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
