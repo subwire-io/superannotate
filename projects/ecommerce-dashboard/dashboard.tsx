@@ -1,14 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import {
-  BarChart,
   LineChart,
   PieChart,
-  Bar,
   Line,
   Pie,
   XAxis,
@@ -19,82 +17,39 @@ import {
   Cell,
 } from "recharts"
 import {
-  Calendar,
-  CreditCard,
   DollarSign,
-  Download,
   LineChartIcon,
-  Package,
-  Search,
-  ShoppingBag,
   ShoppingCart,
   Users,
-  Bell,
-  Menu,
-  X,
-  ChevronDown,
-  Filter,
   ArrowUpRight,
   ArrowDownRight,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
+  Package,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Progress } from "@/components/ui/progress"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
-import { format } from "date-fns"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Toaster, toast } from "sonner"
 
-// Form schemas
+// Define Zod schemas for form validation
 const orderFormSchema = z.object({
-  status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled"], {
-    required_error: "Please select an order status.",
-  }),
+  status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled"]),
   notes: z.string().optional(),
   notifyCustomer: z.boolean().default(false),
 })
 
 const searchFormSchema = z.object({
-  query: z.string().min(1, "Please enter a search term"),
+  query: z.string().min(3, {
+    message: "Search query must be at least 3 characters.",
+  }),
 })
 
 // Sample data for charts and tables
@@ -139,6 +94,11 @@ const initialOrders = [
   { id: "ORD-008", customer: "Grace Taylor", date: "2023-07-08", status: "Pending", total: "$65.25" },
   { id: "ORD-009", customer: "Frank Robinson", date: "2023-07-09", status: "Delivered", total: "$130.00" },
   { id: "ORD-010", customer: "Helen Garcia", date: "2023-07-10", status: "Processing", total: "$110.50" },
+  { id: "ORD-011", customer: "Ivan Petrov", date: "2023-07-11", status: "Pending", total: "$95.00" },
+  { id: "ORD-012", customer: "Julia Kim", date: "2023-07-12", status: "Shipped", total: "$145.75" },
+  { id: "ORD-013", customer: "Kevin Wong", date: "2023-07-13", status: "Delivered", total: "$210.25" },
+  { id: "ORD-014", customer: "Laura Chen", date: "2023-07-14", status: "Processing", total: "$75.50" },
+  { id: "ORD-015", customer: "Michael Davis", date: "2023-07-15", status: "Pending", total: "$120.00" },
 ]
 
 const initialLowStockItems = [
@@ -152,6 +112,11 @@ const initialLowStockItems = [
   { id: "PRD-008", name: "Keyboard", stock: 5, threshold: 10 },
   { id: "PRD-009", name: "Mouse", stock: 4, threshold: 8 },
   { id: "PRD-010", name: "Headphones", stock: 2, threshold: 6 },
+  { id: "PRD-011", name: "Tablet", stock: 3, threshold: 7 },
+  { id: "PRD-012", name: "Power Bank", stock: 4, threshold: 9 },
+  { id: "PRD-013", name: "HDMI Cable", stock: 6, threshold: 12 },
+  { id: "PRD-014", name: "Webcam", stock: 2, threshold: 5 },
+  { id: "PRD-015", name: "External SSD", stock: 3, threshold: 8 },
 ]
 
 const initialTopCustomers = [
@@ -165,16 +130,19 @@ const initialTopCustomers = [
   { id: "CUS-008", name: "Grace Taylor", orders: 7, spent: "$850.75" },
   { id: "CUS-009", name: "Frank Robinson", orders: 11, spent: "$1,300.00" },
   { id: "CUS-010", name: "Helen Garcia", orders: 5, spent: "$650.50" },
+  { id: "CUS-011", name: "Ivan Petrov", orders: 8, spent: "$920.00" },
+  { id: "CUS-012", name: "Julia Kim", orders: 13, spent: "$1,450.75" },
+  { id: "CUS-013", name: "Kevin Wong", orders: 9, spent: "$1,100.25" },
+  { id: "CUS-014", name: "Laura Chen", orders: 6, spent: "$780.50" },
+  { id: "CUS-015", name: "Michael Davis", orders: 10, spent: "$1,200.00" },
 ]
 
 export default function Dashboard() {
   const isMobile = useIsMobile()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const [orders, setOrders] = useState(initialOrders)
   const [lowStockItems, setLowStockItems] = useState(initialLowStockItems)
   const [topCustomers, setTopCustomers] = useState(initialTopCustomers)
-  const [searchTerm, setSearchTerm] = useState("")
   const [orderSearchTerm, setOrderSearchTerm] = useState("")
   const [orderStatusFilter, setOrderStatusFilter] = useState("all")
   const [orderSort, setOrderSort] = useState("newest")
@@ -189,6 +157,27 @@ export default function Dashboard() {
   const [orderToCancel, setOrderToCancel] = useState(null)
   const [showAddOrderDialog, setShowAddOrderDialog] = useState(false)
   const [searchInputRef] = useState(useRef(null))
+
+  // Function to handle chart element click for mobile
+  const handleChartElementClick = (data, category) => {
+    if (isMobile) {
+      let message = ""
+      let description = ""
+
+      if (category === "revenue") {
+        message = `${data.name}: $${data.revenue.toLocaleString()}`
+        description = `Revenue for ${data.name}`
+      } else if (category === "category") {
+        message = `${data.name}: ${((data.value / categoryData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(0)}%`
+        description = `${data.value} units sold`
+      }
+
+      toast.info(message, {
+        description,
+        duration: 3000,
+      })
+    }
+  }
 
   // Initialize form for order status update
   const orderForm = useForm({
@@ -227,20 +216,6 @@ export default function Dashboard() {
       })
     }
   }, [selectedOrder, orderForm])
-
-  // Close sidebar when clicking outside on mobile
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMobile && sidebarOpen && !event.target.closest('[data-sidebar="true"]')) {
-        setSidebarOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isMobile, sidebarOpen])
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -343,16 +318,82 @@ export default function Dashboard() {
   const lowStockTotalPages = Math.ceil(lowStockItems.length / itemsPerPage)
   const customersTotalPages = Math.ceil(topCustomers.length / itemsPerPage)
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
+  // Generate pagination items
+  const generatePaginationItems = (currentPage, totalPages) => {
+    const items = []
+    const maxVisiblePages = 5
+
+    // Always show first page
+    items.push(1)
+
+    // Calculate range of pages to show
+    const startPage = Math.max(2, currentPage - Math.floor(maxVisiblePages / 2))
+    const endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3)
+
+    // Adjust if we're near the beginning
+    if (startPage > 2) {
+      items.push("...")
+    }
+
+    // Add middle pages
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(i)
+    }
+
+    // Adjust if we're near the end
+    if (endPage < totalPages - 1) {
+      items.push("...")
+    }
+
+    // Always show last page if there is more than one page
+    if (totalPages > 1) {
+      items.push(totalPages)
+    }
+
+    return items
+  }
+
+  const handlePageChange = (page, setPageFunction) => {
+    if (page >= 1 && page <= totalPages) {
+      setPageFunction(page)
     }
   }
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1)
-    }
+  // Handle adding a new order
+  const handleAddOrder = () => {
+    setIsLoading(true)
+
+    // Get form values
+    const customerName = document.getElementById("customer-name") as HTMLInputElement
+    const orderTotal = document.getElementById("order-total") as HTMLInputElement
+    const orderStatusSelect = document.getElementById("order-status") as HTMLSelectElement
+
+    // Use default values if inputs are empty
+    const name = customerName?.value || "New Customer"
+    const total = orderTotal?.value ? `$${Number.parseFloat(orderTotal.value).toFixed(2)}` : "$99.99"
+    const status = orderStatusSelect?.value
+      ? orderStatusSelect.value.charAt(0).toUpperCase() + orderStatusSelect.value.slice(1)
+      : "Pending"
+
+    // Simulate adding a new order
+    setTimeout(() => {
+      const newOrderId = `ORD-${(orders.length + 1).toString().padStart(3, "0")}`
+      const newOrder = {
+        id: newOrderId,
+        customer: name,
+        date: new Date().toISOString().split("T")[0],
+        status: status,
+        total: total,
+      }
+
+      setOrders((prevOrders) => [newOrder, ...prevOrders])
+      setIsLoading(false)
+      setShowAddOrderDialog(false)
+
+      toast.success(`New order ${newOrderId} has been created`, {
+        description: "The order has been added to the system",
+      })
+    }, 1000)
   }
 
   // Handle export functionality
@@ -365,17 +406,84 @@ export default function Dashboard() {
 
       const fileName = `${type.toLowerCase()}_export_${new Date().toISOString().split("T")[0]}.csv`
 
+      // Determine which data to export based on type
+      let dataToExport
+      switch (type.toLowerCase()) {
+        case "orders":
+          dataToExport = orders
+          break
+        case "inventory":
+          dataToExport = lowStockItems
+          break
+        case "customers":
+          dataToExport = topCustomers
+          break
+        default:
+          dataToExport = categoryData
+      }
+
+      // Download the CSV file
+      downloadCSV(dataToExport, fileName)
+
       toast.success(`${type} data has been exported as ${fileName}`, {
         description: "Your export is ready to download",
-        action: {
-          label: "Download",
-          onClick: () => {
-            toast.info(`${fileName} is being downloaded.`)
-          },
-        },
         duration: 5000,
       })
-    }, 1500)
+    }, 1000)
+  }
+
+  // Create and download a CSV file
+  const downloadCSV = (data, filename) => {
+    // Create CSV content based on data type
+    let csvContent = "data:text/csv;charset=utf-8,"
+
+    if (filename.includes("orders")) {
+      // Headers for orders
+      csvContent += "Order ID,Customer,Date,Status,Total\n"
+      // Add order data
+      data.forEach((order) => {
+        csvContent += `${order.id},${order.customer},${order.date},${order.status},${order.total}\n`
+      })
+    } else if (filename.includes("inventory")) {
+      // Headers for inventory
+      csvContent += "Product ID,Name,Current Stock,Threshold,Status\n"
+      // Add inventory data
+      data.forEach((item) => {
+        const status =
+          item.stock === 0
+            ? "Out of Stock"
+            : item.stock < item.threshold / 2
+              ? "Critical"
+              : item.stock < item.threshold
+                ? "Low Stock"
+                : "In Stock"
+        csvContent += `${item.id},${item.name},${item.stock},${item.threshold},${status}\n`
+      })
+    } else if (filename.includes("customers")) {
+      // Headers for customers
+      csvContent += "Customer ID,Name,Total Orders,Total Spent\n"
+      // Add customer data
+      data.forEach((customer) => {
+        csvContent += `${customer.id},${customer.name},${customer.orders},${customer.spent}\n`
+      })
+    } else {
+      // Generic data export (dashboard/sales)
+      csvContent += "Category,Value\n"
+      categoryData.forEach((item) => {
+        csvContent += `${item.name},${item.value}\n`
+      })
+    }
+
+    // Create download link
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement("a")
+    link.setAttribute("href", encodedUri)
+    link.setAttribute("download", filename)
+    document.body.appendChild(link)
+
+    // Trigger download
+    link.click()
+    document.body.removeChild(link)
   }
 
   // Handle restock functionality
@@ -462,35 +570,10 @@ export default function Dashboard() {
     }, 800)
   }
 
-  // Handle adding a new order
-  const handleAddOrder = () => {
-    setIsLoading(true)
-
-    // Simulate adding a new order
-    setTimeout(() => {
-      const newOrderId = `ORD-${(orders.length + 1).toString().padStart(3, "0")}`
-      const newOrder = {
-        id: newOrderId,
-        customer: "New Customer",
-        date: new Date().toISOString().split("T")[0],
-        status: "Pending",
-        total: "$99.99",
-      }
-
-      setOrders((prevOrders) => [newOrder, ...prevOrders])
-      setIsLoading(false)
-      setShowAddOrderDialog(false)
-
-      toast.success(`New order ${newOrderId} has been created`, {
-        description: "The order has been added to the system",
-      })
-    }, 1000)
-  }
-
   // Render loading skeleton
   const renderSkeleton = () => (
     <div className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
         {Array(4)
           .fill(0)
           .map((_, i) => (
@@ -524,446 +607,195 @@ export default function Dashboard() {
     </div>
   )
 
+  // Render pagination component
+  const renderPagination = (currentPage, totalPages, setPageFunction) => {
+    const paginationItems = generatePaginationItems(currentPage, totalPages)
+
+    return (
+      <div className="flex items-center justify-center space-x-2 mt-4">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => handlePageChange(currentPage - 1, setPageFunction)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="sr-only">Previous page</span>
+        </Button>
+
+        {paginationItems.map((item, index) =>
+          item === "..." ? (
+            <span key={`ellipsis-${index}`} className="px-2">
+              ...
+            </span>
+          ) : (
+            <Button
+              key={`page-${item}`}
+              variant={currentPage === item ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePageChange(item, setPageFunction)}
+              className="w-8 h-8 p-0"
+            >
+              {item}
+            </Button>
+          ),
+        )}
+
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => handlePageChange(currentPage + 1, setPageFunction)}
+          disabled={currentPage === totalPages || totalPages === 0}
+        >
+          <ChevronRight className="h-4 w-4" />
+          <span className="sr-only">Next page</span>
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar for larger screens */}
-      <aside
-        data-sidebar="true"
-        className={`fixed inset-y-0 z-50 flex w-72 flex-col border-r bg-card transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <div className="flex h-16 items-center border-b px-6">
-          <ShoppingBag className="mr-2 h-6 w-6" aria-hidden="true" />
-          <span className="text-lg font-semibold">E-Commerce Dashboard</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </Button>
-        </div>
-        <nav className="flex-1 overflow-auto py-4">
-          <div className="px-3">
-            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Main</h2>
-            <div className="space-y-1">
-              <Button
-                variant={activeTab === "overview" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("overview")}
-                aria-current={activeTab === "overview" ? "page" : undefined}
-              >
-                <LineChartIcon className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Dashboard</span>
-              </Button>
-              <Button
-                variant={activeTab === "orders" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("orders")}
-                aria-current={activeTab === "orders" ? "page" : undefined}
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Orders</span>
-              </Button>
-              <Button
-                variant={activeTab === "inventory" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("inventory")}
-                aria-current={activeTab === "inventory" ? "page" : undefined}
-              >
-                <Package className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Products</span>
-              </Button>
-              <Button
-                variant={activeTab === "customers" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("customers")}
-                aria-current={activeTab === "customers" ? "page" : undefined}
-              >
-                <Users className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Customers</span>
-              </Button>
+    <div className="flex min-h-screen flex-col bg-background max-w-full">
+      {/* Main dashboard content */}
+      <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-bold tracking-tight">E-Commerce Dashboard</h1>
+            {/* Mobile dropdown navigation */}
+            <div className="md:hidden mt-2 mb-4">
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select section" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="overview">Overview</SelectItem>
+                  <SelectItem value="orders">Orders</SelectItem>
+                  <SelectItem value="inventory">Inventory</SelectItem>
+                  <SelectItem value="customers">Customers</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div className="mt-6 px-3">
-            <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reports</h2>
-            <div className="space-y-1">
-              <Button
-                variant={activeTab === "sales" ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("sales")}
-                aria-current={activeTab === "sales" ? "page" : undefined}
-              >
-                <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Sales</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  toast.info("Transactions Report", {
-                    description: "This feature will be available soon.",
-                  })
-                }}
-              >
-                <CreditCard className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Transactions</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  toast.info("Schedule Report", {
-                    description: "This feature will be available soon.",
-                  })
-                }}
-              >
-                <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
-                <span>Schedule</span>
-              </Button>
-            </div>
-          </div>
-        </nav>
-        <div className="border-t p-4">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src="/placeholder-user.jpg" alt="User profile" />
-              <AvatarFallback>AD</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">Admin User</span>
-              <span className="text-xs text-muted-foreground">admin@example.com</span>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" aria-label="User menu">
-                  <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast.info("Profile", {
-                      description: "Profile settings will be available soon.",
-                    })
-                  }}
-                >
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast.info("Settings", {
-                      description: "Settings will be available soon.",
-                    })
-                  }}
-                >
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast.info("Logged out", {
-                      description: "You have been logged out successfully.",
-                    })
-                  }}
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </aside>
 
-      {/* Main content */}
-      <div className="flex flex-1 flex-col">
-        {/* Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open sidebar"
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-          </Button>
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            <Form {...searchForm}>
-              <form onSubmit={searchForm.handleSubmit(onSearchSubmit)} className="relative">
-                <FormField
-                  control={searchForm.control}
-                  name="query"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <div className="relative">
-                          <Search
-                            className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                            aria-hidden="true"
-                          />
-                          <Input
-                            {...field}
-                            ref={searchInputRef}
-                            type="search"
-                            placeholder="Search... (Alt+S)"
-                            className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
-                            aria-label="Search"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
-          </div>
-          <div className="flex items-center gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-                  <Bell className="h-5 w-5" aria-hidden="true" />
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                    3
-                  </span>
-                  <span className="sr-only">Notifications</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="flex flex-col space-y-2 p-2">
-                  <h3 className="font-medium">Notifications</h3>
-                  <div className="text-sm text-muted-foreground">You have 3 unread notifications</div>
-                  <div className="flex flex-col gap-2 pt-2">
-                    <div className="flex items-start gap-2 rounded-lg border p-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">New order received</p>
-                        <p className="text-xs text-muted-foreground">Order #ORD-011 from Helen Garcia</p>
-                      </div>
-                      <div className="text-xs text-muted-foreground">5m ago</div>
+          {isInitialLoading ? (
+            renderSkeleton()
+          ) : (
+            <>
+              {/* Overview Cards */}
+              <div className="grid gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">$45,231.89</div>
+                    <div className="flex items-center text-sm">
+                      <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
+                      <span className="text-green-500">+20.1%</span>
+                      <span className="ml-1 text-muted-foreground">from last month</span>
                     </div>
-                    <div className="flex items-start gap-2 rounded-lg border p-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Low stock alert</p>
-                        <p className="text-xs text-muted-foreground">Bluetooth Speaker is running low</p>
-                      </div>
-                      <div className="text-xs text-muted-foreground">1h ago</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Orders</CardTitle>
+                    <ShoppingCart className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">+2,350</div>
+                    <div className="flex items-center text-sm">
+                      <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
+                      <span className="text-green-500">+12.2%</span>
+                      <span className="ml-1 text-muted-foreground">from last month</span>
                     </div>
-                    <div className="flex items-start gap-2 rounded-lg border p-3">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Payment received</p>
-                        <p className="text-xs text-muted-foreground">Payment for order #ORD-008 received</p>
-                      </div>
-                      <div className="text-xs text-muted-foreground">3h ago</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Customers</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">+12,234</div>
+                    <div className="flex items-center text-sm">
+                      <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
+                      <span className="text-green-500">+5.4%</span>
+                      <span className="ml-1 text-muted-foreground">from last month</span>
                     </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="mt-2">
-                    View all notifications
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="User menu">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                    <AvatarFallback>AD</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast.info("Profile", {
-                      description: "Profile settings will be available soon.",
-                    })
-                  }}
-                >
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast.info("Settings", {
-                      description: "Settings will be available soon.",
-                    })
-                  }}
-                >
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    toast.info("Logged out", {
-                      description: "You have been logged out successfully.",
-                    })
-                  }}
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-
-        {/* Main dashboard content */}
-        <main className="flex-1 overflow-auto p-6">
-          <div className="flex flex-col space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-              <div className="flex flex-wrap items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9">
-                      <Filter className="mr-2 h-4 w-4" aria-hidden="true" />
-                      <span>Filter</span>
-                      <ChevronDown className="ml-2 h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="flex flex-col space-y-4 p-2">
-                      <h3 className="font-medium">Date Range</h3>
-                      <div className="flex flex-col space-y-2">
-                        <CalendarComponent
-                          mode="range"
-                          selected={dateRange}
-                          onSelect={setDateRange}
-                          className="rounded-md border"
-                          disabled={(date) => date > new Date()}
-                        />
-                      </div>
-                      <div className="flex justify-between">
-                        <Button variant="outline" size="sm" onClick={() => setDateRange({ from: null, to: null })}>
-                          Reset
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            toast.info(
-                              dateRange.from && dateRange.to
-                                ? `Showing data from ${format(dateRange.from, "PPP")} to ${format(dateRange.to, "PPP")}`
-                                : "Showing all data",
-                              {
-                                description: "Filter applied",
-                              },
-                            )
-                          }}
-                        >
-                          Apply
-                        </Button>
-                      </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                    <LineChartIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">3.2%</div>
+                    <div className="flex items-center text-sm">
+                      <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" aria-hidden="true" />
+                      <span className="text-red-500">-0.5%</span>
+                      <span className="ml-1 text-muted-foreground">from last month</span>
                     </div>
-                  </PopoverContent>
-                </Popover>
-                <Button size="sm" className="h-9" onClick={() => handleExport("Dashboard")} disabled={exportLoading}>
-                  {exportLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                      <span>Exporting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-                      <span>Export</span>
-                    </>
-                  )}
-                </Button>
-                <div className="hidden items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground md:flex">
-                  <span>Keyboard shortcuts:</span>
-                  <kbd className="rounded bg-background px-1 text-[10px]">Alt</kbd>
-                  <span>+</span>
-                  <kbd className="rounded bg-background px-1 text-[10px]">S</kbd>
-                  <span>to search</span>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
 
-            {isInitialLoading ? (
-              renderSkeleton()
-            ) : (
-              <>
-                {/* Overview Cards */}
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">$45,231.89</div>
-                      <div className="flex items-center text-sm">
-                        <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                        <span className="text-green-500">+20.1%</span>
-                        <span className="ml-1 text-muted-foreground">from last month</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Orders</CardTitle>
-                      <ShoppingCart className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">+2,350</div>
-                      <div className="flex items-center text-sm">
-                        <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                        <span className="text-green-500">+12.2%</span>
-                        <span className="ml-1 text-muted-foreground">from last month</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Customers</CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">+12,234</div>
-                      <div className="flex items-center text-sm">
-                        <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                        <span className="text-green-500">+5.4%</span>
-                        <span className="ml-1 text-muted-foreground">from last month</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                      <LineChartIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">3.2%</div>
-                      <div className="flex items-center text-sm">
-                        <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" aria-hidden="true" />
-                        <span className="text-red-500">-0.5%</span>
-                        <span className="ml-1 text-muted-foreground">from last month</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {/* Tabs for different sections */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                <div className="border-b hidden md:block">
+                  <div className="container mx-auto px-0">
+                    <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground w-full">
+                      <TabsTrigger
+                        value="overview"
+                        className="rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        Overview
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="orders"
+                        className="rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        Orders
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="inventory"
+                        className="rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        Inventory
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="customers"
+                        className="rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        Customers
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="sales"
+                        className="rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        Sales
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
                 </div>
 
-                {/* Tabs for different sections */}
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                  <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="orders">Orders</TabsTrigger>
-                    <TabsTrigger value="inventory">Inventory</TabsTrigger>
-                    <TabsTrigger value="customers">Customers</TabsTrigger>
-                    <TabsTrigger value="sales">Sales</TabsTrigger>
-                  </TabsList>
-
-                  {/* Overview Tab */}
-                  <TabsContent value="overview" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                      {/* Revenue Chart */}
-                      <Card className="lg:col-span-4">
-                        <CardHeader>
-                          <CardTitle>Revenue Overview</CardTitle>
-                        </CardHeader>
-                        <CardContent className="pl-2">
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="space-y-4">
+                  <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                    {/* Revenue Chart */}
+                    <Card className="overflow-hidden">
+                      <CardHeader>
+                        <CardTitle>Revenue Overview</CardTitle>
+                        {isMobile && (
+                          <CardDescription className="text-xs text-muted-foreground">
+                            Tap on points for details
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="w-full overflow-hidden">
                           <ChartContainer
                             config={{
                               revenue: {
@@ -974,1025 +806,674 @@ export default function Dashboard() {
                             className="h-[300px]"
                           >
                             <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={revenueData}>
+                              <LineChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <ChartTooltip content={<ChartTooltipContent />} />
+                                <XAxis
+                                  dataKey="name"
+                                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                                  tickFormatter={(value) => (isMobile ? value.substring(0, 1) : value)}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                                  width={isMobile ? 30 : 40}
+                                  tickFormatter={(value) => (isMobile ? `${value / 1000}k` : value)}
+                                />
+                                <ChartTooltip
+                                  content={<ChartTooltipContent />}
+                                  cursor={{ strokeDasharray: "3 3" }}
+                                  wrapperStyle={{ zIndex: 100 }}
+                                />
                                 <Line
                                   type="monotone"
                                   dataKey="revenue"
                                   stroke="var(--color-revenue)"
                                   strokeWidth={2}
-                                  activeDot={{ r: 8 }}
+                                  activeDot={{ r: 8, onClick: (e) => e.stopPropagation() }}
+                                  isAnimationActive={!isMobile}
                                 />
                               </LineChart>
                             </ResponsiveContainer>
                           </ChartContainer>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                      {/* Sales by Category */}
-                      <Card className="lg:col-span-3">
-                        <CardHeader>
-                          <CardTitle>Sales by Category</CardTitle>
-                        </CardHeader>
-                        <CardContent>
+                    {/* Sales by Category */}
+                    <Card className="overflow-hidden">
+                      <CardHeader>
+                        <CardTitle>Sales by Category</CardTitle>
+                        {isMobile && (
+                          <CardDescription className="text-xs text-muted-foreground">
+                            Tap on segments for details
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="w-full overflow-hidden">
                           <div className="h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
+                              <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                                 <Pie
                                   data={categoryData}
                                   cx="50%"
                                   cy="50%"
                                   labelLine={false}
-                                  outerRadius={80}
+                                  outerRadius={isMobile ? 70 : 80}
                                   fill="#8884d8"
                                   dataKey="value"
-                                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                  label={({ name, percent }) => {
+                                    // On mobile, only show percentage
+                                    if (isMobile) {
+                                      return `${(percent * 100).toFixed(0)}%`
+                                    }
+                                    // On desktop, show name and percentage
+                                    return `${name} ${(percent * 100).toFixed(0)}%`
+                                  }}
+                                  onClick={(data) => {
+                                    if (isMobile) {
+                                      toast.info(`${data.name}: ${(data.percent * 100).toFixed(0)}%`, {
+                                        description: `${data.value} units sold`,
+                                        duration: 3000,
+                                      })
+                                    }
+                                  }}
                                 >
                                   {categoryData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                   ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip
+                                  formatter={(value) => [`${value} units`, "Sales"]}
+                                  itemStyle={{ color: "var(--foreground)" }}
+                                />
                               </PieChart>
                             </ResponsiveContainer>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Recent Orders */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Recent Orders</CardTitle>
-                        <CardDescription>You have {orders.length} orders this period.</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {orders.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Order ID</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {currentOrders.map((order) => (
-                                <TableRow key={order.id}>
-                                  <TableCell className="font-medium">{order.id}</TableCell>
-                                  <TableCell>{order.customer}</TableCell>
-                                  <TableCell>{order.date}</TableCell>
-                                  <TableCell>
-                                    <Badge
-                                      variant={
-                                        order.status === "Delivered"
-                                          ? "default"
-                                          : order.status === "Processing"
-                                            ? "secondary"
-                                            : order.status === "Shipped"
-                                              ? "outline"
-                                              : order.status === "Cancelled"
-                                                ? "destructive"
-                                                : "warning"
-                                      }
-                                    >
-                                      {order.status}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="text-right">{order.total}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        ) : (
-                          <div className="flex h-[200px] items-center justify-center">
-                            <div className="flex flex-col items-center text-center">
-                              <ShoppingCart className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                              <h3 className="mt-2 text-lg font-semibold">No orders found</h3>
-                              <p className="text-sm text-muted-foreground">
-                                There are no orders matching your criteria.
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                        </div>
                       </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
-                          Previous
-                        </Button>
-                        <div className="text-sm text-muted-foreground">
-                          Page {currentPage} of {totalPages || 1}
-                        </div>
-                        <Button onClick={handleNextPage} disabled={currentPage === totalPages || totalPages === 0}>
-                          Next
-                        </Button>
-                      </CardFooter>
                     </Card>
-                  </TabsContent>
+                  </div>
 
-                  {/* Orders Tab */}
-                  <TabsContent value="orders" className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <CardTitle>Order Management</CardTitle>
-                            <CardDescription>Manage and process customer orders.</CardDescription>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button onClick={() => setShowAddOrderDialog(true)} size="sm" className="h-9">
-                              <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
-                              <span>New Order</span>
-                            </Button>
-                            <Button
-                              onClick={() => handleExport("Orders")}
-                              disabled={exportLoading}
-                              size="sm"
-                              className="h-9"
-                            >
-                              {exportLoading ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                  <span>Exporting...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-                                  <span>Export Orders</span>
-                                </>
-                              )}
-                            </Button>
+                  {/* Recent Orders */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Orders</CardTitle>
+                      <CardDescription>You have {orders.length} orders this period.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {orders.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Order ID</TableHead>
+                              <TableHead>Customer</TableHead>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentOrders.map((order) => (
+                              <TableRow key={order.id}>
+                                <TableCell className="font-medium">{order.id}</TableCell>
+                                <TableCell>{order.customer}</TableCell>
+                                <TableCell>{order.date}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      order.status === "Delivered"
+                                        ? "default"
+                                        : order.status === "Processing"
+                                          ? "secondary"
+                                          : order.status === "Shipped"
+                                            ? "outline"
+                                            : order.status === "Cancelled"
+                                              ? "destructive"
+                                              : "warning"
+                                    }
+                                  >
+                                    {order.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">{order.total}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="flex h-[200px] items-center justify-center">
+                          <div className="flex flex-col items-center text-center">
+                            <ShoppingCart className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                            <h3 className="mt-2 text-lg font-semibold">No orders found</h3>
+                            <p className="text-sm text-muted-foreground">There are no orders matching your criteria.</p>
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                            <Input
+                      )}
+                    </CardContent>
+                    <CardFooter>{renderPagination(currentPage, totalPages, setCurrentPage)}</CardFooter>
+                  </Card>
+                </TabsContent>
+
+                {/* Add the Orders tab content */}
+                <TabsContent value="orders" className="space-y-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle>Orders</CardTitle>
+                        <CardDescription>Manage and track customer orders.</CardDescription>
+                      </div>
+                      <Button size="sm" onClick={() => setShowAddOrderDialog(true)}>
+                        Add Order
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between mb-4">
+                        <div className="flex flex-1 items-center gap-2">
+                          <div className="relative flex-1 max-w-sm">
+                            <input
+                              type="text"
                               placeholder="Search orders..."
-                              className="w-full md:w-[250px]"
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                               value={orderSearchTerm}
                               onChange={(e) => setOrderSearchTerm(e.target.value)}
-                              aria-label="Search orders"
                             />
-                            <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
-                              <SelectTrigger className="w-full md:w-[180px]" aria-label="Filter by status">
-                                <SelectValue placeholder="Filter by status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Orders</SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="processing">Processing</SelectItem>
-                                <SelectItem value="shipped">Shipped</SelectItem>
-                                <SelectItem value="delivered">Delivered</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
                           </div>
-                          <Select value={orderSort} onValueChange={setOrderSort}>
-                            <SelectTrigger className="w-full md:w-[180px]" aria-label="Sort orders">
-                              <SelectValue placeholder="Sort by" />
+                          <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Filter by status" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="newest">Newest First</SelectItem>
-                              <SelectItem value="oldest">Oldest First</SelectItem>
-                              <SelectItem value="highest">Highest Value</SelectItem>
-                              <SelectItem value="lowest">Lowest Value</SelectItem>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="shipped">Shipped</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-
-                        {isLoading ? (
-                          <div className="flex h-[300px] items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
-                            <span className="sr-only">Loading orders...</span>
-                          </div>
-                        ) : orders.length > 0 ? (
-                          <div className="mt-4 overflow-hidden rounded-lg border">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Order ID</TableHead>
-                                  <TableHead>Customer</TableHead>
-                                  <TableHead>Date</TableHead>
-                                  <TableHead>Status</TableHead>
-                                  <TableHead className="text-right">Total</TableHead>
-                                  <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {currentOrders.map((order) => (
-                                  <TableRow key={order.id}>
-                                    <TableCell className="font-medium">{order.id}</TableCell>
-                                    <TableCell>{order.customer}</TableCell>
-                                    <TableCell>{order.date}</TableCell>
-                                    <TableCell>
-                                      <Badge
-                                        variant={
-                                          order.status === "Delivered"
-                                            ? "default"
-                                            : order.status === "Processing"
-                                              ? "secondary"
-                                              : order.status === "Shipped"
-                                                ? "outline"
-                                                : order.status === "Cancelled"
-                                                  ? "destructive"
-                                                  : "warning"
-                                        }
-                                      >
-                                        {order.status}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">{order.total}</TableCell>
-                                    <TableCell className="text-right">
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            aria-label={`Actions for order ${order.id}`}
-                                          >
-                                            <span className="sr-only">Open menu</span>
-                                            <ChevronDown className="h-4 w-4" aria-hidden="true" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem
-                                            onClick={() => {
-                                              setSelectedOrder(order)
-                                              toast.info(`Viewing details for order ${order.id}`, {
-                                                description: "Order details",
-                                              })
-                                            }}
-                                          >
-                                            View details
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
-                                            Update status
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() => {
-                                              toast.info(`Email sent to ${order.customer}`, {
-                                                description: "Contact sent",
-                                              })
-                                            }}
-                                          >
-                                            Contact customer
-                                          </DropdownMenuItem>
-                                          <DropdownMenuSeparator />
-                                          <DropdownMenuItem
-                                            className="text-destructive focus:text-destructive"
-                                            onClick={() => setOrderToCancel(order)}
-                                            disabled={order.status === "Cancelled"}
-                                          >
-                                            Cancel order
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        ) : (
-                          <div className="flex h-[300px] items-center justify-center">
-                            <div className="flex flex-col items-center text-center">
-                              <ShoppingCart className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                              <h3 className="mt-2 text-lg font-semibold">No orders found</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {orderSearchTerm || orderStatusFilter !== "all"
-                                  ? "Try adjusting your search or filter to find what you're looking for."
-                                  : "There are no orders in the system yet."}
-                              </p>
-                              {(orderSearchTerm || orderStatusFilter !== "all") && (
-                                <Button
-                                  variant="outline"
-                                  className="mt-4"
-                                  onClick={() => {
-                                    setOrderSearchTerm("")
-                                    setOrderStatusFilter("all")
-                                  }}
-                                >
-                                  Clear filters
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <div className="text-sm text-muted-foreground">
-                          Showing {orders.length > 0 ? indexOfFirstItem + 1 : 0}-
-                          {Math.min(indexOfLastItem, orders.length)} of {orders.length} orders
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={currentPage === 1}>
-                            Previous
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleNextPage}
-                            disabled={currentPage === totalPages || totalPages === 0}
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  </TabsContent>
-
-                  {/* Inventory Tab */}
-                  <TabsContent value="inventory" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                          <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">1,245</div>
-                          <div className="text-xs text-muted-foreground">Across 15 categories</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-                          <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">
-                            {lowStockItems.filter((item) => item.stock < item.threshold).length}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Items below threshold</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-                          <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">
-                            {lowStockItems.filter((item) => item.stock === 0).length}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Items need restocking</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card>
-                      <CardHeader>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <CardTitle>Low Stock Items</CardTitle>
-                            <CardDescription>Items that need to be restocked soon.</CardDescription>
-                          </div>
-                          <Button
-                            onClick={() => handleExport("Inventory")}
-                            disabled={exportLoading}
-                            size="sm"
-                            className="h-9"
-                          >
-                            {exportLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                <span>Exporting...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-                                <span>Export List</span>
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {lowStockItems.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Product ID</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Current Stock</TableHead>
-                                <TableHead>Threshold</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                        <Select value={orderSort} onValueChange={setOrderSort}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Sort by" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="newest">Newest First</SelectItem>
+                            <SelectItem value="oldest">Oldest First</SelectItem>
+                            <SelectItem value="highest">Highest Total</SelectItem>
+                            <SelectItem value="lowest">Lowest Total</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {orders.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Order ID</TableHead>
+                              <TableHead>Customer</TableHead>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentOrders.map((order) => (
+                              <TableRow key={order.id}>
+                                <TableCell className="font-medium">{order.id}</TableCell>
+                                <TableCell>{order.customer}</TableCell>
+                                <TableCell>{order.date}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      order.status === "Delivered"
+                                        ? "default"
+                                        : order.status === "Processing"
+                                          ? "secondary"
+                                          : order.status === "Shipped"
+                                            ? "outline"
+                                            : order.status === "Cancelled"
+                                              ? "destructive"
+                                              : "warning"
+                                    }
+                                  >
+                                    {order.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">{order.total}</TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}>
+                                    Edit
+                                  </Button>
+                                </TableCell>
                               </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {currentLowStockItems.map((item) => (
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="flex h-[200px] items-center justify-center">
+                          <div className="flex flex-col items-center text-center">
+                            <ShoppingCart className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                            <h3 className="mt-2 text-lg font-semibold">No orders found</h3>
+                            <p className="text-sm text-muted-foreground">There are no orders matching your criteria.</p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                      {renderPagination(currentPage, totalPages, setCurrentPage)}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport("Orders")}
+                        disabled={exportLoading}
+                      >
+                        {exportLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Exporting...
+                          </>
+                        ) : (
+                          <>Export CSV</>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+
+                {/* Add the Inventory tab content */}
+                <TabsContent value="inventory" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Inventory Management</CardTitle>
+                      <CardDescription>Monitor stock levels and restock items.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <input
+                          type="text"
+                          placeholder="Search inventory..."
+                          className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        />
+                      </div>
+                      {lowStockItems.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Product ID</TableHead>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Current Stock</TableHead>
+                              <TableHead>Threshold</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentLowStockItems.map((item) => {
+                              const stockStatus =
+                                item.stock === 0
+                                  ? "Out of Stock"
+                                  : item.stock < item.threshold / 2
+                                    ? "Critical"
+                                    : item.stock < item.threshold
+                                      ? "Low Stock"
+                                      : "In Stock"
+
+                              return (
                                 <TableRow key={item.id}>
                                   <TableCell className="font-medium">{item.id}</TableCell>
                                   <TableCell>{item.name}</TableCell>
                                   <TableCell>{item.stock}</TableCell>
                                   <TableCell>{item.threshold}</TableCell>
                                   <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Badge
-                                        variant={
-                                          item.stock === 0
+                                    <Badge
+                                      variant={
+                                        stockStatus === "Out of Stock"
+                                          ? "destructive"
+                                          : stockStatus === "Critical"
                                             ? "destructive"
-                                            : item.stock < item.threshold / 2
-                                              ? "destructive"
-                                              : item.stock < item.threshold
-                                                ? "warning"
-                                                : "default"
-                                        }
-                                      >
-                                        {item.stock === 0
-                                          ? "Out of Stock"
-                                          : item.stock < item.threshold / 2
-                                            ? "Critical"
-                                            : item.stock < item.threshold
-                                              ? "Low Stock"
-                                              : "In Stock"}
-                                      </Badge>
-                                    </div>
+                                            : stockStatus === "Low Stock"
+                                              ? "warning"
+                                              : "default"
+                                      }
+                                    >
+                                      {stockStatus}
+                                    </Badge>
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleRestock(item.id)}
-                                      disabled={restockLoading[item.id] || item.stock >= item.threshold}
+                                      disabled={restockLoading[item.id]}
                                     >
                                       {restockLoading[item.id] ? (
                                         <>
-                                          <Loader2 className="mr-2 h-3 w-3 animate-spin" aria-hidden="true" />
-                                          <span>Restocking...</span>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Restocking...
                                         </>
                                       ) : (
-                                        "Restock"
+                                        <>Restock</>
                                       )}
                                     </Button>
                                   </TableCell>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                              )
+                            })}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="flex h-[200px] items-center justify-center">
+                          <div className="flex flex-col items-center text-center">
+                            <Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                            <h3 className="mt-2 text-lg font-semibold">No low stock items</h3>
+                            <p className="text-sm text-muted-foreground">
+                              All inventory items are at healthy stock levels.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                      {renderPagination(currentPage, lowStockTotalPages, setCurrentPage)}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport("Inventory")}
+                        disabled={exportLoading}
+                      >
+                        {exportLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Exporting...
+                          </>
                         ) : (
-                          <div className="flex h-[200px] items-center justify-center">
-                            <div className="flex flex-col items-center text-center">
-                              <Package className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                              <h3 className="mt-2 text-lg font-semibold">No low stock items</h3>
-                              <p className="text-sm text-muted-foreground">All items are sufficiently stocked.</p>
-                            </div>
-                          </div>
+                          <>Export CSV</>
                         )}
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
-                          Previous
-                        </Button>
-                        <div className="text-sm text-muted-foreground">
-                          Page {currentPage} of {lowStockTotalPages || 1}
-                        </div>
-                        <Button
-                          onClick={handleNextPage}
-                          disabled={currentPage === lowStockTotalPages || lowStockTotalPages === 0}
-                        >
-                          Next
-                        </Button>
-                      </CardFooter>
-                    </Card>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Inventory Overview</CardTitle>
-                        <CardDescription>Stock levels by category</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-medium">Electronics</div>
-                              <div className="text-sm text-muted-foreground">65% in stock</div>
-                            </div>
-                            <Progress value={65} aria-label="Electronics stock level" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-medium">Clothing</div>
-                              <div className="text-sm text-muted-foreground">82% in stock</div>
-                            </div>
-                            <Progress value={82} aria-label="Clothing stock level" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-medium">Home & Kitchen</div>
-                              <div className="text-sm text-muted-foreground">45% in stock</div>
-                            </div>
-                            <Progress value={45} aria-label="Home & Kitchen stock level" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-medium">Books</div>
-                              <div className="text-sm text-muted-foreground">95% in stock</div>
-                            </div>
-                            <Progress value={95} aria-label="Books stock level" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-medium">Beauty</div>
-                              <div className="text-sm text-muted-foreground">70% in stock</div>
-                            </div>
-                            <Progress value={70} aria-label="Beauty stock level" />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  {/* Customers Tab */}
-                  <TabsContent value="customers" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-                          <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">12,234</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                            <span className="text-green-500">+5.4%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">New Customers</CardTitle>
-                          <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">321</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                            <span className="text-green-500">+12.3%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Repeat Customers</CardTitle>
-                          <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">64%</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                            <span className="text-green-500">+2.1%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Avg. Order Value</CardTitle>
-                          <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">$85.25</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                            <span className="text-green-500">+3.2%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card>
-                      <CardHeader>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <CardTitle>Top Customers</CardTitle>
-                            <CardDescription>Your most valuable customers by total spend.</CardDescription>
-                          </div>
-                          <Button
-                            onClick={() => handleExport("Customers")}
-                            disabled={exportLoading}
-                            size="sm"
-                            className="h-9"
-                          >
-                            {exportLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                <span>Exporting...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-                                <span>Export Customers</span>
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {topCustomers.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Customer ID</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Total Orders</TableHead>
-                                <TableHead>Total Spent</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                {/* Add the Customers tab content */}
+                <TabsContent value="customers" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Customer Analytics</CardTitle>
+                      <CardDescription>View and analyze customer data.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <input
+                          type="text"
+                          placeholder="Search customers..."
+                          className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        />
+                      </div>
+                      {topCustomers.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Customer ID</TableHead>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Total Orders</TableHead>
+                              <TableHead>Total Spent</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentTopCustomers.map((customer) => (
+                              <TableRow key={customer.id}>
+                                <TableCell className="font-medium">{customer.id}</TableCell>
+                                <TableCell>{customer.name}</TableCell>
+                                <TableCell>{customer.orders}</TableCell>
+                                <TableCell>{customer.spent}</TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="ghost" size="sm">
+                                    View Details
+                                  </Button>
+                                </TableCell>
                               </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {currentTopCustomers.map((customer) => (
-                                <TableRow key={customer.id}>
-                                  <TableCell className="font-medium">{customer.id}</TableCell>
-                                  <TableCell>{customer.name}</TableCell>
-                                  <TableCell>{customer.orders}</TableCell>
-                                  <TableCell>{customer.spent}</TableCell>
-                                  <TableCell className="text-right">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        toast.info(`Viewing details for ${customer.name}`, {
-                                          description: "Customer details",
-                                        })
-                                      }}
-                                    >
-                                      View Details
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="flex h-[200px] items-center justify-center">
+                          <div className="flex flex-col items-center text-center">
+                            <Users className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
+                            <h3 className="mt-2 text-lg font-semibold">No customers found</h3>
+                            <p className="text-sm text-muted-foreground">
+                              There are no customers matching your criteria.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                      {renderPagination(currentPage, customersTotalPages, setCurrentPage)}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport("Customers")}
+                        disabled={exportLoading}
+                      >
+                        {exportLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Exporting...
+                          </>
                         ) : (
-                          <div className="flex h-[200px] items-center justify-center">
-                            <div className="flex flex-col items-center text-center">
-                              <Users className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                              <h3 className="mt-2 text-lg font-semibold">No customers found</h3>
-                              <p className="text-sm text-muted-foreground">There are no customers in the system yet.</p>
-                            </div>
-                          </div>
+                          <>Export CSV</>
                         )}
-                      </CardContent>
-                      <CardFooter className="flex justify-between">
-                        <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
-                          Previous
-                        </Button>
-                        <div className="text-sm text-muted-foreground">
-                          Page {currentPage} of {customersTotalPages || 1}
-                        </div>
-                        <Button
-                          onClick={handleNextPage}
-                          disabled={currentPage === customersTotalPages || customersTotalPages === 0}
-                        >
-                          Next
-                        </Button>
-                      </CardFooter>
-                    </Card>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
 
-                    <Card>
+                {/* Add the Sales tab content */}
+                <TabsContent value="sales" className="space-y-4">
+                  <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                    {/* Sales Overview Chart */}
+                    <Card className="overflow-hidden">
                       <CardHeader>
-                        <CardTitle>Customer Acquisition</CardTitle>
-                        <CardDescription>New customers over time</CardDescription>
+                        <CardTitle>Sales Overview</CardTitle>
+                        {isMobile && (
+                          <CardDescription className="text-xs text-muted-foreground">
+                            Tap on points for details
+                          </CardDescription>
+                        )}
                       </CardHeader>
-                      <CardContent>
-                        <ChartContainer
-                          config={{
-                            sales: {
-                              label: "New Customers",
-                              color: "hsl(var(--chart-1))",
-                            },
-                          }}
-                          className="h-[300px]"
-                        >
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={salesData}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="name" />
-                              <YAxis />
-                              <ChartTooltip content={<ChartTooltipContent />} />
-                              <Bar dataKey="sales" fill="var(--color-sales)" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  {/* Sales Tab */}
-                  <TabsContent value="sales" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-                          <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">$45,231.89</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                            <span className="text-green-500">+20.1%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
-                          <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">$85.25</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" aria-hidden="true" />
-                            <span className="text-green-500">+3.2%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                          <LineChartIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">3.2%</div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" aria-hidden="true" />
-                            <span className="text-red-500">-0.5%</span>
-                            <span className="ml-1 text-muted-foreground">from last month</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card>
-                      <CardHeader>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <CardTitle>Sales Overview</CardTitle>
-                            <CardDescription>Monthly sales performance</CardDescription>
-                          </div>
-                          <Button
-                            onClick={() => handleExport("Sales")}
-                            disabled={exportLoading}
-                            size="sm"
-                            className="h-9"
+                      <CardContent className="p-0">
+                        <div className="w-full overflow-hidden">
+                          <ChartContainer
+                            config={{
+                              sales: {
+                                label: "Sales",
+                                color: "hsl(var(--chart-2))",
+                              },
+                            }}
+                            className="h-[300px]"
                           >
-                            {exportLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                                <span>Exporting...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-                                <span>Export Sales</span>
-                              </>
-                            )}
-                          </Button>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={salesData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis
+                                  dataKey="name"
+                                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                                  tickFormatter={(value) => (isMobile ? value.substring(0, 1) : value)}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                                  width={isMobile ? 30 : 40}
+                                  tickFormatter={(value) => (isMobile ? `${value / 100}h` : value)}
+                                />
+                                <ChartTooltip
+                                  content={<ChartTooltipContent />}
+                                  cursor={{ strokeDasharray: "3 3" }}
+                                  wrapperStyle={{ zIndex: 100 }}
+                                />
+                                <Line
+                                  type="monotone"
+                                  dataKey="sales"
+                                  stroke="var(--color-sales)"
+                                  strokeWidth={2}
+                                  activeDot={{ r: 8, onClick: (e) => e.stopPropagation() }}
+                                  isAnimationActive={!isMobile}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </ChartContainer>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <ChartContainer
-                          config={{
-                            revenue: {
-                              label: "Revenue",
-                              color: "hsl(var(--chart-1))",
-                            },
-                          }}
-                          className="h-[300px]"
-                        >
-                          <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={revenueData}>
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis dataKey="name" />
-                              <YAxis />
-                              <ChartTooltip content={<ChartTooltipContent />} />
-                              <Line
-                                type="monotone"
-                                dataKey="revenue"
-                                stroke="var(--color-revenue)"
-                                strokeWidth={2}
-                                activeDot={{ r: 8 }}
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    {/* Sales by Category */}
+                    <Card className="overflow-hidden">
                       <CardHeader>
                         <CardTitle>Sales by Category</CardTitle>
-                        <CardDescription>Distribution of sales across product categories</CardDescription>
+                        {isMobile && (
+                          <CardDescription className="text-xs text-muted-foreground">
+                            Tap on segments for details
+                          </CardDescription>
+                        )}
                       </CardHeader>
-                      <CardContent>
-                        <div className="h-[300px]">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={categoryData}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                              >
-                                {categoryData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                              </Pie>
-                              <Tooltip />
-                            </PieChart>
-                          </ResponsiveContainer>
+                      <CardContent className="p-0">
+                        <div className="w-full overflow-hidden">
+                          <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                                <Pie
+                                  data={categoryData}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  outerRadius={isMobile ? 70 : 80}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                  label={({ name, percent }) => {
+                                    // On mobile, only show percentage
+                                    if (isMobile) {
+                                      return `${(percent * 100).toFixed(0)}%`
+                                    }
+                                    // On desktop, show name and percentage
+                                    return `${name} ${(percent * 100).toFixed(0)}%`
+                                  }}
+                                  onClick={(data) => {
+                                    if (isMobile) {
+                                      toast.info(`${data.name}: ${(data.percent * 100).toFixed(0)}%`, {
+                                        description: `${data.value} units sold`,
+                                        duration: 3000,
+                                      })
+                                    }
+                                  }}
+                                >
+                                  {categoryData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  formatter={(value) => [`${value} units`, "Sales"]}
+                                  itemStyle={{ color: "var(--foreground)" }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
-                  </TabsContent>
-                </Tabs>
-              </>
-            )}
-          </div>
-        </main>
-      </div>
+                  </div>
 
-      {/* Order Status Update Dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Update Order Status</DialogTitle>
-            <DialogDescription>Change the status for order {selectedOrder?.id}</DialogDescription>
-          </DialogHeader>
-          <Form {...orderForm}>
-            <form onSubmit={orderForm.handleSubmit(handleUpdateOrderStatus)} className="space-y-4">
-              <FormField
-                control={orderForm.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="shipped">Shipped</SelectItem>
-                        <SelectItem value="delivered">Delivered</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={orderForm.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Add notes about this status change" className="resize-none" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={orderForm.control}
-                name="notifyCustomer"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Notify Customer</FormLabel>
-                      <FormDescription>Send an email notification to the customer</FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setSelectedOrder(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                      <span>Updating...</span>
-                    </>
-                  ) : (
-                    "Update Status"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Sales Performance</CardTitle>
+                      <CardDescription>Monthly sales performance metrics.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Month</TableHead>
+                            <TableHead>Revenue</TableHead>
+                            <TableHead>Units Sold</TableHead>
+                            <TableHead>Growth</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {revenueData.map((item, index) => (
+                            <TableRow key={item.name}>
+                              <TableCell className="font-medium">{item.name}</TableCell>
+                              <TableCell>${item.revenue.toLocaleString()}</TableCell>
+                              <TableCell>{salesData[index].sales}</TableCell>
+                              <TableCell>
+                                {index > 0 ? (
+                                  <div className="flex items-center">
+                                    {item.revenue > revenueData[index - 1].revenue ? (
+                                      <>
+                                        <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
+                                        <span className="text-green-500">
+                                          +
+                                          {(
+                                            ((item.revenue - revenueData[index - 1].revenue) /
+                                              revenueData[index - 1].revenue) *
+                                            100
+                                          ).toFixed(1)}
+                                          %
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
+                                        <span className="text-red-500">
+                                          {(
+                                            ((item.revenue - revenueData[index - 1].revenue) /
+                                              revenueData[index - 1].revenue) *
+                                            100
+                                          ).toFixed(1)}
+                                          %
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                ) : (
+                                  "—"
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="sm">
+                                  Details
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                    <CardFooter className="flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport("Sales")}
+                        disabled={exportLoading}
+                      >
+                        {exportLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Exporting...
+                          </>
+                        ) : (
+                          <>Export CSV</>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </div>
+      </main>
 
-      {/* Order Cancellation Alert Dialog */}
-      <AlertDialog open={!!orderToCancel} onOpenChange={(open) => !open && setOrderToCancel(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Order</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel order {orderToCancel?.id}? This action can be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelOrder}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span>Cancelling...</span>
-                </>
-              ) : (
-                "Confirm"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Add New Order Dialog */}
-      <Dialog open={showAddOrderDialog} onOpenChange={setShowAddOrderDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Order</DialogTitle>
-            <DialogDescription>Create a new customer order in the system.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-span-4">
-                <div className="flex flex-col space-y-1.5">
-                  <FormLabel htmlFor="customer-name">Customer Name</FormLabel>
-                  <Input id="customer-name" placeholder="Enter customer name" />
-                </div>
-              </div>
-              <div className="col-span-4">
-                <div className="flex flex-col space-y-1.5">
-                  <FormLabel htmlFor="order-total">Order Total</FormLabel>
-                  <Input id="order-total" placeholder="Enter order total" type="number" min="0" step="0.01" />
-                </div>
-              </div>
-              <div className="col-span-4">
-                <div className="flex flex-col space-y-1.5">
-                  <FormLabel htmlFor="order-status">Status</FormLabel>
-                  <Select defaultValue="pending">
-                    <SelectTrigger id="order-status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="processing">Processing</SelectItem>
-                      <SelectItem value="shipped">Shipped</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddOrderDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddOrder} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span>Creating...</span>
-                </>
-              ) : (
-                "Create Order"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      {/* Sonner Toast Container */}
+      {/* Toaster for notifications */}
       <Toaster position="top-right" richColors closeButton />
     </div>
   )
