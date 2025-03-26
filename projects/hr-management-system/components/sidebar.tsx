@@ -1,87 +1,103 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Users, BarChart3, CalendarDays, BriefcaseBusiness, Home, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Users, Calendar, BarChart2, Briefcase, Home, Menu, X } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
 
-// Remove Settings from the navItems array
-const navItems = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Employees", href: "/employees", icon: Users },
-  { name: "Attendance", href: "/attendance", icon: Calendar },
-  { name: "Performance", href: "/performance", icon: BarChart2 },
-  { name: "Recruitment", href: "/recruitment", icon: Briefcase },
-]
-
-export default function Sidebar() {
+export function Sidebar({
+  className,
+  isSidebarOpen,
+  toggleSidebar,
+}: {
+  className?: string
+  isSidebarOpen: boolean
+  toggleSidebar: () => void
+}) {
   const pathname = usePathname()
   const isMobile = useMobile()
-  const [isOpen, setIsOpen] = useState(false)
 
-  const toggleSidebar = () => setIsOpen(!isOpen)
+  const routes = [
+    {
+      href: "/",
+      icon: Home,
+      label: "Dashboard",
+    },
+    {
+      href: "/employees",
+      icon: Users,
+      label: "Employees",
+    },
+    {
+      href: "/attendance",
+      icon: CalendarDays,
+      label: "Attendance",
+    },
+    {
+      href: "/performance",
+      icon: BarChart3,
+      label: "Performance",
+    },
+    {
+      href: "/recruitment",
+      icon: BriefcaseBusiness,
+      label: "Recruitment",
+    },
+  ]
+
+  if (isMobile && !isSidebarOpen) {
+    return null
+  }
 
   return (
     <>
-      {/* Only show the hamburger menu when sidebar is closed on mobile */}
-      {isMobile && !isOpen && (
-        <Button variant="ghost" size="icon" className="fixed top-2.5 left-2 z-50 h-9 w-9" onClick={toggleSidebar}>
-          <Menu size={18} />
-        </Button>
+      {/* Overlay for mobile */}
+      {isMobile && isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={toggleSidebar} aria-hidden="true" />
       )}
 
-      <aside
+      <div
         className={cn(
-          "bg-card text-card-foreground w-64 border-r transition-all duration-300 ease-in-out",
-          isMobile ? (isOpen ? "fixed inset-y-0 left-0 z-40" : "fixed -left-64") : "relative",
+          "pb-12 min-h-screen bg-background border-r flex flex-col",
+          isMobile ? "fixed z-50 w-64 max-w-[80vw]" : "w-64",
+          className,
         )}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 flex items-center">
-            {/* Close button inside the sidebar */}
-            {isMobile && isOpen && (
-              <Button variant="ghost" size="icon" className="mr-2 h-9 w-9" onClick={toggleSidebar}>
-                <X size={18} />
-              </Button>
-            )}
-            <h1 className="text-xl font-bold truncate">HR Management</h1>
-          </div>
-          <nav className="flex-1 px-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href
-              const Icon = item.icon
-              return (
-                <Link key={item.name} href={item.href} onClick={isMobile ? () => setIsOpen(false) : undefined}>
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-3 mb-1",
-                      isActive ? "bg-secondary text-secondary-foreground" : "hover:bg-secondary/50",
-                    )}
-                  >
-                    <Icon size={18} />
-                    <span>{item.name}</span>
-                  </Button>
+        <div className="flex h-16 items-center px-4 border-b">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <BriefcaseBusiness className="h-6 w-6" />
+            <span className="text-xl">HR System</span>
+          </Link>
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="ml-auto">
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+        <div className="space-y-4 py-4 flex flex-col h-full overflow-y-auto">
+          <div className="px-3 py-2">
+            <div className="space-y-1">
+              {routes.map((route) => (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  prefetch={true}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-all",
+                    pathname === route.href ? "bg-accent text-accent-foreground" : "transparent",
+                  )}
+                  onClick={isMobile ? toggleSidebar : undefined}
+                >
+                  <route.icon className="h-5 w-5" />
+                  {route.label}
                 </Link>
-              )
-            })}
-          </nav>
-          <div className="p-4 border-t">
-            <div className="flex items-center gap-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                <span className="text-sm font-medium">JD</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground truncate">HR Manager</p>
-              </div>
+              ))}
             </div>
           </div>
         </div>
-      </aside>
+      </div>
     </>
   )
 }

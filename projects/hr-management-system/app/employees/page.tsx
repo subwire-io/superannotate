@@ -2,177 +2,334 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Search, X, Plus } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { EmployeeList } from "@/components/employees/employee-list"
-import { EmployeeGrid } from "@/components/employees/employee-grid"
-import { Download, Upload, Filter, Search, SearchX } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { AddEmployeeForm } from "@/components/employees/add-employee-form"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { EmployeeCard } from "@/components/employee-card"
+import { toast } from "sonner"
+
+// Sample employee data
+const initialEmployeesData = [
+  {
+    id: "1",
+    name: "John Smith",
+    position: "Senior Developer",
+    department: "Engineering",
+    email: "john.smith@example.com",
+    phone: "+1 (555) 123-4567",
+    avatar: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: "2",
+    name: "Sarah Johnson",
+    position: "Marketing Specialist",
+    department: "Marketing",
+    email: "sarah.johnson@example.com",
+    phone: "+1 (555) 234-5678",
+    avatar: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: "3",
+    name: "Michael Brown",
+    position: "UX Designer",
+    department: "Design",
+    email: "michael.brown@example.com",
+    phone: "+1 (555) 345-6789",
+    avatar: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: "4",
+    name: "Emily Davis",
+    position: "HR Manager",
+    department: "Human Resources",
+    email: "emily.davis@example.com",
+    phone: "+1 (555) 456-7890",
+    avatar: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: "5",
+    name: "Robert Wilson",
+    position: "Product Manager",
+    department: "Product",
+    email: "robert.wilson@example.com",
+    phone: "+1 (555) 567-8901",
+    avatar: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: "6",
+    name: "Jennifer Lee",
+    position: "Financial Analyst",
+    department: "Finance",
+    email: "jennifer.lee@example.com",
+    phone: "+1 (555) 678-9012",
+    avatar: "/placeholder.svg?height=100&width=100",
+  },
+]
 
 export default function EmployeesPage() {
+  const [employees, setEmployees] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchPerformed, setSearchPerformed] = useState(false)
-  const [selectedDepartment, setSelectedDepartment] = useState("all")
-  const { toast } = useToast()
+  const [filteredEmployees, setFilteredEmployees] = useState([])
+  const [department, setDepartment] = useState("all")
+  const [newEmployee, setNewEmployee] = useState({
+    name: "",
+    position: "",
+    department: "",
+    email: "",
+    phone: "",
+  })
+
+  // Load employees from localStorage on initial render
+  useEffect(() => {
+    const storedEmployees = localStorage.getItem("employees")
+    if (storedEmployees) {
+      const parsedEmployees = JSON.parse(storedEmployees)
+      setEmployees(parsedEmployees)
+      setFilteredEmployees(parsedEmployees)
+    } else {
+      // If no stored employees, use initial data
+      setEmployees(initialEmployeesData)
+      setFilteredEmployees(initialEmployeesData)
+    }
+  }, [])
+
+  // Save employees to localStorage whenever they change
+  useEffect(() => {
+    if (employees.length > 0) {
+      localStorage.setItem("employees", JSON.stringify(employees))
+    }
+  }, [employees])
+
+  // Apply filters whenever search query or department changes
+  useEffect(() => {
+    applyFilters()
+  }, [searchQuery, department, employees])
+
+  const applyFilters = () => {
+    let filtered = [...employees]
+
+    // Apply search filter if there's a query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (employee) =>
+          employee.name.toLowerCase().includes(query) ||
+          employee.position.toLowerCase().includes(query) ||
+          employee.department.toLowerCase().includes(query) ||
+          employee.email.toLowerCase().includes(query),
+      )
+    }
+
+    // Apply department filter if not "all"
+    if (department !== "all") {
+      filtered = filtered.filter((emp) => emp.department === department)
+    }
+
+    setFilteredEmployees(filtered)
+  }
+
+  const clearFilters = () => {
+    setSearchQuery("")
+    setDepartment("all")
+    setFilteredEmployees(employees)
+  }
+
+  const handleAddEmployee = () => {
+    // Validate form
+    if (!newEmployee.name || !newEmployee.position || !newEmployee.department || !newEmployee.email) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+
+    const newEmployeeData = {
+      id: (employees.length + 1).toString(),
+      ...newEmployee,
+      avatar: "/placeholder.svg?height=100&width=100",
+    }
+
+    const updatedEmployees = [...employees, newEmployeeData]
+    setEmployees(updatedEmployees)
+    setFilteredEmployees(updatedEmployees)
+
+    // Reset form
+    setNewEmployee({
+      name: "",
+      position: "",
+      department: "",
+      email: "",
+      phone: "",
+    })
+
+    // Show success toast
+    toast.success(`${newEmployee.name} has been added successfully.`)
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setSearchPerformed(true)
-
-    toast({
-      title: "Search Performed",
-      description: `Searching for "${searchQuery}" in ${selectedDepartment === "all" ? "all departments" : selectedDepartment}`,
-    })
-  }
-
-  const handleExport = () => {
-    toast({
-      title: "Export Data",
-      description: "Exporting employee data",
-    })
-  }
-
-  const handleImport = () => {
-    toast({
-      title: "Import Data",
-      description: "Opening import data dialog",
-    })
-  }
-
-  const handleFilterToggle = () => {
-    toast({
-      title: "Filter Options",
-      description: "Toggling advanced filter options",
-    })
+    applyFilters()
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Employees</h1>
-          <p className="text-muted-foreground">Manage your employee directory</p>
-        </div>
-        <AddEmployeeForm />
+    <div className="flex-1 space-y-6 p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold">Employees</h1>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Employee
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Employee</DialogTitle>
+              <DialogDescription>Enter the details of the new employee.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={newEmployee.name}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+                  placeholder="John Smith"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="position">Position</Label>
+                <Input
+                  id="position"
+                  value={newEmployee.position}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
+                  placeholder="Senior Developer"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="department">Department</Label>
+                <Select
+                  value={newEmployee.department}
+                  onValueChange={(value) => setNewEmployee({ ...newEmployee, department: value })}
+                >
+                  <SelectTrigger id="department">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Engineering">Engineering</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Human Resources">Human Resources</SelectItem>
+                    <SelectItem value="Product">Product</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newEmployee.email}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                  placeholder="john.smith@example.com"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={newEmployee.phone}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <DialogClose asChild>
+                <Button onClick={handleAddEmployee}>Add Employee</Button>
+              </DialogClose>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Employee Directory</CardTitle>
-          <CardDescription>View and manage all employees in your organization</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-            <form className="flex flex-1 items-center gap-2" onSubmit={handleSearch}>
-              <div className="relative flex-1 max-w-sm">
-                <Input
-                  placeholder="Search employees..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              </div>
-              <Button type="submit" variant="outline" size="icon" className="transition-all hover:bg-secondary">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={handleFilterToggle}
-                className="transition-all hover:bg-secondary"
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </form>
-            <div className="flex items-center gap-2">
-              <Select defaultValue="all" value={selectedDepartment} onValueChange={setSelectedDepartment}>
+        <CardContent className="p-6">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search employees..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                  onClick={() => setSearchQuery("")}
+                  type="button"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Select value={department} onValueChange={setDepartment}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Department" />
+                  <SelectValue placeholder="Filter by department" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Departments</SelectItem>
-                  <SelectItem value="engineering">Engineering</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="product">Product</SelectItem>
-                  <SelectItem value="operations">Operations</SelectItem>
+                  <SelectItem value="Engineering">Engineering</SelectItem>
+                  <SelectItem value="Marketing">Marketing</SelectItem>
+                  <SelectItem value="Design">Design</SelectItem>
+                  <SelectItem value="Human Resources">Human Resources</SelectItem>
+                  <SelectItem value="Product">Product</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleExport}
-                className="transition-all hover:bg-secondary"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleImport}
-                className="transition-all hover:bg-secondary"
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
+              {(searchQuery || department !== "all") && (
+                <Button variant="outline" onClick={clearFilters} type="button">
+                  Clear Filters
+                </Button>
+              )}
             </div>
+          </form>
+
+          <div className="text-sm text-muted-foreground mb-4">
+            Showing {filteredEmployees.length} of {employees.length} employees
           </div>
 
-          {searchPerformed && searchQuery && (
-            <div className="flex flex-col items-center justify-center py-12 text-center border rounded-md mb-6">
-              <SearchX className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No results found</h3>
-              <p className="text-muted-foreground mt-2">
-                We couldn't find any matches for "{searchQuery}". Try different keywords or filters.
-              </p>
-              <Button
-                className="mt-4"
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery("")
-                  setSearchPerformed(false)
-                }}
-              >
-                Clear Search
-              </Button>
-            </div>
-          )}
-
-          {!searchPerformed && (
-            <Tabs defaultValue="grid">
-              <div className="flex items-center justify-between">
-                <TabsList>
-                  <TabsTrigger
-                    value="grid"
-                    className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    Grid
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="list"
-                    className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    List
-                  </TabsTrigger>
-                </TabsList>
-                <div className="text-sm text-muted-foreground">
-                  Showing <strong>142</strong> employees
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEmployees.length > 0 ? (
+              filteredEmployees.map((employee) => <EmployeeCard key={employee.id} employee={employee} />)
+            ) : (
+              <div className="col-span-full text-center py-8">
+                <p className="text-muted-foreground">No employees found matching your filters.</p>
+                <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                  Clear Filters
+                </Button>
               </div>
-              <TabsContent value="grid" className="mt-6">
-                <EmployeeGrid />
-              </TabsContent>
-              <TabsContent value="list" className="mt-6">
-                <EmployeeList />
-              </TabsContent>
-            </Tabs>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,78 +1,153 @@
 "use client"
 
-import { useState } from "react"
-import { Bell, Search, Sun, Moon } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Bell, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { useTheme } from "next-themes"
-import { Badge } from "@/components/ui/badge"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useMobile } from "@/hooks/use-mobile"
+import { toast } from "sonner"
 
-export default function Header() {
-  const { setTheme } = useTheme()
+interface Notification {
+  id: string
+  title: string
+  description: string
+  time: string
+  read: boolean
+}
+
+interface HeaderProps {
+  toggleSidebar: () => void
+  title?: string
+}
+
+// Initial notifications
+const initialNotifications = [
+  {
+    id: "1",
+    title: "New Employee Added",
+    description: "John Doe has been added to the system",
+    time: "5 minutes ago",
+    read: false,
+  },
+  {
+    id: "2",
+    title: "Performance Review Due",
+    description: "3 performance reviews are due this week",
+    time: "1 hour ago",
+    read: false,
+  },
+  {
+    id: "3",
+    title: "Attendance Alert",
+    description: "Sarah Johnson has been absent for 3 days",
+    time: "2 hours ago",
+    read: false,
+  },
+]
+
+export function Header({ toggleSidebar, title = "HR Dashboard" }: HeaderProps) {
   const isMobile = useMobile()
-  const [notifications] = useState([
-    { id: 1, message: "New employee onboarding", time: "10 min ago" },
-    { id: 2, message: "Performance review due", time: "1 hour ago" },
-    { id: 3, message: "Meeting scheduled", time: "2 hours ago" },
-  ])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+
+  // Load notifications from localStorage on initial render
+  useEffect(() => {
+    const storedNotifications = localStorage.getItem("notifications")
+    if (storedNotifications) {
+      setNotifications(JSON.parse(storedNotifications))
+    } else {
+      setNotifications(initialNotifications)
+    }
+  }, [])
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("notifications", JSON.stringify(notifications))
+  }, [notifications])
+
+  // Filter to show only unread notifications
+  const unreadNotifications = notifications.filter((n) => !n.read)
+  const unreadCount = unreadNotifications.length
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map((n) => ({ ...n, read: true })))
+    toast.success("All notifications marked as read")
+  }
+
+  const handleNotificationClick = (id: string) => {
+    setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    toast.success("Notification viewed")
+  }
 
   return (
-    <header className="border-b bg-background p-2 md:p-4">
-      <div className="flex items-center justify-between">
-        {/* Add left spacer on mobile to balance the header */}
-        {isMobile && <div className="w-9"></div>}
+    <header className="sticky top-0 z-40 border-b bg-background w-full">
+      <div className="flex h-16 items-center px-4">
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        )}
 
-        {/* Center the search bar */}
-        <div className={`relative ${isMobile ? "w-[60%] mx-auto" : "w-full max-w-md"}`}>
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input type="search" placeholder="Search..." className="w-full pl-9 text-sm md:text-base" />
-        </div>
+        {/* Title - centered on mobile, left-aligned on desktop */}
+        {isMobile ? (
+          <div className="flex-1 text-center font-semibold text-lg">{title}</div>
+        ) : (
+          <div className="flex-1 font-semibold text-lg">{title}</div>
+        )}
 
+        {/* Right-aligned actions */}
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="relative">
-                <Bell size={18} />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0">
-                  {notifications.length}
-                </Badge>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />}
+                <span className="sr-only">Notifications</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
-              <div className="flex items-center justify-between px-4 py-2 border-b">
-                <h3 className="font-medium">Notifications</h3>
-                <Button variant="ghost" size="sm">
-                  Mark all as read
-                </Button>
-              </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <DropdownMenuItem key={notification.id} className="p-4 cursor-pointer">
-                    <div>
-                      <p className="font-medium">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground">{notification.time}</p>
+              <DropdownMenuLabel className="flex items-center justify-between">
+                Notifications
+                {unreadCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="flex items-center text-xs">
+                    Mark all as read
+                  </Button>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {unreadNotifications.length > 0 ? (
+                unreadNotifications.map((notification) => (
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className="cursor-pointer p-0"
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
+                    <div className="p-3 w-full">
+                      <div className="font-medium">{notification.title}</div>
+                      <div className="text-sm text-muted-foreground">{notification.description}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{notification.time}</div>
                     </div>
                   </DropdownMenuItem>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">No notifications</div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+          {/* Static Avatar (not a button) */}
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+            <AvatarFallback>U</AvatarFallback>
+          </Avatar>
         </div>
       </div>
     </header>

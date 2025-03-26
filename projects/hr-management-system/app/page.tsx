@@ -1,185 +1,188 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, UserCheck, Clock, Briefcase, TrendingUp, AlertCircle, Bell } from "lucide-react"
-import { DashboardChart } from "@/components/dashboard/dashboard-chart"
-import { RecentActivities } from "@/components/dashboard/recent-activities"
-import { UpcomingReviews } from "@/components/dashboard/upcoming-reviews"
+import { ArrowUpRight, ArrowDownRight, Calendar, CircleUser, FileText, Mail } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
-export default function Dashboard() {
+export default function DashboardPage() {
+  // Sample data
+  const metrics = [
+    {
+      title: "Total Employees",
+      value: "248",
+      change: "+12%",
+      increasing: true,
+    },
+    {
+      title: "Active Employees",
+      value: "235",
+      change: "+5%",
+      increasing: true,
+    },
+    {
+      title: "On Leave",
+      value: "13",
+      change: "-2%",
+      increasing: false,
+    },
+    {
+      title: "Attendance Rate",
+      value: "96%",
+      change: "+1%",
+      increasing: true,
+    },
+  ]
+
+  const upcomingReviews = [
+    {
+      id: "1",
+      name: "John Smith",
+      position: "Senior Developer",
+      department: "Engineering",
+      date: "May 15, 2023",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "2",
+      name: "Sarah Johnson",
+      position: "Marketing Specialist",
+      department: "Marketing",
+      date: "May 18, 2023",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+    {
+      id: "3",
+      name: "Michael Brown",
+      position: "UX Designer",
+      department: "Design",
+      date: "May 20, 2023",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+  ]
+
+  const recentActivities = [
+    {
+      id: "1",
+      action: "New employee added",
+      name: "Emily Davis",
+      time: "2 hours ago",
+      icon: CircleUser,
+    },
+    {
+      id: "2",
+      action: "Performance review completed",
+      name: "Robert Wilson",
+      time: "Yesterday",
+      icon: FileText,
+    },
+    {
+      id: "3",
+      action: "Leave request approved",
+      name: "Jennifer Lee",
+      time: "2 days ago",
+      icon: Calendar,
+    },
+    {
+      id: "4",
+      action: "Job application received",
+      name: "Thomas Moore",
+      time: "3 days ago",
+      icon: Mail,
+    },
+  ]
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your HR management system</p>
+    <div className="flex-1 space-y-6 p-4 sm:p-6 max-w-full overflow-hidden">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <Card key={index}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metric.value}</div>
+              <div className={`flex items-center text-sm ${metric.increasing ? "text-green-500" : "text-red-500"}`}>
+                {metric.increasing ? (
+                  <ArrowUpRight className="mr-1 h-4 w-4" />
+                ) : (
+                  <ArrowDownRight className="mr-1 h-4 w-4" />
+                )}
+                {metric.change}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle>Upcoming Performance Reviews</CardTitle>
+            <CardDescription>Reviews scheduled for the next 7 days</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">142</div>
-            <p className="text-xs text-muted-foreground">+4 from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">96.3%</div>
-            <p className="text-xs text-muted-foreground">+2.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">5 in final interview stage</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">8 due this week</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-4">
-              <CardHeader>
-                <CardTitle>Employee Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <DashboardChart />
-              </CardContent>
-            </Card>
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Upcoming Reviews</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UpcomingReviews />
-              </CardContent>
-            </Card>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Department Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { name: "Engineering", count: 42, percentage: 29.6 },
-                    { name: "Marketing", count: 19, percentage: 13.4 },
-                    { name: "Sales", count: 24, percentage: 16.9 },
-                    { name: "Product", count: 18, percentage: 12.7 },
-                    { name: "Operations", count: 15, percentage: 10.6 },
-                    { name: "HR", count: 8, percentage: 5.6 },
-                    { name: "Finance", count: 16, percentage: 11.2 },
-                  ].map((dept) => (
-                    <div key={dept.name} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">{dept.name}</div>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {dept.count} ({dept.percentage}%)
-                        </div>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-secondary">
-                        <div className="h-2 rounded-full bg-primary" style={{ width: `${dept.percentage}%` }} />
-                      </div>
+          <CardContent className="px-4 sm:px-6">
+            <div className="space-y-1">
+              {upcomingReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex flex-col sm:flex-row sm:items-center gap-4 py-4 border-b last:border-0"
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={review.avatar} alt={review.name} />
+                    <AvatarFallback>
+                      {review.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-2 flex-1 mt-2 sm:mt-0">
+                    <p className="font-medium leading-none text-base">{review.name}</p>
+                    <p className="text-sm text-muted-foreground">{review.position}</p>
+                    <div className="flex flex-wrap gap-2 items-center mt-2">
+                      <Badge variant="outline" className="mr-2">
+                        {review.department}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{review.date}</span>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="lg:col-span-4">
-              <CardHeader>
-                <CardTitle>Recent Activities</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RecentActivities />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analytics Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed">
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <TrendingUp className="h-10 w-10 text-muted-foreground" />
-                  <h3 className="text-lg font-medium">Analytics Dashboard</h3>
-                  <p className="text-sm text-muted-foreground max-w-[250px]">
-                    Detailed analytics about employee performance, attendance, and recruitment metrics.
-                  </p>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter className="px-4 sm:px-6 pt-2 pb-4">
+            <Link href="/performance" className="w-full">
+              <Button variant="default" className="w-full">
+                View All Reviews
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle>Recent Activities</CardTitle>
+            <CardDescription>Latest actions in the system</CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6">
+            <div className="space-y-1">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start gap-4 py-4 border-b last:border-0">
+                  <div className="rounded-full bg-muted p-2 flex-shrink-0 h-9 w-9 flex items-center justify-center">
+                    <activity.icon className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium leading-none">{activity.action}</p>
+                    <p className="text-sm text-muted-foreground">{activity.name}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Reports Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed">
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <AlertCircle className="h-10 w-10 text-muted-foreground" />
-                  <h3 className="text-lg font-medium">Reports Dashboard</h3>
-                  <p className="text-sm text-muted-foreground max-w-[250px]">
-                    Generate and view reports on various HR metrics and KPIs.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifications Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex h-[300px] items-center justify-center rounded-md border border-dashed">
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <Bell className="h-10 w-10 text-muted-foreground" />
-                  <h3 className="text-lg font-medium">Notifications Dashboard</h3>
-                  <p className="text-sm text-muted-foreground max-w-[250px]">
-                    View and manage all system notifications and alerts.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
