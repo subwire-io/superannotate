@@ -29,8 +29,41 @@ export default function TaskColumn({
   onDrop,
   draggedTask,
 }: TaskColumnProps) {
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    onDragOver(e, column.id)
+
+    // Add class to column when dragging over
+    const columnElement = e.currentTarget
+    columnElement.classList.add("drag-over")
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only remove the class if we're actually leaving the column
+    // and not just moving between child elements
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      e.currentTarget.classList.remove("drag-over")
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    // Remove highlight class
+    e.currentTarget.classList.remove("drag-over")
+
+    // Drop the task at the end of the column by default
+    onDrop(e, column.id)
+  }
+
   return (
-    <Card className={`${isMobileView ? "shadow-sm" : "h-full"}`}>
+    <Card
+      className={`${isMobileView ? "shadow-sm" : "h-full"}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {!isMobileView && (
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -43,36 +76,35 @@ export default function TaskColumn({
       )}
       <CardContent className={isMobileView ? "p-2" : "p-4"}>
         <div
-          className={`task-list ${
-            isMobileView ? "min-h-[80px]" : "min-h-[500px]"
-          } rounded-md transition-colors hover:bg-secondary/50 ${
+          className={`task-list ${isMobileView ? "min-h-[80px]" : "min-h-[500px]"} rounded-md transition-colors ${
             draggedTask && draggedTask.columnId !== column.id ? "bg-primary/5" : ""
           }`}
-          onDragOver={(e) => onDragOver(e, column.id)}
-          onDrop={(e) => onDrop(e, column.id)}
         >
           {column.tasks.length === 0 ? (
             <div
-              className={`flex items-center justify-center ${isMobileView ? "h-12 text-xs" : "h-24"} border border-dashed rounded-md border-muted-foreground/50 text-muted-foreground`}
-              onDragOver={(e) => onDragOver(e, column.id)}
-              onDrop={(e) => onDrop(e, column.id)}
+              className={`flex items-center justify-center ${isMobileView ? "h-12 text-xs" : "h-24"} border border-dashed rounded-md border-muted-foreground/50 text-muted-foreground w-full`}
             >
               No tasks
             </div>
           ) : (
-            <div className={`task-items ${isMobileView ? "space-y-1" : "space-y-2"}`}>
+            <>
               {column.tasks.map((task, index) => (
                 <div
                   key={task.id}
                   className="task-drop-zone"
                   onDragOver={(e) => {
                     e.preventDefault()
+                    e.stopPropagation()
                     e.currentTarget.classList.add("task-drop-zone-active")
                   }}
                   onDragLeave={(e) => {
-                    e.currentTarget.classList.remove("task-drop-zone-active")
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      e.currentTarget.classList.remove("task-drop-zone-active")
+                    }
                   }}
                   onDrop={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
                     e.currentTarget.classList.remove("task-drop-zone-active")
                     onDrop(e, column.id, index)
                   }}
@@ -90,22 +122,7 @@ export default function TaskColumn({
                   />
                 </div>
               ))}
-              {/* Add a drop zone at the end of the list */}
-              <div
-                className="task-drop-zone-end"
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  e.currentTarget.classList.add("task-drop-zone-active")
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove("task-drop-zone-active")
-                }}
-                onDrop={(e) => {
-                  e.currentTarget.classList.remove("task-drop-zone-active")
-                  onDrop(e, column.id)
-                }}
-              />
-            </div>
+            </>
           )}
         </div>
       </CardContent>

@@ -63,6 +63,17 @@ export default function TaskBoard() {
   const handleDragEnd = () => {
     setDraggedTask(null)
     document.body.classList.remove("touch-none")
+
+    // Remove any lingering drag-related classes
+    const columns = document.querySelectorAll(".card")
+    columns.forEach((column) => {
+      column.classList.remove("drag-over")
+    })
+
+    const dropZones = document.querySelectorAll(".task-drop-zone")
+    dropZones.forEach((zone) => {
+      zone.classList.remove("task-drop-zone-active")
+    })
   }
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
@@ -76,8 +87,13 @@ export default function TaskBoard() {
 
     const { task, columnId: sourceColumnId } = draggedTask
 
-    // If dropping in the same column and no specific index, do nothing
-    if (sourceColumnId === columnId && index === -1) {
+    // If dropping in the same column at the same position, do nothing
+    if (
+      sourceColumnId === columnId &&
+      index === -1 &&
+      columns.find((col) => col.id === columnId)?.tasks.findIndex((t) => t.id === task.id) ===
+        columns.find((col) => col.id === columnId)?.tasks.length - 1
+    ) {
       return
     }
 
@@ -119,7 +135,7 @@ export default function TaskBoard() {
     setColumns(newColumns)
     toast({
       title: "Task moved",
-      description: "Task has been moved successfully",
+      description: `Task moved to ${newColumns[destColIndex].title}`,
     })
 
     handleDragEnd()

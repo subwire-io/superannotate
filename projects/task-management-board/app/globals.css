@@ -74,16 +74,29 @@
   -webkit-user-drag: element;
 }
 
+/* Make entire card droppable */
+.card {
+  position: relative;
+}
+
+/* Highlight when dragging over a column */
+.drag-over {
+  outline: 2px solid hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.05);
+}
+
 /* Task list container */
 .task-list {
-  padding: 8px;
+  padding: 12px;
   min-height: 100px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* Task card wrapper */
 .task-card-wrapper {
-  margin-bottom: 8px;
   position: relative;
   z-index: 0;
 }
@@ -91,7 +104,25 @@
 /* Drop zone styling */
 .task-drop-zone {
   position: relative;
-  margin-bottom: 8px;
+  padding: 4px 0;
+  margin: 0;
+  border-radius: 4px;
+}
+
+/* Add a visible drop area before each task */
+.task-drop-zone::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 4px;
+  z-index: 5;
+}
+
+.task-drop-zone:hover::before {
+  background-color: hsl(var(--primary) / 0.05);
 }
 
 .task-drop-zone-active {
@@ -101,29 +132,20 @@
 .task-drop-zone-active::before {
   content: "";
   position: absolute;
-  top: -4px;
+  top: -8px;
   left: 0;
   right: 0;
-  height: 2px;
-  background-color: hsl(var(--primary));
+  height: 8px;
+  background-color: hsl(var(--primary) / 0.2);
   z-index: 10;
-  border-radius: 1px;
-}
-
-.task-drop-zone-end {
-  min-height: 8px;
-}
-
-.task-drop-zone-end.task-drop-zone-active {
-  min-height: 16px;
-  background-color: hsl(var(--primary) / 0.1);
   border-radius: 4px;
 }
 
 /* Improve mobile card appearance */
 @media (max-width: 640px) {
-  .task-card-wrapper {
-    margin-bottom: 4px;
+  .task-list {
+    padding: 8px;
+    gap: 8px;
   }
 
   .task-list {
@@ -131,7 +153,12 @@
   }
 
   .task-drop-zone {
-    margin-bottom: 4px;
+    padding: 2px 0;
+  }
+
+  .task-drop-zone::before {
+    top: -6px;
+    height: 6px;
   }
 }
 
