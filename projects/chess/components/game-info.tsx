@@ -3,7 +3,8 @@
 import React, { useRef, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Color, PieceType } from "@/lib/chess-types"
-import { RotateCcw, Clipboard, Download, Check } from "lucide-react"
+import { RotateCcw, Clipboard, Download, Check, X } from "lucide-react"
+import { toast } from "sonner"
 
 interface GameInfoProps {
   currentPlayer: Color
@@ -25,6 +26,7 @@ export default function GameInfo({
 }: GameInfoProps) {
   const moveHistoryRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
 
   // Auto-scroll to the bottom of move history when new moves are added
   useEffect(() => {
@@ -40,6 +42,14 @@ export default function GameInfo({
       return () => clearTimeout(timer)
     }
   }, [copied])
+
+  // Check for game over status and show toast
+  useEffect(() => {
+    if (gameStatus.includes("Checkmate!")) {
+      const winner = gameStatus.includes("Black wins") ? "Black" : "White"
+      toast(`${winner} wins!`)
+    }
+  }, [gameStatus])
 
   const renderCapturedPieces = (color: Color) => {
     return capturedPieces[color].map((pieceType, index) => {
@@ -85,6 +95,7 @@ export default function GameInfo({
     const text = formatMoveHistoryForExport()
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
+      toast("Move history copied")
     })
   }
 
@@ -102,6 +113,14 @@ export default function GameInfo({
     // Cleanup
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+
+    toast("Move history downloaded")
+  }
+
+  const handleResetConfirm = () => {
+    onResetGame()
+    setShowResetConfirm(false)
+    toast("New game started. Good luck!")
   }
 
   return (
@@ -109,11 +128,36 @@ export default function GameInfo({
       {/* Header with title and reset button */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold leading-none">Game Info</h2>
-        <Button variant="outline" size="sm" className="h-7 px-2" onClick={onResetGame}>
+        <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => setShowResetConfirm(true)}>
           <RotateCcw className="mr-1 h-3.5 w-3.5" />
           <span className="text-xs">Reset</span>
         </Button>
       </div>
+
+      {/* Reset confirmation modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 max-w-[300px] shadow-lg">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold">Reset Game</h3>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowResetConfirm(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to reset the game? This will start a new game and clear the current board.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowResetConfirm(false)}>
+                Cancel
+              </Button>
+              <Button variant="default" size="sm" onClick={handleResetConfirm}>
+                Reset
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Current player status */}
       <div className="mb-4 bg-gray-50 p-2 rounded border">
