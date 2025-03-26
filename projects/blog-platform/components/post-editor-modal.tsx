@@ -6,13 +6,14 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { SimpleInput } from "@/components/ui/simple-input"
 import { PostEditor } from "@/components/post-editor"
 import { CategorySelector } from "@/components/category-selector"
 import { TagSelector } from "@/components/tag-selector"
 import { PublishControls } from "@/components/publish-controls"
 import type { Post } from "@/types"
+import { cn } from "@/lib/utils"
 
 const postSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title is too long"),
@@ -28,10 +29,9 @@ interface PostEditorModalProps {
   onOpenChange: (open: boolean) => void
   post?: Post
   onSave?: (post: Post) => void
-  onView?: (post: Post) => void
 }
 
-export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: PostEditorModalProps) {
+export function PostEditorModal({ open, onOpenChange, post, onSave }: PostEditorModalProps) {
   const isEdit = !!post
 
   const form = useForm<PostFormValues>({
@@ -44,6 +44,7 @@ export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: Po
       category: post?.category || "",
       tags: post?.tags || [],
     },
+    mode: "onChange", // Validate on change for better user experience
   })
 
   useEffect(() => {
@@ -109,7 +110,10 @@ export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: Po
                   <FormItem>
                     <SimpleInput
                       placeholder="Post title"
-                      className="w-full border bg-background/50 text-lg font-medium outline-none placeholder:text-muted-foreground p-4 rounded-md"
+                      className={cn(
+                        "w-full border bg-background/50 text-lg font-medium outline-none placeholder:text-muted-foreground p-4 rounded-md",
+                        form.formState.errors.title && "border-destructive",
+                      )}
                       {...field}
                     />
                     <FormMessage />
@@ -124,13 +128,17 @@ export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: Po
                     name="category"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Category</FormLabel>
                         <CategorySelector
                           value={field.value}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            // Manually trigger validation after selection
+                            form.trigger("category")
+                          }}
                           required={true}
                           error={form.formState.errors.category?.message}
                         />
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -140,6 +148,7 @@ export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: Po
                     name="tags"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Tags</FormLabel>
                         <TagSelector tags={field.value || []} onChange={field.onChange} />
                       </FormItem>
                     )}
@@ -154,7 +163,6 @@ export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: Po
                     postId={post?.id}
                     onClose={() => onOpenChange(false)}
                     onSave={onSave}
-                    onView={onView}
                   />
                 </div>
               </div>
@@ -164,6 +172,7 @@ export function PostEditorModal({ open, onOpenChange, post, onSave, onView }: Po
                 name="content"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>Content</FormLabel>
                     <PostEditor value={field.value} onChange={field.onChange} />
                     <FormMessage />
                   </FormItem>

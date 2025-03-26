@@ -3,22 +3,19 @@
 import { useState, useEffect } from "react"
 import { PlusCircle } from "lucide-react"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { BlogHeader } from "@/components/blog-header"
 import { EmptyState } from "@/components/empty-state"
 import { PostEditorModal } from "@/components/post-editor-modal"
-import { PostView } from "@/components/post-view"
 import { PostTable } from "@/components/post-table"
 import { filterPosts } from "@/lib/utils"
 import type { Post, PostFilter } from "@/types"
 
 export default function Dashboard() {
   const [editorOpen, setEditorOpen] = useState(false)
-  const [viewerOpen, setViewerOpen] = useState(false)
   const [currentPost, setCurrentPost] = useState<Post | undefined>(undefined)
-  const [viewPost, setViewPost] = useState<Post | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState("")
   const [filter, setFilter] = useState<PostFilter>({ status: "all" })
 
@@ -26,11 +23,36 @@ export default function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([])
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Load posts from localStorage on initial render
   useEffect(() => {
     loadPosts()
-  }, [])
+  }, []) // Run only once on mount
+
+  useEffect(() => {
+    // Check if we should open the editor with a post from session storage
+    const editParam = searchParams.get("edit")
+    if (editParam === "true") {
+      const storedPost = sessionStorage.getItem("editPost")
+      if (storedPost) {
+        try {
+          const post = JSON.parse(storedPost)
+          setCurrentPost({
+            ...post,
+            createdAt: new Date(post.createdAt),
+            updatedAt: new Date(post.updatedAt),
+            publishedAt: post.publishedAt ? new Date(post.publishedAt) : undefined,
+          })
+          setEditorOpen(true)
+          // Clear the stored post
+          sessionStorage.removeItem("editPost")
+        } catch (error) {
+          console.error("Error parsing stored post:", error)
+        }
+      }
+    }
+  }, [searchParams]) // Only run when searchParams changes
 
   // Update filtered posts when filter or posts change
   useEffect(() => {
@@ -197,12 +219,6 @@ export default function Dashboard() {
   const handleEditPost = (post: Post) => {
     setCurrentPost(post)
     setEditorOpen(true)
-    setViewerOpen(false)
-  }
-
-  const handleViewPost = (post: Post) => {
-    setViewPost(post)
-    setViewerOpen(true)
   }
 
   const handleSavePost = (updatedPost: Post) => {
@@ -271,11 +287,6 @@ export default function Dashboard() {
       setEditorOpen(false)
     }
 
-    // Close the viewer if it was open
-    if (viewPost?.id === postId) {
-      setViewerOpen(false)
-    }
-
     toast.success("Post deleted", {
       description: `"${postToDelete.title}" has been permanently removed.`,
       action: {
@@ -319,7 +330,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <BlogHeader onEditPost={handleEditPost} onSearch={handleSearchChange} posts={posts} />
+      <BlogHeader onEditPost={handleEditPost} posts={posts} />
       <main className="flex-1 p-6 md:p-10">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -333,11 +344,12 @@ export default function Dashboard() {
           <PostTable
             posts={filteredPosts}
             onEdit={handleEditPost}
-            onView={handleViewPost}
             onDelete={(post) => handleDeletePost(post.id)}
             categories={categories as string[]}
             onFilterChange={handleFilterChange}
             currentFilter={filter}
+            onSearch={handleSearchChange}
+            searchQuery={searchQuery}
           />
         ) : (
           <EmptyState
@@ -352,17 +364,7 @@ export default function Dashboard() {
           />
         )}
 
-        <PostEditorModal
-          open={editorOpen}
-          onOpenChange={setEditorOpen}
-          post={currentPost}
-          onSave={handleSavePost}
-          onView={handleViewPost}
-        />
-
-        {viewPost && (
-          <PostView post={viewPost} open={viewerOpen} onOpenChange={setViewerOpen} onEdit={handleEditPost} />
-        )}
+        <PostEditorModal open={editorOpen} onOpenChange={setEditorOpen} post={currentPost} onSave={handleSavePost} />
       </main>
     </div>
   )

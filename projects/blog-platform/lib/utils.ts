@@ -50,7 +50,9 @@ export function filterPosts(posts: Post[], filter: PostFilter): Post[] {
       filter.search &&
       !post.title.toLowerCase().includes(filter.search.toLowerCase()) &&
       !post.content.toLowerCase().includes(filter.search.toLowerCase()) &&
-      !post.excerpt.toLowerCase().includes(filter.search.toLowerCase())
+      !post.excerpt.toLowerCase().includes(filter.search?.toLowerCase()) &&
+      !(post.category && post.category.toLowerCase().includes(filter.search?.toLowerCase())) &&
+      !(post.tags && post.tags?.some((tag) => tag.toLowerCase().includes(filter.search?.toLowerCase()!)))
     ) {
       return false
     }

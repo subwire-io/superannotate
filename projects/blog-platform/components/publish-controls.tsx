@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Save, Eye, Upload, Calendar, Trash2 } from "lucide-react"
+import { Save, Eye, Upload, Calendar, Trash2, Share2 } from "lucide-react"
 import type { UseFormReturn } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -47,7 +47,6 @@ interface PublishControlsProps {
   postId?: string
   onClose?: () => void
   onSave?: (post: Post) => void
-  onView?: (post: Post) => void
 }
 
 export function PublishControls({
@@ -57,7 +56,6 @@ export function PublishControls({
   postId,
   onClose,
   onSave,
-  onView,
 }: PublishControlsProps) {
   const [isPublishing, setIsPublishing] = useState(false)
   const [isUnpublishing, setIsUnpublishing] = useState(false)
@@ -78,11 +76,15 @@ export function PublishControls({
   })
 
   const handleSaveDraft = async () => {
+    // Trigger validation for required fields
     const isValid = await postForm.trigger(["title", "content", "category"])
+
     if (!isValid) {
-      toast.error("Validation Error", {
-        description: "Please fill in all required fields.",
-      })
+      // Focus on the first invalid field
+      const firstError = Object.keys(postForm.formState.errors)[0]
+      if (firstError) {
+        postForm.setFocus(firstError as any)
+      }
       return
     }
 
@@ -216,11 +218,15 @@ export function PublishControls({
   }
 
   const handlePublish = async (data: PublishFormValues) => {
+    // Trigger validation for required fields
     const isValid = await postForm.trigger(["title", "content", "category"])
+
     if (!isValid) {
-      toast.error("Validation Error", {
-        description: "Please fill in all required fields.",
-      })
+      // Focus on the first invalid field
+      const firstError = Object.keys(postForm.formState.errors)[0]
+      if (firstError) {
+        postForm.setFocus(firstError as any)
+      }
       return
     }
 
@@ -313,26 +319,30 @@ export function PublishControls({
   }
 
   const handleViewPost = () => {
-    if (!postId) return
-
-    const formValues = postForm.getValues()
-    const post: Post = {
-      id: postId,
-      title: formValues.title || "Untitled Post",
-      content: formValues.content || "",
-      category: formValues.category || "",
-      tags: formValues.tags || [],
-      excerpt: formValues.excerpt || "",
-      slug: formValues.slug || `post-${postId}`,
-      published: isPublished,
-      featured: formValues.featured || false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      publishedAt: isPublished ? new Date() : undefined,
+    if (postId) {
+      // Navigate to the post page
+      window.location.href = `/posts/${postId}`
     }
+  }
 
-    if (onView) {
-      onView(post)
+  const handleSharePost = () => {
+    if (postId) {
+      // Create the post URL
+      const postUrl = `${window.location.origin}/posts/${postId}`
+
+      // Copy to clipboard
+      navigator.clipboard
+        .writeText(postUrl)
+        .then(() => {
+          toast.success("Link copied to clipboard", {
+            description: "Share this link with others to view this post.",
+          })
+        })
+        .catch(() => {
+          toast.error("Failed to copy link", {
+            description: "Please try again or copy the URL manually.",
+          })
+        })
     }
   }
 
@@ -357,6 +367,15 @@ export function PublishControls({
           >
             <Eye className="mr-2 h-4 w-4" />
             View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSharePost}
+            className="hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900 dark:hover:text-green-200 transition-colors"
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            Share
           </Button>
         </>
       ) : (
@@ -515,7 +534,7 @@ export function PublishControls({
       </Dialog>
 
       {!isPublished && (
-        <Button variant="outline" size="sm" className="p-2" onClick={handleViewPost}>
+        <Button variant="outline" size="sm" className="p-2">
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Delete</span>
         </Button>
