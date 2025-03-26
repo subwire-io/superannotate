@@ -742,6 +742,7 @@ export default function PacmanGame() {
         const initialOffset = 15 // Increased from 10
 
         // Different initial directions for each ghost to avoid clustering
+
         const initialDirections = [DIRECTIONS.UP, DIRECTIONS.LEFT, DIRECTIONS.RIGHT, DIRECTIONS.DOWN]
         ghost.direction = initialDirections[index]
         ghost.nextDirection = ghost.direction
@@ -1234,7 +1235,7 @@ export default function PacmanGame() {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center max-h-full">
       <div className="mb-4 flex items-center justify-between w-full max-w-md">
         <div className="text-white">Score: {score}</div>
         <div className="text-white">Lives: {lives}</div>
@@ -1283,7 +1284,9 @@ export default function PacmanGame() {
       </div>
 
       {/* Mobile Controls */}
-      <MobileControls onDirectionChange={handleDirectionChange} />
+      <div className="mt-2">
+        <MobileControls onDirectionChange={handleDirectionChange} />
+      </div>
     </div>
   )
 }
