@@ -1,9 +1,12 @@
 "use client"
 
+import type React from "react"
+
 import Image from "next/image"
 import { Play, Pause, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { Song } from "./music-interface"
+import type { Song, Playlist } from "./music-interface"
+import { useEffect, useState } from "react"
 
 interface RecommendationsViewProps {
   recommendations: Song[]
@@ -11,6 +14,8 @@ interface RecommendationsViewProps {
   currentSongId?: string
   isPlaying: boolean
   onAddToPlaylist: (song: Song) => void
+  onRemoveFromPlaylist: (songId: string) => void
+  selectedPlaylist: Playlist | null
 }
 
 export default function RecommendationsView({
@@ -19,7 +24,46 @@ export default function RecommendationsView({
   currentSongId,
   isPlaying,
   onAddToPlaylist,
+  onRemoveFromPlaylist,
+  selectedPlaylist,
 }: RecommendationsViewProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile devices
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+
+    return () => {
+      window.removeEventListener("resize", checkMobile)
+    }
+  }, [])
+
+  // Check if a song is in the current playlist
+  const isSongInPlaylist = (songId: string) => {
+    if (!selectedPlaylist) return false
+    return selectedPlaylist.songs.some((song) => song.id === songId)
+  }
+
+  // Handle heart button click
+  const handleHeartClick = (e: React.MouseEvent, song: Song) => {
+    e.stopPropagation()
+    if (isSongInPlaylist(song.id)) {
+      onRemoveFromPlaylist(song.id)
+    } else {
+      onAddToPlaylist(song)
+    }
+  }
+
+  // Handle card click to play song
+  const handleCardClick = (song: Song) => {
+    onPlaySong(song)
+  }
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Recommended for You</h1>
@@ -35,8 +79,10 @@ export default function RecommendationsView({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {recommendations.map((song) => {
             const isCurrentSong = song.id === currentSongId
+            const inPlaylist = isSongInPlaylist(song.id)
+
             return (
-              <div key={song.id} className="group relative cursor-pointer">
+              <div key={song.id} className="group relative cursor-pointer" onClick={() => handleCardClick(song)}>
                 <div className="relative aspect-square overflow-hidden rounded-md shadow-sm group-hover:shadow-md transition-shadow duration-300">
                   <Image
                     src={song.coverArt || "/placeholder.svg"}
@@ -48,7 +94,7 @@ export default function RecommendationsView({
                   />
                   <div
                     className={`absolute inset-0 bg-black/40 flex items-center justify-center ${
-                      isCurrentSong ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      isCurrentSong || isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     } transition-opacity duration-300`}
                   >
                     <div className="flex gap-2">
@@ -73,14 +119,13 @@ export default function RecommendationsView({
                       <Button
                         variant="secondary"
                         size="icon"
-                        className="rounded-full shadow-lg transform scale-90 opacity-90 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onAddToPlaylist(song)
-                        }}
+                        className={`rounded-full shadow-lg transform scale-90 opacity-90 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 ${
+                          inPlaylist ? "bg-red-100 hover:bg-red-200" : ""
+                        }`}
+                        onClick={(e) => handleHeartClick(e, song)}
                       >
-                        <Heart className="h-5 w-5" />
-                        <span className="sr-only">Add to playlist</span>
+                        <Heart className={`h-5 w-5 ${inPlaylist ? "fill-red-500 text-red-500" : ""}`} />
+                        <span className="sr-only">{inPlaylist ? "Remove from playlist" : "Add to playlist"}</span>
                       </Button>
                     </div>
                   </div>

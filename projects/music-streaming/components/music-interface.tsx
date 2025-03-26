@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import Sidebar from "./sidebar"
 import NowPlaying from "./now-playing"
 import PlaylistView from "./playlist-view"
@@ -28,6 +28,12 @@ export type Playlist = {
   coverArt: string
 }
 
+type DeletedSong = {
+  song: Song
+  playlistId: string
+  index: number
+}
+
 export default function MusicInterface() {
   const [currentView, setCurrentView] = useState<"playlists" | "recommendations">("playlists")
   const [currentSong, setCurrentSong] = useState<Song | null>(sampleSongs[0])
@@ -39,6 +45,9 @@ export default function MusicInterface() {
   const [showSelectPlaylistDialog, setShowSelectPlaylistDialog] = useState(false)
   const [songToAddToPlaylist, setSongToAddToPlaylist] = useState<Song | null>(null)
   const selectedPlaylistId = selectedPlaylist?.id
+
+  // Keep track of recently deleted songs for undo functionality
+  const lastDeletedSongRef = useRef<DeletedSong | null>(null)
 
   const handlePlaySong = (song: Song) => {
     if (currentSong?.id === song.id) {
@@ -95,6 +104,58 @@ export default function MusicInterface() {
     })
   }
 
+  const handleUpdatePlaylist = (id: string, name: string, coverArt?: string) => {
+    const updatedPlaylists = playlists.map((playlist) => {
+      if (playlist.id === id) {
+        return {
+          ...playlist,
+          name,
+          coverArt: coverArt || playlist.coverArt,
+        }
+      }
+      return playlist
+    })
+
+    setPlaylists(updatedPlaylists)
+
+    // If this is the currently selected playlist, update it too
+    if (selectedPlaylist && selectedPlaylist.id === id) {
+      setSelectedPlaylist({
+        ...selectedPlaylist,
+        name,
+        coverArt: coverArt || selectedPlaylist.coverArt,
+      })
+    }
+
+    toast.success("Playlist updated", {
+      description: `"${name}" has been updated.`,
+    })
+  }
+
+  const handleDeletePlaylist = (id: string) => {
+    // Find the playlist to delete
+    const playlistToDelete = playlists.find((p) => p.id === id)
+    if (!playlistToDelete) return
+
+    // Remove the playlist
+    const updatedPlaylists = playlists.filter((playlist) => playlist.id !== id)
+    setPlaylists(updatedPlaylists)
+
+    // If this was the selected playlist, select another one or go to recommendations
+    if (selectedPlaylist && selectedPlaylist.id === id) {
+      if (updatedPlaylists.length > 0) {
+        setSelectedPlaylist(updatedPlaylists[0])
+      } else {
+        setSelectedPlaylist(null)
+        setCurrentView("recommendations")
+      }
+    }
+
+    toast.success("Playlist deleted", {
+      description: `"${playlistToDelete.name}" has been deleted.`,
+    })
+  }
+
   const handleAddToPlaylist = (song: Song) => {
     if (playlists.length === 0) {
       toast.error("No playlists available", {
@@ -103,8 +164,43 @@ export default function MusicInterface() {
       return
     }
 
-    setSongToAddToPlaylist(song)
-    setShowSelectPlaylistDialog(true)
+    // If we're in the recommendations view and have a selected playlist,
+    // add directly to that playlist
+    if (currentView === "recommendations" && selectedPlaylist) {
+      // Check if song is already in the playlist
+      if (selectedPlaylist.songs.some((s) => s.id === song.id)) {
+        toast.info("Already in playlist", {
+          description: `"${song.title}" is already in "${selectedPlaylist.name}".`,
+        })
+        return
+      }
+
+      // Add song to the selected playlist
+      const updatedPlaylists = playlists.map((playlist) => {
+        if (playlist.id === selectedPlaylist.id) {
+          return {
+            ...playlist,
+            songs: [...playlist.songs, song],
+          }
+        }
+        return playlist
+      })
+
+      setPlaylists(updatedPlaylists)
+      setSelectedPlaylist({
+        ...selectedPlaylist,
+        songs: [...selectedPlaylist.songs, song],
+      })
+
+      toast.success("Added to playlist", {
+        description: `"${song.title}" has been added to "${selectedPlaylist.name}".`,
+      })
+    } else {
+      // Otherwise show the dialog to select a playlist
+      setSongToAddToPlaylist(song)
+      setShowSelectPlaylistDialog(true)
+      // No toast here - it will be shown after a playlist is selected
+    }
   }
 
   const handleAddToSpecificPlaylist = (playlistId: string, song: Song) => {
@@ -145,11 +241,22 @@ export default function MusicInterface() {
     })
   }
 
-  const handleRemoveFromPlaylist = (songId: string) => {
+  const handleRemoveFromPlaylist = (songId: string, enableUndo = false) => {
     if (!selectedPlaylist) return
 
-    const songToRemove = selectedPlaylist.songs.find((s) => s.id === songId)
-    if (!songToRemove) return
+    const songIndex = selectedPlaylist.songs.findIndex((s) => s.id === songId)
+    if (songIndex === -1) return
+
+    const songToRemove = selectedPlaylist.songs[songIndex]
+
+    // Store the deleted song for potential undo
+    if (enableUndo) {
+      lastDeletedSongRef.current = {
+        song: songToRemove,
+        playlistId: selectedPlaylist.id,
+        index: songIndex,
+      }
+    }
 
     // Remove song from the selected playlist
     const updatedPlaylists = playlists.map((playlist) => {
@@ -168,9 +275,62 @@ export default function MusicInterface() {
       songs: selectedPlaylist.songs.filter((song) => song.id !== songId),
     })
 
-    toast.success("Removed from playlist", {
-      description: `"${songToRemove.title}" has been removed from "${selectedPlaylist.name}".`,
+    if (enableUndo) {
+      toast.success("Removed from playlist", {
+        description: `"${songToRemove.title}" has been removed from "${selectedPlaylist.name}".`,
+        action: {
+          label: "Undo",
+          onClick: handleUndoRemove,
+        },
+      })
+    } else {
+      toast.success("Removed from playlist", {
+        description: `"${songToRemove.title}" has been removed from "${selectedPlaylist.name}".`,
+      })
+    }
+  }
+
+  const handleUndoRemove = () => {
+    const deletedSong = lastDeletedSongRef.current
+    if (!deletedSong) return
+
+    // Find the playlist
+    const targetPlaylist = playlists.find((p) => p.id === deletedSong.playlistId)
+    if (!targetPlaylist) return
+
+    // Create a copy of the songs array
+    const updatedSongs = [...targetPlaylist.songs]
+
+    // Insert the song back at its original position
+    updatedSongs.splice(deletedSong.index, 0, deletedSong.song)
+
+    // Update the playlists
+    const updatedPlaylists = playlists.map((playlist) => {
+      if (playlist.id === deletedSong.playlistId) {
+        return {
+          ...playlist,
+          songs: updatedSongs,
+        }
+      }
+      return playlist
     })
+
+    setPlaylists(updatedPlaylists)
+
+    // If this is the currently selected playlist, update it too
+    if (selectedPlaylist && selectedPlaylist.id === deletedSong.playlistId) {
+      setSelectedPlaylist({
+        ...selectedPlaylist,
+        songs: updatedSongs,
+      })
+    }
+
+    toast.success("Song restored", {
+      description: `"${deletedSong.song.title}" has been added back to the playlist.`,
+    })
+
+    // Clear the reference
+    lastDeletedSongRef.current = null
   }
 
   return (
@@ -223,6 +383,8 @@ export default function MusicInterface() {
             currentSongId={currentSong?.id}
             isPlaying={isPlaying}
             onRemoveFromPlaylist={handleRemoveFromPlaylist}
+            onUpdatePlaylist={handleUpdatePlaylist}
+            onDeletePlaylist={handleDeletePlaylist}
           />
         ) : (
           <RecommendationsView
@@ -231,6 +393,8 @@ export default function MusicInterface() {
             currentSongId={currentSong?.id}
             isPlaying={isPlaying}
             onAddToPlaylist={handleAddToPlaylist}
+            onRemoveFromPlaylist={handleRemoveFromPlaylist}
+            selectedPlaylist={selectedPlaylist}
           />
         )}
       </main>
@@ -243,6 +407,8 @@ export default function MusicInterface() {
           onNextSong={handleNextSong}
           onPrevSong={handlePrevSong}
           onAddToPlaylist={handleAddToPlaylist}
+          selectedPlaylist={selectedPlaylist}
+          onRemoveFromPlaylist={handleRemoveFromPlaylist}
         />
       )}
 

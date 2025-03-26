@@ -2,31 +2,42 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ImagePlus } from "lucide-react"
 import Image from "next/image"
+import type { Playlist } from "./music-interface"
 
-interface AddPlaylistDialogProps {
+interface EditPlaylistDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAddPlaylist: (name: string, coverArt?: string) => void
+  playlist: Playlist
+  onUpdatePlaylist: (id: string, name: string, coverArt?: string) => void
 }
 
-export default function AddPlaylistDialog({ open, onOpenChange, onAddPlaylist }: AddPlaylistDialogProps) {
-  const [playlistName, setPlaylistName] = useState("")
-  const [previewUrl, setPreviewUrl] = useState("")
+export default function EditPlaylistDialog({
+  open,
+  onOpenChange,
+  playlist,
+  onUpdatePlaylist,
+}: EditPlaylistDialogProps) {
+  const [playlistName, setPlaylistName] = useState(playlist.name)
+  const [previewUrl, setPreviewUrl] = useState(playlist.coverArt)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Update state when playlist changes
+  useEffect(() => {
+    setPlaylistName(playlist.name)
+    setPreviewUrl(playlist.coverArt)
+  }, [playlist])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (playlistName.trim()) {
-      onAddPlaylist(playlistName, previewUrl || undefined)
-      setPlaylistName("")
-      setPreviewUrl("")
+      onUpdatePlaylist(playlist.id, playlistName, previewUrl || undefined)
       onOpenChange(false)
     }
   }
@@ -50,7 +61,7 @@ export default function AddPlaylistDialog({ open, onOpenChange, onAddPlaylist }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create new playlist</DialogTitle>
+          <DialogTitle>Edit playlist</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -108,7 +119,7 @@ export default function AddPlaylistDialog({ open, onOpenChange, onAddPlaylist }:
               Cancel
             </Button>
             <Button type="submit" disabled={!playlistName.trim()}>
-              Create
+              Save changes
             </Button>
           </DialogFooter>
         </form>

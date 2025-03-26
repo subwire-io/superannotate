@@ -5,8 +5,7 @@ import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart } from "lucide-react"
 import Image from "next/image"
-import type { Song } from "./music-interface"
-import { toast } from "sonner"
+import type { Song, Playlist } from "./music-interface"
 
 interface NowPlayingProps {
   song: Song
@@ -15,6 +14,8 @@ interface NowPlayingProps {
   onNextSong: () => void
   onPrevSong: () => void
   onAddToPlaylist: (song: Song) => void
+  selectedPlaylist?: Playlist | null
+  onRemoveFromPlaylist?: (songId: string) => void
 }
 
 export default function NowPlaying({
@@ -24,6 +25,8 @@ export default function NowPlaying({
   onNextSong,
   onPrevSong,
   onAddToPlaylist,
+  selectedPlaylist,
+  onRemoveFromPlaylist,
 }: NowPlayingProps) {
   const [volume, setVolume] = useState(70)
   const [prevVolume, setPrevVolume] = useState(70)
@@ -57,11 +60,22 @@ export default function NowPlaying({
     }
   }
 
-  const handleAddToPlaylist = () => {
-    onAddToPlaylist(song)
-    toast.success("Added to playlist", {
-      description: `"${song.title}" has been added to your playlist.`,
-    })
+  // Check if the song is in the current playlist
+  const isSongInPlaylist = () => {
+    if (!selectedPlaylist) return false
+    return selectedPlaylist.songs.some((s) => s.id === song.id)
+  }
+
+  const inPlaylist = isSongInPlaylist()
+
+  const handleHeartClick = () => {
+    if (inPlaylist && onRemoveFromPlaylist) {
+      onRemoveFromPlaylist(song.id)
+      // Toast is handled in the parent component
+    } else {
+      onAddToPlaylist(song)
+      // Toast is handled in the parent component
+    }
   }
 
   return (
@@ -137,9 +151,16 @@ export default function NowPlaying({
           </div>
 
           <div className="flex items-center justify-end w-1/3 md:w-1/4 space-x-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleAddToPlaylist}>
-              <Heart className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
-              <span className="sr-only">Add to playlist</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${inPlaylist ? "hover:bg-red-100" : ""}`}
+              onClick={handleHeartClick}
+            >
+              <Heart
+                className={`h-4 w-4 ${inPlaylist ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-primary"} transition-colors`}
+              />
+              <span className="sr-only">{inPlaylist ? "Remove from playlist" : "Add to playlist"}</span>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleMute}>
               {isMuted ? (
