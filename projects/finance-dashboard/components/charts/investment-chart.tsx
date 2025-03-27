@@ -1,6 +1,8 @@
 "use client"
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useTheme } from "next-themes"
 
 // This would typically come from an API with historical data
 const data = [
@@ -39,29 +41,58 @@ const data = [
 ]
 
 export function InvestmentChart() {
+  const isMobile = useIsMobile()
+  const { theme } = useTheme()
+  const isDarkTheme = theme === "dark"
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg overflow-hidden border border-border">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-muted/50">
+                <th className="text-left px-6 py-4 font-medium text-sm">Month</th>
+                <th className="text-right px-6 py-4 font-medium text-sm">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, index) => (
+                <tr key={item.name} className="border-t border-border">
+                  <td className="text-left px-6 py-4 text-sm">{item.name}</td>
+                  <td className="text-right px-6 py-4 text-sm font-medium">${item.value.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <AreaChart data={data} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
         <XAxis
           dataKey="name"
           stroke="#888888"
           fontSize={12}
           tickLine={false}
-          axisLine={false}
-          height={40}
+          axisLine={true}
+          height={30}
           tickMargin={8}
         />
         <YAxis
           stroke="#888888"
           fontSize={12}
           tickLine={false}
-          axisLine={false}
+          axisLine={true}
           tickFormatter={(value) => `$${value}`}
-          width={60}
-          domain={["dataMin - 500", "dataMax + 500"]}
+          width={50}
+          domain={["dataMin - 200", "dataMax + 200"]}
           allowDataOverflow={false}
         />
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
         <Area
           type="monotone"
           dataKey="value"
@@ -71,16 +102,41 @@ export function InvestmentChart() {
           strokeWidth={2}
         />
         <Tooltip
-          formatter={(value: number) => [`$${value}`, "Value"]}
+          formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]}
           contentStyle={{
-            backgroundColor: "hsl(var(--background))",
+            backgroundColor: "hsl(var(--card))",
             borderColor: "hsl(var(--border))",
-            padding: "8px 12px",
+            padding: "12px 16px",
             borderRadius: "6px",
-            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+            fontSize: 12,
+            color: "hsl(var(--foreground))",
+            textAlign: "center",
+            fontWeight: "500",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60px",
           }}
-          labelStyle={{ color: "hsl(var(--foreground))" }}
-          wrapperStyle={{ zIndex: 10 }}
+          itemStyle={{
+            color: "hsl(var(--foreground))",
+            textAlign: "center",
+            padding: "2px 0",
+            fontWeight: "500",
+            display: "flex",
+            justifyContent: "center",
+            width: "100%",
+          }}
+          labelStyle={{
+            color: "hsl(var(--foreground))",
+            fontWeight: "bold",
+            marginBottom: "8px",
+            textAlign: "center",
+            display: "block",
+            width: "100%",
+          }}
+          separator=": "
         />
       </AreaChart>
     </ResponsiveContainer>

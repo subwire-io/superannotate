@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { cn } from "@/lib/utils"
 import { useFinance } from "@/lib/data-context"
@@ -57,7 +58,7 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
           shares: investment.shares,
           price: investment.price,
           date: new Date(),
-          notes: "",
+          notes: investment.notes || "",
         })
       }
     }
@@ -79,12 +80,14 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
             shares: data.shares,
             price: data.price,
             value,
+            notes: data.notes,
           })
         }
 
         toast({
           title: "Investment updated",
           description: "Your investment has been updated successfully.",
+          duration: 3000,
         })
       } else {
         // Add new investment
@@ -93,11 +96,13 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
           type: data.type,
           shares: data.shares,
           price: data.price,
+          notes: data.notes,
         })
 
         toast({
           title: "Investment added",
           description: "Your investment has been added successfully.",
+          duration: 3000,
         })
       }
 
@@ -107,6 +112,7 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
         title: "Error",
         description: "There was an error saving your investment.",
         variant: "destructive",
+        duration: 3000,
       })
     } finally {
       setIsSubmitting(false)
@@ -115,8 +121,8 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="max-w-md w-full p-5 sm:p-6 overflow-y-auto max-h-[90vh]">
+        <DialogHeader className="mb-4">
           <DialogTitle>{investmentId ? "Edit Investment" : "Add Investment"}</DialogTitle>
           <DialogDescription>
             {investmentId ? "Update the details of your investment." : "Enter the details of your investment."}
@@ -180,7 +186,11 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
                       min="0"
                       placeholder="0"
                       {...field}
-                      onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                      value={field.value === 0 ? "" : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value)
+                        field.onChange(value)
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -204,7 +214,11 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
                         className="pl-7"
                         placeholder="0.00"
                         {...field}
-                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                        value={field.value === 0 ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : Number.parseFloat(e.target.value)
+                          field.onChange(value)
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -255,18 +269,18 @@ export function InvestmentForm({ investmentId, onClose }: InvestmentFormProps) {
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Input placeholder="Investment notes" {...field} />
+                    <Textarea placeholder="Investment notes" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={onClose}>
+            <DialogFooter className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-2">
+              <Button variant="outline" type="button" onClick={onClose} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

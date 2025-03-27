@@ -86,7 +86,7 @@ export function TransactionForm({ onClose }: TransactionFormProps) {
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[425px]"
+        className="sm:max-w-[425px] mx-4 sm:mx-auto"
         aria-labelledby="transaction-form-title"
         aria-describedby="transaction-form-description"
       >

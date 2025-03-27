@@ -117,8 +117,8 @@ export function GoalForm({ goalId, onClose }: GoalFormProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="max-w-md w-full p-5 sm:p-6 overflow-y-auto max-h-[90vh]">
+        <DialogHeader className="mb-4">
           <DialogTitle>{goalId ? "Edit Financial Goal" : "Create Financial Goal"}</DialogTitle>
           <DialogDescription>
             {goalId ? "Update your financial goal details." : "Set up a new financial goal to track."}
@@ -266,11 +266,11 @@ export function GoalForm({ goalId, onClose }: GoalFormProps) {
               )}
             />
 
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={onClose}>
+            <DialogFooter className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-2">
+              <Button variant="outline" type="button" onClick={onClose} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

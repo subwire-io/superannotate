@@ -262,6 +262,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [investments, setInvestments] = useState<Investment[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [deletedItems, setDeletedItems] = useState<{ id: string; type: string; item: any }[]>([])
 
   // Simulate data loading
   useEffect(() => {
@@ -279,93 +280,116 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     loadData()
   }, [])
 
+  // Update budget spent amounts based on expenses
+  useEffect(() => {
+    if (!isLoading) {
+      // Group expenses by category
+      const expensesByCategory: Record<string, number> = {}
+      expenses.forEach((expense) => {
+        if (expensesByCategory[expense.category]) {
+          expensesByCategory[expense.category] += expense.amount
+        } else {
+          expensesByCategory[expense.category] = expense.amount
+        }
+      })
+
+      // Update budgets with actual spent amounts
+      const updatedBudgets = budgets.map((budget) => {
+        const spent = expensesByCategory[budget.category] || 0
+        const remaining = budget.allocated - spent
+        const progress = Math.min(100, Math.round((spent / budget.allocated) * 100))
+
+        return {
+          ...budget,
+          spent,
+          remaining,
+          progress,
+        }
+      })
+
+      setBudgets(updatedBudgets)
+    }
+  }, [expenses, isLoading])
+
   // Expense functions
   const addExpense = (expense: Omit<Expense, "id">) => {
-    const newExpense = {
-      ...expense,
-      id: `exp${Date.now()}`,
-    }
-    setExpenses([newExpense, ...expenses])
+    // Check if this is an undo operation (item exists in deletedItems)
+    const deletedItem = deletedItems.find(
+      (item) =>
+        item.type === "expense" &&
+        item.item.date === expense.date &&
+        item.item.description === expense.description &&
+        item.item.category === expense.category &&
+        item.item.amount === expense.amount,
+    )
 
-    // Update budget spent amount
-    const matchingBudget = budgets.find((b) => b.category === expense.category)
-    if (matchingBudget) {
-      const updatedBudget = {
-        ...matchingBudget,
-        spent: matchingBudget.spent + expense.amount,
-        remaining: matchingBudget.allocated - (matchingBudget.spent + expense.amount),
-        progress: Math.min(100, Math.round(((matchingBudget.spent + expense.amount) / matchingBudget.allocated) * 100)),
+    if (deletedItem) {
+      // This is an undo operation, restore the original item with its ID
+      setExpenses((prev) => [...prev, deletedItem.item as Expense])
+      // Remove from deletedItems
+      setDeletedItems((prev) => prev.filter((item) => item.id !== deletedItem.id))
+    } else {
+      // This is a new expense
+      const newExpense = {
+        ...expense,
+        id: `exp${Date.now()}`,
       }
-      updateBudget(updatedBudget)
+      setExpenses([newExpense, ...expenses])
     }
   }
 
   const updateExpense = (expense: Expense) => {
     const oldExpense = expenses.find((e) => e.id === expense.id)
     setExpenses(expenses.map((e) => (e.id === expense.id ? expense : e)))
-
-    // Update budget spent amount if category or amount changed
-    if (oldExpense && (oldExpense.category !== expense.category || oldExpense.amount !== expense.amount)) {
-      // Remove from old category
-      if (oldExpense.category !== expense.category) {
-        const oldBudget = budgets.find((b) => b.category === oldExpense.category)
-        if (oldBudget) {
-          const updatedOldBudget = {
-            ...oldBudget,
-            spent: oldBudget.spent - oldExpense.amount,
-            remaining: oldBudget.allocated - (oldBudget.spent - oldExpense.amount),
-            progress: Math.round(((oldBudget.spent - oldExpense.amount) / oldBudget.allocated) * 100),
-          }
-          updateBudget(updatedOldBudget)
-        }
-      }
-
-      // Add to new category
-      const newBudget = budgets.find((b) => b.category === expense.category)
-      if (newBudget) {
-        const amountDiff =
-          oldExpense.category === expense.category ? expense.amount - oldExpense.amount : expense.amount
-
-        const updatedNewBudget = {
-          ...newBudget,
-          spent: newBudget.spent + amountDiff,
-          remaining: newBudget.allocated - (newBudget.spent + amountDiff),
-          progress: Math.min(100, Math.round(((newBudget.spent + amountDiff) / newBudget.allocated) * 100)),
-        }
-        updateBudget(updatedNewBudget)
-      }
-    }
   }
 
   const deleteExpense = (id: string) => {
     const expenseToDelete = expenses.find((e) => e.id === id)
     if (expenseToDelete) {
-      setExpenses(expenses.filter((e) => e.id !== id))
+      // Store the deleted item for potential undo
+      setDeletedItems((prev) => [
+        ...prev,
+        {
+          id: id,
+          type: "expense",
+          item: expenseToDelete,
+        },
+      ])
 
-      // Update budget spent amount
-      const matchingBudget = budgets.find((b) => b.category === expenseToDelete.category)
-      if (matchingBudget) {
-        const updatedBudget = {
-          ...matchingBudget,
-          spent: matchingBudget.spent - expenseToDelete.amount,
-          remaining: matchingBudget.allocated - (matchingBudget.spent - expenseToDelete.amount),
-          progress: Math.round(((matchingBudget.spent - expenseToDelete.amount) / matchingBudget.allocated) * 100),
-        }
-        updateBudget(updatedBudget)
-      }
+      // Remove from expenses
+      setExpenses(expenses.filter((e) => e.id !== id))
     }
   }
 
   // Budget functions
   const addBudget = (budget: Omit<Budget, "id" | "spent" | "remaining" | "progress">) => {
-    const newBudget = {
-      ...budget,
-      id: `b${Date.now()}`,
-      spent: 0,
-      remaining: budget.allocated,
-      progress: 0,
+    // Check if this is an undo operation
+    const deletedItem = deletedItems.find(
+      (item) =>
+        item.type === "budget" && item.item.category === budget.category && item.item.allocated === budget.allocated,
+    )
+
+    if (deletedItem) {
+      // This is an undo operation, restore the original item with its ID
+      setBudgets((prev) => [...prev, deletedItem.item as Budget])
+      // Remove from deletedItems
+      setDeletedItems((prev) => prev.filter((item) => item.id !== deletedItem.id))
+    } else {
+      // Calculate spent amount from expenses
+      const categoryExpenses = expenses.filter((e) => e.category === budget.category)
+      const spent = categoryExpenses.reduce((sum, e) => sum + e.amount, 0)
+      const remaining = budget.allocated - spent
+      const progress = Math.min(100, Math.round((spent / budget.allocated) * 100))
+
+      const newBudget = {
+        ...budget,
+        id: `b${Date.now()}`,
+        spent,
+        remaining,
+        progress,
+      }
+      setBudgets([...budgets, newBudget])
     }
-    setBudgets([...budgets, newBudget])
   }
 
   const updateBudget = (budget: Budget) => {
@@ -373,19 +397,50 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }
 
   const deleteBudget = (id: string) => {
-    setBudgets(budgets.filter((b) => b.id !== id))
+    const budgetToDelete = budgets.find((b) => b.id === id)
+    if (budgetToDelete) {
+      // Store the deleted item for potential undo
+      setDeletedItems((prev) => [
+        ...prev,
+        {
+          id: id,
+          type: "budget",
+          item: budgetToDelete,
+        },
+      ])
+
+      // Remove from budgets
+      setBudgets(budgets.filter((b) => b.id !== id))
+    }
   }
 
   // Investment functions
   const addInvestment = (investment: Omit<Investment, "id" | "value" | "change">) => {
-    const value = investment.shares * investment.price
-    const newInvestment = {
-      ...investment,
-      id: `inv${Date.now()}`,
-      value,
-      change: 0,
+    // Check if this is an undo operation
+    const deletedItem = deletedItems.find(
+      (item) =>
+        item.type === "investment" &&
+        item.item.name === investment.name &&
+        item.item.type === investment.type &&
+        item.item.shares === investment.shares &&
+        item.item.price === investment.price,
+    )
+
+    if (deletedItem) {
+      // This is an undo operation, restore the original item with its ID
+      setInvestments((prev) => [...prev, deletedItem.item as Investment])
+      // Remove from deletedItems
+      setDeletedItems((prev) => prev.filter((item) => item.id !== deletedItem.id))
+    } else {
+      const value = investment.shares * investment.price
+      const newInvestment = {
+        ...investment,
+        id: `inv${Date.now()}`,
+        value,
+        change: 0,
+      }
+      setInvestments([...investments, newInvestment])
     }
-    setInvestments([...investments, newInvestment])
   }
 
   const updateInvestment = (investment: Investment) => {
@@ -393,18 +448,49 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }
 
   const deleteInvestment = (id: string) => {
-    setInvestments(investments.filter((i) => i.id !== id))
+    const investmentToDelete = investments.find((i) => i.id === id)
+    if (investmentToDelete) {
+      // Store the deleted item for potential undo
+      setDeletedItems((prev) => [
+        ...prev,
+        {
+          id: id,
+          type: "investment",
+          item: investmentToDelete,
+        },
+      ])
+
+      // Remove from investments
+      setInvestments(investments.filter((i) => i.id !== id))
+    }
   }
 
   // Goal functions
   const addGoal = (goal: Omit<Goal, "id" | "progress">) => {
-    const progress = Math.round((goal.current / goal.target) * 100)
-    const newGoal = {
-      ...goal,
-      id: `g${Date.now()}`,
-      progress,
+    // Check if this is an undo operation
+    const deletedItem = deletedItems.find(
+      (item) =>
+        item.type === "goal" &&
+        item.item.name === goal.name &&
+        item.item.type === goal.type &&
+        item.item.target === goal.target &&
+        item.item.current === goal.current,
+    )
+
+    if (deletedItem) {
+      // This is an undo operation, restore the original item with its ID
+      setGoals((prev) => [...prev, deletedItem.item as Goal])
+      // Remove from deletedItems
+      setDeletedItems((prev) => prev.filter((item) => item.id !== deletedItem.id))
+    } else {
+      const progress = Math.round((goal.current / goal.target) * 100)
+      const newGoal = {
+        ...goal,
+        id: `g${Date.now()}`,
+        progress,
+      }
+      setGoals([...goals, newGoal])
     }
-    setGoals([...goals, newGoal])
   }
 
   const updateGoal = (goal: Goal) => {
@@ -412,7 +498,21 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }
 
   const deleteGoal = (id: string) => {
-    setGoals(goals.filter((g) => g.id !== id))
+    const goalToDelete = goals.find((g) => g.id === id)
+    if (goalToDelete) {
+      // Store the deleted item for potential undo
+      setDeletedItems((prev) => [
+        ...prev,
+        {
+          id: id,
+          type: "goal",
+          item: goalToDelete,
+        },
+      ])
+
+      // Remove from goals
+      setGoals(goals.filter((g) => g.id !== id))
+    }
   }
 
   // Utility functions

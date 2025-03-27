@@ -6,7 +6,6 @@ import { format } from "date-fns"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import {
   Dialog,
   DialogContent,
@@ -38,7 +37,7 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
     resolver: zodResolver(budgetFormSchema),
     defaultValues: {
       category: "",
-      allocated: 0,
+      allocated: undefined,
       period: new Date(),
       notes: "",
     },
@@ -60,6 +59,14 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
   }, [budgetId, budgets, form])
 
   const onSubmit = async (data: BudgetFormValues) => {
+    if (data.allocated === undefined || isNaN(data.allocated)) {
+      form.setError("allocated", {
+        type: "manual",
+        message: "Amount is required and must be a number",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -77,6 +84,7 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
         toast({
           title: "Budget updated",
           description: "Your budget has been updated successfully.",
+          duration: 3000,
         })
       } else {
         // Add new budget
@@ -88,6 +96,7 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
         toast({
           title: "Budget created",
           description: "Your budget has been created successfully.",
+          duration: 3000,
         })
       }
 
@@ -97,6 +106,7 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
         title: "Error",
         description: "There was an error saving your budget.",
         variant: "destructive",
+        duration: 3000,
       })
     } finally {
       setIsSubmitting(false)
@@ -105,8 +115,8 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="max-w-md w-full p-5 sm:p-6 overflow-y-auto max-h-[90vh]">
+        <DialogHeader className="mb-4">
           <DialogTitle>{budgetId ? "Edit Budget" : "Create Budget"}</DialogTitle>
           <DialogDescription>
             {budgetId ? "Update your budget allocation." : "Set up a new budget for a category."}
@@ -160,7 +170,11 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
                         className="pl-7"
                         placeholder="0.00"
                         {...field}
-                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                        value={field.value === undefined ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? undefined : Number.parseFloat(e.target.value)
+                          field.onChange(value)
+                        }}
                       />
                     </div>
                   </FormControl>
@@ -174,7 +188,7 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
               name="period"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Period</FormLabel>
+                  <FormLabel>Budget Period</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -190,13 +204,39 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        disabled={(date) => date > new Date()}
-                      />
+                      <div className="p-2 text-center text-sm font-medium">
+                        {/* Only show month and year in header */}
+                        {field.value ? format(field.value, "MMMM yyyy") : "Select month"}
+                      </div>
+                      <div className="p-2">
+                        {/* Custom month picker that only allows selecting months */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const date = new Date()
+                            date.setMonth(i)
+                            return (
+                              <Button
+                                key={i}
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-9 w-full",
+                                  field.value && field.value.getMonth() === i
+                                    ? "bg-primary text-primary-foreground"
+                                    : "",
+                                )}
+                                onClick={() => {
+                                  const newDate = new Date()
+                                  newDate.setMonth(i)
+                                  field.onChange(newDate)
+                                }}
+                              >
+                                {format(date, "MMM")}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </PopoverContent>
                   </Popover>
                   <FormMessage />
@@ -218,11 +258,11 @@ export function BudgetForm({ budgetId, onClose }: BudgetFormProps) {
               )}
             />
 
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={onClose}>
+            <DialogFooter className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-2">
+              <Button variant="outline" type="button" onClick={onClose} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>

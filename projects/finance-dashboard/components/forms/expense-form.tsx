@@ -37,7 +37,7 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      amount: 0,
+      amount: undefined,
       description: "",
       category: "",
       date: new Date(),
@@ -62,6 +62,14 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
   }, [expenseId, expenses, form])
 
   const onSubmit = async (data: ExpenseFormValues) => {
+    if (data.amount === undefined || isNaN(data.amount)) {
+      form.setError("amount", {
+        type: "manual",
+        message: "Amount is required and must be a number",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -78,6 +86,7 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
         toast({
           title: "Expense updated",
           description: "Your expense has been updated successfully.",
+          duration: 3000,
         })
       } else {
         // Add new expense
@@ -91,6 +100,7 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
         toast({
           title: "Expense added",
           description: "Your expense has been added successfully.",
+          duration: 3000,
         })
       }
 
@@ -100,6 +110,7 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
         title: "Error",
         description: "There was an error saving your expense.",
         variant: "destructive",
+        duration: 3000,
       })
     } finally {
       setIsSubmitting(false)
@@ -109,11 +120,11 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[425px]"
+        className="max-w-md w-full p-5 sm:p-6 overflow-y-auto max-h-[90vh]"
         aria-labelledby="expense-form-title"
         aria-describedby="expense-form-description"
       >
-        <DialogHeader>
+        <DialogHeader className="mb-4">
           <DialogTitle id="expense-form-title">{expenseId ? "Edit Expense" : "Add Expense"}</DialogTitle>
           <DialogDescription id="expense-form-description">
             {expenseId ? "Update the details of your expense." : "Enter the details of your expense."}
@@ -140,10 +151,14 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
                         type="number"
                         step="0.01"
                         min="0"
-                        className="pl-7"
+                        className="pl-7 w-full"
                         placeholder="0.00"
                         {...field}
-                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                        value={field.value === undefined ? "" : field.value}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? undefined : Number.parseFloat(e.target.value)
+                          field.onChange(value)
+                        }}
                         aria-describedby={`amount-error`}
                       />
                     </div>
@@ -160,7 +175,12 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="Grocery shopping" {...field} aria-describedby={`description-error`} />
+                    <Input
+                      placeholder="Grocery shopping"
+                      className="w-full"
+                      {...field}
+                      aria-describedby={`description-error`}
+                    />
                   </FormControl>
                   <FormMessage id="description-error" />
                 </FormItem>
@@ -175,7 +195,7 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
                   <FormLabel>Category</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger aria-describedby={`category-error`}>
+                      <SelectTrigger className="w-full" aria-describedby={`category-error`}>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
@@ -239,15 +259,21 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Input placeholder="Additional details" {...field} />
+                    <Input placeholder="Additional details" className="w-full" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={onClose} aria-label="Cancel adding expense">
+            <DialogFooter className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={onClose}
+                aria-label="Cancel adding expense"
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </Button>
               <Button
@@ -255,6 +281,7 @@ export function ExpenseForm({ expenseId, onClose }: ExpenseFormProps) {
                 disabled={isSubmitting}
                 aria-label={expenseId ? "Save expense changes" : "Add new expense"}
                 aria-busy={isSubmitting}
+                className="w-full sm:w-auto"
               >
                 {isSubmitting ? "Saving..." : "Save"}
               </Button>

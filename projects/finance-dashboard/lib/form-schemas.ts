@@ -1,7 +1,7 @@
 import * as z from "zod"
 
 export const expenseFormSchema = z.object({
-  amount: z.number().positive("Amount must be a positive number"),
+  amount: z.number().positive("Amount must be a positive number").optional(),
   description: z.string().min(1, "Description is required"),
   category: z.string().min(1, "Category is required"),
   date: z.date(),
@@ -12,7 +12,7 @@ export type ExpenseFormValues = z.infer<typeof expenseFormSchema>
 
 export const budgetFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
-  allocated: z.number().positive("Amount must be a positive number"),
+  allocated: z.number().positive("Amount must be a positive number").optional(),
   period: z.date(),
   notes: z.string().optional(),
 })

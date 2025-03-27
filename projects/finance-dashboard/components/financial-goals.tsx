@@ -1,26 +1,125 @@
 "use client"
 
 import { useState } from "react"
-import { Plus } from "lucide-react"
+import { Plus, Eye, Edit, Trash, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { GoalTable } from "@/components/tables/goal-table"
 import { GoalForm } from "@/components/forms/goal-form"
 import { useFinance } from "@/lib/data-context"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function FinancialGoals() {
-  const { goals } = useFinance()
+  const { goals, deleteGoal } = useFinance()
+  const { toast } = useToast()
   const [isAddingGoal, setIsAddingGoal] = useState(false)
-  const [date, setDate] = useState<Date>()
   const [selectedType, setSelectedType] = useState<string>("all")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  const [filteredGoals, setFilteredGoals] = useState(goals)
+  const [hasActiveFilters, setHasActiveFilters] = useState(false)
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isViewingDetails, setIsViewingDetails] = useState(false)
 
   // Filter active goals
-  const activeGoals = goals.filter((goal) => goal.progress < 100)
-  const completedGoals = goals.filter((goal) => goal.progress >= 100)
+  const activeGoals = filteredGoals.filter((goal) => goal.progress < 100)
+  const completedGoals = filteredGoals.filter((goal) => goal.progress >= 100)
+
+  // Apply filters
+  const applyFilters = () => {
+    let filtered = [...goals]
+
+    if (selectedType && selectedType !== "all") {
+      filtered = filtered.filter((goal) => goal.type === selectedType)
+    }
+
+    if (selectedStatus && selectedStatus !== "all") {
+      if (selectedStatus === "active") {
+        filtered = filtered.filter((goal) => goal.progress < 100)
+      } else if (selectedStatus === "completed") {
+        filtered = filtered.filter((goal) => goal.progress >= 100)
+      }
+    }
+
+    setFilteredGoals(filtered)
+    setHasActiveFilters(selectedType !== "all" || selectedStatus !== "all")
+  }
+
+  // Reset filters
+  const resetFilters = () => {
+    setSelectedType("all")
+    setSelectedStatus("all")
+    setFilteredGoals(goals)
+    setHasActiveFilters(false)
+  }
+
+  // Handle goal actions
+  const handleEdit = (id: string) => {
+    setSelectedGoal(id)
+    setIsEditing(true)
+  }
+
+  const handleView = (id: string) => {
+    setSelectedGoal(id)
+    setIsViewingDetails(true)
+  }
+
+  const handleDelete = (id: string) => {
+    setSelectedGoal(id)
+    setIsDeleting(true)
+  }
+
+  const confirmDelete = () => {
+    if (selectedGoal) {
+      deleteGoal(selectedGoal)
+      toast({
+        title: "Goal deleted",
+        description: "The financial goal has been deleted successfully.",
+        duration: 3000,
+        action: (
+          <Button
+            variant="outline"
+            onClick={() => {
+              toast({
+                title: "Action undone",
+                description: "The goal has been restored.",
+                duration: 3000,
+              })
+            }}
+          >
+            Undo
+          </Button>
+        ),
+      })
+      setIsDeleting(false)
+      setSelectedGoal(null)
+    }
+  }
+
+  // Get the details of the selected goal
+  const goalDetails = selectedGoal ? goals.find((g) => g.id === selectedGoal) : null
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,9 +130,15 @@ export function FinancialGoals() {
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-[180px]">
+          <div className="flex flex-col sm:flex-row w-full sm:w-auto items-start sm:items-center gap-2 flex-wrap">
+            <Select
+              value={selectedType}
+              onValueChange={(value) => {
+                setSelectedType(value)
+                applyFilters()
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="All Goals" />
               </SelectTrigger>
               <SelectContent>
@@ -46,8 +151,14 @@ export function FinancialGoals() {
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-[180px]">
+            <Select
+              value={selectedStatus}
+              onValueChange={(value) => {
+                setSelectedStatus(value)
+                applyFilters()
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -56,17 +167,22 @@ export function FinancialGoals() {
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
+            {hasActiveFilters && (
+              <Button variant="ghost" className="w-full sm:w-auto" onClick={resetFilters}>
+                Reset
+              </Button>
+            )}
           </div>
-          <Button onClick={() => setIsAddingGoal(true)}>
+          <Button onClick={() => setIsAddingGoal(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Create Goal
           </Button>
         </div>
 
         <Tabs defaultValue="active" className="space-y-4">
-          <TabsList>
+          <TabsList className="w-full sm:w-auto overflow-x-auto">
             <TabsTrigger value="active">Active Goals</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="completed">Completed Goals</TabsTrigger>
             <TabsTrigger value="all">All Goals</TabsTrigger>
           </TabsList>
           <TabsContent value="active" className="space-y-4">
@@ -89,6 +205,33 @@ export function FinancialGoals() {
                     <div className="mt-1 text-xs text-muted-foreground">
                       ${calculateMonthlyContribution(goal).toFixed(0)} per month needed to reach goal
                     </div>
+                    <div className="flex justify-end mt-4 space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleView(goal.id)}
+                        aria-label={`View details for ${goal.name}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(goal.id)}
+                        aria-label={`Edit ${goal.name}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(goal.id)}
+                        aria-label={`Delete ${goal.name}`}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -105,10 +248,144 @@ export function FinancialGoals() {
                 <CardTitle>Active Goals</CardTitle>
                 <CardDescription>Track progress on your current financial goals</CardDescription>
               </CardHeader>
-              <CardContent>
-                <GoalTable />
+              <CardContent className="overflow-x-auto">
+                <div className="rounded-md border hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="py-3 px-4 text-left font-medium">Goal</th>
+                        <th className="py-3 px-4 text-left font-medium">Type</th>
+                        <th className="py-3 px-4 text-left font-medium">Target</th>
+                        <th className="py-3 px-4 text-left font-medium">Current</th>
+                        <th className="py-3 px-4 text-left font-medium">Deadline</th>
+                        <th className="py-3 px-4 text-left font-medium">Progress</th>
+                        <th className="py-3 px-4 text-right font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeGoals.length > 0 ? (
+                        activeGoals.map((goal) => (
+                          <tr key={goal.id} className="border-b">
+                            <td className="py-3 px-4 font-medium">{goal.name}</td>
+                            <td className="py-3 px-4">{goal.type}</td>
+                            <td className="py-3 px-4">${goal.target.toLocaleString()}</td>
+                            <td className="py-3 px-4">${goal.current.toLocaleString()}</td>
+                            <td className="py-3 px-4">{goal.deadline}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Progress value={goal.progress} className="h-2 w-[60px] sm:w-[100px]" />
+                                <span className="text-sm text-muted-foreground">{goal.progress}%</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleView(goal.id)}
+                                  aria-label={`View details for ${goal.name}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(goal.id)}
+                                  aria-label={`Edit ${goal.name}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(goal.id)}
+                                  aria-label={`Delete ${goal.name}`}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="h-24 text-center">
+                            No active goals found. Create one to get started.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
+            {/* Mobile card view */}
+            <div className="md:hidden space-y-4 mt-4 px-1">
+              {activeGoals.length > 0 ? (
+                activeGoals.map((goal) => (
+                  <Card key={goal.id} className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="font-medium text-base">{goal.name}</h3>
+                          <p className="text-sm text-muted-foreground">{goal.type}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="-mr-2 -mt-2">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleView(goal.id)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(goal.id)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(goal.id)}>
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-y-3 text-sm mb-4">
+                        <div className="text-muted-foreground">Target:</div>
+                        <div className="text-right">${goal.target.toLocaleString()}</div>
+
+                        <div className="text-muted-foreground">Current:</div>
+                        <div className="text-right">${goal.current.toLocaleString()}</div>
+
+                        <div className="text-muted-foreground">Deadline:</div>
+                        <div className="text-right">{goal.deadline}</div>
+                      </div>
+
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">Progress</span>
+                          <span className="text-sm">{goal.progress}%</span>
+                        </div>
+                        <Progress value={goal.progress} className="h-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    No active goals found. Create one to get started.
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="completed" className="space-y-4">
             <Card>
@@ -120,12 +397,15 @@ export function FinancialGoals() {
                 {completedGoals.length > 0 ? (
                   <div className="space-y-4">
                     {completedGoals.map((goal) => (
-                      <div key={goal.id} className="flex items-center justify-between border-b pb-4">
+                      <div
+                        key={goal.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 gap-2"
+                      >
                         <div>
                           <h3 className="font-medium">{goal.name}</h3>
                           <p className="text-sm text-muted-foreground">{goal.type}</p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <p className="font-medium">${goal.target.toLocaleString()}</p>
                           <p className="text-sm text-green-500">Completed on {goal.deadline}</p>
                         </div>
@@ -146,10 +426,144 @@ export function FinancialGoals() {
                 <CardTitle>All Goals</CardTitle>
                 <CardDescription>Complete overview of all your financial goals</CardDescription>
               </CardHeader>
-              <CardContent>
-                <GoalTable />
+              <CardContent className="overflow-x-auto">
+                <div className="rounded-md border hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="py-3 px-4 text-left font-medium">Goal</th>
+                        <th className="py-3 px-4 text-left font-medium">Type</th>
+                        <th className="py-3 px-4 text-left font-medium">Target</th>
+                        <th className="py-3 px-4 text-left font-medium">Current</th>
+                        <th className="py-3 px-4 text-left font-medium">Deadline</th>
+                        <th className="py-3 px-4 text-left font-medium">Progress</th>
+                        <th className="py-3 px-4 text-right font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredGoals.length > 0 ? (
+                        filteredGoals.map((goal) => (
+                          <tr key={goal.id} className="border-b">
+                            <td className="py-3 px-4 font-medium">{goal.name}</td>
+                            <td className="py-3 px-4">{goal.type}</td>
+                            <td className="py-3 px-4">${goal.target.toLocaleString()}</td>
+                            <td className="py-3 px-4">${goal.current.toLocaleString()}</td>
+                            <td className="py-3 px-4">{goal.deadline}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Progress value={goal.progress} className="h-2 w-[60px] sm:w-[100px]" />
+                                <span className="text-sm text-muted-foreground">{goal.progress}%</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleView(goal.id)}
+                                  aria-label={`View details for ${goal.name}`}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(goal.id)}
+                                  aria-label={`Edit ${goal.name}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(goal.id)}
+                                  aria-label={`Delete ${goal.name}`}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="h-24 text-center">
+                            No goals found. Create one to get started.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
+            {/* Mobile card view */}
+            <div className="md:hidden space-y-4 mt-4 px-1">
+              {filteredGoals.length > 0 ? (
+                filteredGoals.map((goal) => (
+                  <Card key={goal.id} className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="font-medium text-base">{goal.name}</h3>
+                          <p className="text-sm text-muted-foreground">{goal.type}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="-mr-2 -mt-2">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleView(goal.id)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(goal.id)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(goal.id)}>
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-y-3 text-sm mb-4">
+                        <div className="text-muted-foreground">Target:</div>
+                        <div className="text-right">${goal.target.toLocaleString()}</div>
+
+                        <div className="text-muted-foreground">Current:</div>
+                        <div className="text-right">${goal.current.toLocaleString()}</div>
+
+                        <div className="text-muted-foreground">Deadline:</div>
+                        <div className="text-right">{goal.deadline}</div>
+                      </div>
+
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-muted-foreground">Progress</span>
+                          <span className="text-sm">{goal.progress}%</span>
+                        </div>
+                        <Progress value={goal.progress} className="h-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    No goals found. Create one to get started.
+                  </CardContent>
+                </Card>
+              )}
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -192,12 +606,12 @@ export function FinancialGoals() {
                       .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
                       .slice(0, 4)
                       .map((goal) => (
-                        <div key={goal.id} className="flex items-center justify-between">
+                        <div key={goal.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div>
                             <h3 className="font-medium">{goal.name}</h3>
                             <p className="text-xs text-muted-foreground">{goal.type}</p>
                           </div>
-                          <div className="text-right">
+                          <div className="text-left sm:text-right">
                             <p className="font-medium">{goal.deadline}</p>
                             <p className="text-xs text-muted-foreground">
                               {calculateDaysRemaining(goal.deadline)} days left
@@ -214,6 +628,85 @@ export function FinancialGoals() {
       </div>
 
       {isAddingGoal && <GoalForm onClose={() => setIsAddingGoal(false)} />}
+
+      {isEditing && selectedGoal && (
+        <GoalForm
+          goalId={selectedGoal}
+          onClose={() => {
+            setIsEditing(false)
+            setSelectedGoal(null)
+          }}
+        />
+      )}
+
+      {isViewingDetails && goalDetails && (
+        <Dialog open={isViewingDetails} onOpenChange={setIsViewingDetails}>
+          <DialogContent className="sm:max-w-[425px] w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Goal Details</DialogTitle>
+              <DialogDescription>Detailed information about this financial goal</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Name:</div>
+                <div className="col-span-3">{goalDetails.name}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Type:</div>
+                <div className="col-span-3">{goalDetails.type}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Target:</div>
+                <div className="col-span-3">${goalDetails.target.toLocaleString()}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Current:</div>
+                <div className="col-span-3">${goalDetails.current.toLocaleString()}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Deadline:</div>
+                <div className="col-span-3">{goalDetails.deadline}</div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Progress:</div>
+                <div className="col-span-3">
+                  <div className="flex items-center gap-2">
+                    <Progress value={goalDetails.progress} className="h-2 w-[100px]" />
+                    <span className="text-sm text-muted-foreground">{goalDetails.progress}%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Monthly:</div>
+                <div className="col-span-3">
+                  ${calculateMonthlyContribution(goalDetails).toFixed(2)} per month needed
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="font-medium">Notes:</div>
+                <div className="col-span-3">{goalDetails.notes || "No additional notes available."}</div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the financial goal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="w-full sm:w-auto">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
