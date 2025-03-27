@@ -6,14 +6,13 @@ import { useState, useEffect } from "react"
 import { Plus, LayoutGrid, LayoutList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import TaskColumn from "./task-column"
 import AddTaskDialog from "./add-task-dialog"
 import type { Task, Column } from "@/types/task"
 import { useMobile } from "@/hooks/use-mobile"
 
 export default function TaskBoard() {
-  const { toast } = useToast()
   const isMobile = useMobile()
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
@@ -90,9 +89,7 @@ export default function TaskBoard() {
     // If dropping in the same column at the same position, do nothing
     if (
       sourceColumnId === columnId &&
-      index === -1 &&
-      columns.find((col) => col.id === columnId)?.tasks.findIndex((t) => t.id === task.id) ===
-        columns.find((col) => col.id === columnId)?.tasks.length - 1
+      index === -1 && columns.find(col => col.id === columnId)?.tasks.findIndex(t => t.id === task.id) === (columns.find(col => col.id === columnId)?.tasks.length ?? 0) - 1
     ) {
       return
     }
@@ -133,10 +130,7 @@ export default function TaskBoard() {
     }
 
     setColumns(newColumns)
-    toast({
-      title: "Task moved",
-      description: `Task moved to ${newColumns[destColIndex].title}`,
-    })
+    toast.success(`Task moved to ${newColumns[destColIndex].title}`)
 
     handleDragEnd()
   }
@@ -148,10 +142,7 @@ export default function TaskBoard() {
     if (columnIndex !== -1) {
       newColumns[columnIndex].tasks.push(task)
       setColumns(newColumns)
-      toast({
-        title: "Task added",
-        description: "New task has been added successfully",
-      })
+      toast.success("New task has been added successfully")
     }
   }
 
@@ -173,14 +164,12 @@ export default function TaskBoard() {
         setColumns(newColumns)
 
         // Show toast with undo button
-        toast({
-          title: "Task deleted",
+        toast("Task deleted", {
           description: "Task has been deleted",
-          action: (
-            <Button variant="outline" size="sm" onClick={() => undoDelete()} className="hover:bg-primary/10">
-              Undo
-            </Button>
-          ),
+          action: {
+            label: "Undo",
+            onClick: () => undoDelete(),
+          },
         })
       }
     }
@@ -199,10 +188,7 @@ export default function TaskBoard() {
         // Remove the restored task from deletedTasks
         setDeletedTasks(deletedTasks.slice(0, -1))
 
-        toast({
-          title: "Task restored",
-          description: "Task has been restored successfully",
-        })
+        toast.success("Task has been restored successfully")
       }
     }
   }
@@ -210,20 +196,53 @@ export default function TaskBoard() {
   const updateTask = (updatedTask: Task) => {
     const newColumns = [...columns]
 
-    // Find the column containing the task
-    const columnIndex = newColumns.findIndex((col) => col.tasks.some((task) => task.id === updatedTask.id))
+    // Find the column containing the original task
+    let sourceColumnIndex = -1
+    let taskIndex = -1
 
-    if (columnIndex !== -1) {
-      // Update the task in its current column
-      newColumns[columnIndex].tasks = newColumns[columnIndex].tasks.map((task) =>
-        task.id === updatedTask.id ? updatedTask : task,
-      )
+    // Find the task in all columns
+    for (let i = 0; i < newColumns.length; i++) {
+      const index = newColumns[i].tasks.findIndex((task) => task.id === updatedTask.id)
+      if (index !== -1) {
+        sourceColumnIndex = i
+        taskIndex = index
+        break
+      }
+    }
 
+    if (sourceColumnIndex === -1 || taskIndex === -1) {
+      console.error("Task not found for update")
+      return
+    }
+
+    // Get the original task
+    const originalTask = newColumns[sourceColumnIndex].tasks[taskIndex]
+
+    // Check if the status has changed
+    if (originalTask.status !== updatedTask.status) {
+      // Status has changed, move the task to the new column
+
+      // Remove from source column
+      newColumns[sourceColumnIndex].tasks.splice(taskIndex, 1)
+
+      // Add to destination column
+      const destColumnIndex = newColumns.findIndex((col) => col.id === updatedTask.status)
+      if (destColumnIndex !== -1) {
+        newColumns[destColumnIndex].tasks.push(updatedTask)
+
+        setColumns(newColumns)
+        toast.success(`Task moved to ${newColumns[destColumnIndex].title}`)
+      } else {
+        // If destination column not found, just update in place
+        newColumns[sourceColumnIndex].tasks[taskIndex] = updatedTask
+        setColumns(newColumns)
+        toast.success("Task has been updated successfully")
+      }
+    } else {
+      // Status hasn't changed, just update the task in its current column
+      newColumns[sourceColumnIndex].tasks[taskIndex] = updatedTask
       setColumns(newColumns)
-      toast({
-        title: "Task updated",
-        description: "Task has been updated successfully",
-      })
+      toast.success("Task has been updated successfully")
     }
   }
 

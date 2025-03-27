@@ -9,7 +9,6 @@ import { Trash2, Edit, Clock, AlertCircle, CheckCircle2 } from "lucide-react"
 import type { Task } from "@/types/task"
 import EditTaskDialog from "./edit-task-dialog"
 import AlertDialogDelete from "./alert-dialog-delete"
-import { useToast } from "@/hooks/use-toast"
 
 interface TaskCardProps {
   task: Task
@@ -36,7 +35,6 @@ export default function TaskCard({
 }: TaskCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const { toast } = useToast()
 
   const getPriorityIcon = () => {
     switch (task.priority) {
@@ -70,7 +68,9 @@ export default function TaskCard({
         className={`task-card-wrapper ${isDragging ? "opacity-50" : ""}`}
       >
         <Card
-          className={`transition-all duration-200 hover:shadow-md hover:translate-y-[-2px] hover:border-primary/50 touch-manipulation ${isMobileView ? "scale-100 active:scale-[0.98]" : ""} ${isDragging ? "shadow-lg" : ""}`}
+          className={`transition-all duration-200 hover:shadow-md hover:translate-y-[-2px] hover:border-primary/50 touch-manipulation ${
+            isMobileView ? "scale-100 active:scale-[0.98]" : ""
+          } ${isDragging ? "shadow-lg" : ""}`}
         >
           <CardContent className={`${isMobileView ? "p-2" : "p-3"}`}>
             <div className="space-y-2">
@@ -90,7 +90,9 @@ export default function TaskCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`${isMobileView ? "h-6 w-6" : "h-8 w-8 sm:h-7 sm:w-7"} text-destructive hover:bg-destructive/10 transition-colors`}
+                    className={`${
+                      isMobileView ? "h-6 w-6" : "h-8 w-8 sm:h-7 sm:w-7"
+                    } text-destructive hover:bg-destructive/10 transition-colors`}
                     onClick={() => setIsDeleteDialogOpen(true)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -99,7 +101,9 @@ export default function TaskCard({
                 </div>
               </div>
               <p
-                className={`${isMobileView ? "text-xs" : "text-sm"} text-muted-foreground line-clamp-${isMobileView ? "1" : "2"}`}
+                className={`${isMobileView ? "text-xs" : "text-sm"} text-muted-foreground line-clamp-${
+                  isMobileView ? "1" : "2"
+                }`}
               >
                 {task.description}
               </p>
